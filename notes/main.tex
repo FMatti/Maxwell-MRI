@@ -206,6 +206,131 @@ Here, we have adjusted the first rows in $\mathbf{L}$ and $\mathbf{K}$, such tha
 the boundary conditions are necessarily satisfied.
 To obtain the finite element solution, we simply solve this linear system.
 
+\section{Maxwell's equations}
+\label{sec:maxwell}
+
+Let $\mathbf{E} = (E_1, E_2, E_3)^T$ denote the electric field,
+$\mathbf{B} = (B_1, B_2, B_3)$ the magnetic field strength, and 
+$\mathbf{j} = (j_1, j_2, j_3)$ the electric current density. 
+We suppose Maxwell's equations hold:
+
+\begin{align}
+    \epsilon \nabla \cdot \mathbf{E} &= \rho \\
+    \nabla \cdot \mathbf{B} &= 0 \\
+    \nabla \times \mathbf{E} &= -\partial_t \mathbf{B} \\
+    \nabla \times (\mu^{-1} \mathbf{B}) &= \partial_t \mathbf{E} + \mathbf{j} \label{equ:mw4}
+\end{align}
+
+We can therefore write $\mathbf{B} = \nabla \times \mathbf{A}$ for some vector
+potential $\mathbf{A}$, and $\mathbf{E} = \nabla \phi - \partial_t \mathbf{A}$ for some
+scalar potential $\phi$. Plugging these identities into (\ref{equ:mw4}), we get 
+
+\begin{equation}
+    \nabla \times (\mu^{-1} \nabla \times \mathbf{A}) = \partial_t \nabla \phi -
+    \partial_t^2 \mathbf{A} + \mathbf{j} \label{equ:mwvecpot}
+\end{equation}
+
+We may choose $\nabla \phi = 0$ as a gauge, and introduce a harmonic time dependence
+of $\mathbf{A}$ and $\mathbf{j}$ with frequencies $\omega$, such that $\mathbf{A}(\mathbf{x}, t) = 
+\mathbf{A}(\mathbf{x})\exp(i \omega t)$ and $\mathbf{j}(\mathbf{x}, t) = 
+\mathbf{j}(\mathbf{x})\exp(i \omega t)$. Plugging this into (\ref{equ:mwvecpot})
+yields us
+
+\begin{equation}
+    \nabla \times (\mu^{-1} \nabla \times \mathbf{A}) - \omega^2 \mathbf{A} = \mathbf{j} \label{equ:mwtimeharm}
+\end{equation}
+
+We reduce this equation to its weak formulation, by multiplying it with a vector-valued 
+function $\mathbf{v} \in H_{\text{curl}}(\Omega)$, where we denoted
+
+\begin{equation}
+    H_{\text{curl}}(\Omega) = \{u : \Omega \to \mathbb{C}, ~\text{such that}~ u \in L^2(\mathbb{C}),
+    \nabla \times u \in L^2(\mathbb{C}) \}
+\end{equation}
+
+and by integrating over all of $\Omega$:
+
+\begin{equation}
+    \int_{\Omega} (\nabla \times ({\mu^{-1} \nabla \times \mathbf{A}})) \cdot \mathbf{v}
+    - \omega^2 \int_{\Omega} \mathbf{A} \cdot \mathbf{v} = \int_{\Omega} \mathbf{j} \cdot \mathbf{v} \label{equ:mwweak}
+\end{equation}
+
+To further simplify this expression, we will derive an identity for the scalar product
+of a vector-valued function $\mathbf{v}$ with the curl of a vector-valued function 
+$\mathbf{u}$. For this, we use the completely antisymmetric tensor $\varepsilon_{ijk}$
+(frequently referred to as the Levi-Civita tensor), to rewrite the $k$-th component
+of the curl as
+
+\begin{equation}
+    (\nabla \times \mathbf{u})_k = \sum_i \sum_j \varepsilon_{ijk} \partial_i \mathbf{u}_j
+\end{equation}
+
+where $\partial_i$ denotes the partial derivative with respect to the $i$-th coordinate
+direction. Rewriting the scalar product as a sum, we apply the product rule to get
+
+\begin{align}
+    (\nabla \times \mathbf{u}) \cdot \mathbf{v} &= \sum_k (\nabla \times \mathbf{u})_k v_k \notag \\ 
+    &= \sum_k (\sum_i \sum_j \varepsilon_{ijk} \partial_i u_j) v_k \notag \\ 
+    &= \sum_k \sum_i \sum_j \partial_i (\varepsilon_{ijk} u_j v_k) - \sum_k \sum_i \sum_j u_j (\varepsilon_{ijk} \partial_i v_k) \notag \\ 
+    &= \sum_i \partial_i (\mathbf{u} \times \mathbf{v})_i - \sum_j u_j (\nabla \times \mathbf{v})_j \notag \\ 
+    &= \nabla \cdot (\mathbf{u} \times \mathbf{v}) - \mathbf{u} \cdot (\nabla \times \mathbf{v}) \label{equ:curlidentity} 
+\end{align}
+
+Consequently, we may rewrite the double curl term in the weak formulation as 
+
+\begin{align}
+    \int_{\Omega} (\nabla \times ({\mu^{-1} \nabla \times \mathbf{A}})) \cdot \mathbf{v} &=
+    \int_{\Omega} \nabla \cdot (({\mu^{-1} \nabla \times \mathbf{A}}) \times \mathbf{v})
+    - \int_{\Omega} ({\mu^{-1} \nabla \times \mathbf{A}}) \cdot (\nabla \times \mathbf{v}) \notag \\
+    &= \int_{\partial \Omega} (({\mu^{-1} \nabla \times \mathbf{A}}) \times \mathbf{v}) \cdot \mathbf{n}
+    - \int_{\Omega} ({\mu^{-1} \nabla \times \mathbf{A}}) \cdot (\nabla \times \mathbf{v}) \notag \\
+\end{align}
+
+We will now have a look at what conditions $\mathbf{v}$ needs to satisfy, such that
+the boundary term (first integral) vanishes, and we would end up with
+
+\begin{equation}
+    - \int_{\Omega} ({\mu^{-1} \nabla \times \mathbf{A}}) \cdot (\nabla \times \mathbf{v})
+    - \omega^2 \int_{\Omega} \mathbf{A} \cdot \mathbf{v} 
+    = \int_{\Omega} \mathbf{j} \cdot \mathbf{v} \label{equ:mwweaksimple}
+\end{equation}
+
+To be continued...
+
+\section{Ideas}
+\label{sec:ideas}
+
+What might be really interesting is to instead look at the problem in space-time 
+using the Maxwell tensor
+
+\begin{equation}
+    \mathbb{F} = \begin{bmatrix}
+        0 & -E_1/c & -E_2/c & -E_3/c \\
+        E_1/c & 0 & B_3 & -B_2 \\ 
+        E_2/c & -B_3 & 0 & B_1 \\ 
+        E_3/c & B_2 & -B_1 & 0
+    \end{bmatrix}
+\end{equation}
+
+In the covariant formulation of the Maxwell theory, the inhomogeneous Maxwell
+equations reduce to a single equation
+
+\begin{equation}
+    \partial_a F^{ab} = - \mu J^b
+\end{equation}
+
+with the four current density $\mathbf{J} = (\mu c \rho, \mu \mathbf{j})$. The 
+weak formulation of the problem could then be stated as (using Einstein's sum
+convention, i.e. summing over repeated indices)
+
+\begin{equation}
+    \int_{\Omega \times \mathbb{R}} F_{ab} \partial^a v^b = \int_{\Omega \times \mathbb{R}} \mu J_b v^b
+\end{equation}
+
+where boundary conditions are yet to be determined. If we somehow would manage
+to find a suitable function space for the four-dimensional $\mathbf{v}$, it might 
+be possible to find both $\mathbf{E}$ and $\mathbf{B}$ from a finite element method.
+
 \bibliography{biblio.bib}
 
 \end{document}
