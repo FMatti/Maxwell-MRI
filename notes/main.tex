@@ -19,6 +19,8 @@
 \subsection{The poisson equation}
 \label{subsec:poisson}
 
+\textit{Taken from FEniCS manual (too lazy for bibtex...)}
+
 We aim to solve an equation of the form
 
 \begin{equation}
@@ -70,6 +72,8 @@ and also the bilinear form $a: V \times V \to \mathbb{R}$
 
 \subsection{Example: One dimensional poisson equation}
 \label{subsec:1dpoiss}
+
+\textit{Initial idea taken from Wikipedia article about FEM.}
 
 To illustrate the choice of basis functions, we will now consider the simple one 
 dimensional case $\Omega = [a, b]$, such that the weak formulation of the problem
@@ -210,19 +214,19 @@ To obtain the finite element solution, we simply solve this linear system.
 \label{sec:maxwell}
 
 Let $\mathbf{E} = (E_1, E_2, E_3)^T$ denote the electric field,
-$\mathbf{B} = (B_1, B_2, B_3)$ the magnetic field strength, and 
-$\mathbf{j} = (j_1, j_2, j_3)$ the electric current density. 
+$\mathbf{B} = (B_1, B_2, B_3)^T$ the magnetic field strength, and 
+$\mathbf{j} = (j_1, j_2, j_3)^T$ the electric current density. 
 We suppose Maxwell's equations hold:
 
 \begin{align}
-    \epsilon \nabla \cdot \mathbf{E} &= \rho \\
+    \nabla \cdot (\epsilon \mathbf{E}) &= \rho \\
     \nabla \cdot \mathbf{B} &= 0 \\
     \nabla \times \mathbf{E} &= -\partial_t \mathbf{B} \\
-    \nabla \times (\mu^{-1} \mathbf{B}) &= \partial_t \mathbf{E} + \mathbf{j} \label{equ:mw4}
+    \nabla \times (\mu^{-1} \mathbf{B}) &= \partial_t (\epsilon \mathbf{E}) + \mathbf{j} \label{equ:mw4}
 \end{align}
 
 We can therefore write $\mathbf{B} = \nabla \times \mathbf{A}$ for some vector
-potential $\mathbf{A}$, and $\mathbf{E} = \nabla \phi - \partial_t \mathbf{A}$ for some
+potential $\mathbf{A}$, and $\mathbf{E} = -\nabla \phi - \partial_t \mathbf{A}$ for some
 scalar potential $\phi$. Plugging these identities into (\ref{equ:mw4}), we get 
 
 \begin{equation}
@@ -262,7 +266,7 @@ $\mathbf{u}$. For this, we use the completely antisymmetric tensor $\varepsilon_
 of the curl as
 
 \begin{equation}
-    (\nabla \times \mathbf{u})_k = \sum_i \sum_j \varepsilon_{ijk} \partial_i \mathbf{u}_j
+    (\nabla \times \mathbf{u})_k = \sum_i \sum_j \varepsilon_{ijk} \partial_i u_j
 \end{equation}
 
 where $\partial_i$ denotes the partial derivative with respect to the $i$-th coordinate
@@ -295,7 +299,92 @@ the boundary term (first integral) vanishes, and we would end up with
     = \int_{\Omega} \mathbf{j} \cdot \mathbf{v} \label{equ:mwweaksimple}
 \end{equation}
 
-To be continued...
+Let $\mathbf{n}$ and $\mathbf{t}$ denote the normal and tangential
+vectors to $\partial \Omega$ at a point $\mathbf{x} \in \partial \Omega$.
+For the boundary term to vanish, we require 
+
+\begin{equation}
+    (({\mu^{-1} \nabla \times \mathbf{A}}) \times \mathbf{v}) \cdot \mathbf{n} = 0
+\end{equation}
+
+In other words, we need 
+
+\begin{equation}
+    (({\mu^{-1} \nabla \times \mathbf{A}}) \times \mathbf{v}) \perp \mathbf{n}
+\end{equation}
+
+which is satisfied for all $\mathbf{v} \parallel \mathbf{n}$ on $\partial \Omega$.
+
+[Todo: Properly derive/verify this condition using Levi-Civita tensor]
+
+\section{Weak derivative}
+\label{sec:weak}
+
+\textit{Taken from Quarteroni: Introduction to Finite Elements Method}
+
+Let $\Omega \subset \mathbb{R}^d$ open. The support of $f:\Omega \to \mathbb{R}$
+is defined as
+
+\begin{equation}
+    \text{supp}(f) = \overline{\{x \in \Omega ~|~ f(x) \neq 0\}}
+\end{equation}
+
+$f$ has compact support, if there exists a compact subset $K \subset \Omega$,
+such that supp($f$) $\subset K$, and define
+
+\begin{equation}
+    \mathcal{D}(\Omega) = \{f \in C^{\infty}(\Omega) ~|~ f ~\text{has compact support}\}
+\end{equation}
+
+(If I remember correctly, extending this notion to $f \in C^1(\Omega)$ should yield
+an almost identical treatment, unless we also include higher order (weak) partial derivatives).
+Let $T: \mathcal{D} \to \mathbb{R}$, $\varphi \mapsto \langle T, \varphi \rangle = T(\varphi)$
+be a linear map. We say that $T$ is continuous, if
+
+\begin{equation}
+    \lim_{n\to\infty} \langle T, \varphi_n \rangle = \langle T, \varphi \rangle
+\end{equation}
+
+with $\{\varphi_k\}_{k \in \mathbb{N}} \subset \mathcal{D}(\Omega)$ converging to $\varphi$.
+Such (linear and continuous) maps are called distribution on $\mathcal{D}(\Omega)$,
+and they form the space of distributions $\mathcal{D}'(\Omega)$.
+
+The (weak) partial coordinate-derivatives of $T$ (namely $\partial_i T, ~i \in \{1, \dots, d\}$)
+are characterized by distributions that satisfy
+
+\begin{equation}
+    \langle \partial_i T, \varphi \rangle = - \langle T, \partial_i \varphi \rangle 
+\end{equation}
+
+for all $\varphi \in \mathcal{D}(\Omega)$. 
+
+Interesting for us is mainly the following case:
+Given a function $f \in L^2(\Omega)$, we define a distribution $T_f \in \mathcal{D}'(\Omega)$
+to be 
+
+\begin{equation}
+    \langle T_f , \varphi \rangle = \int_{\Omega} f(x) \varphi(x) dx
+\end{equation}
+
+for all $\varphi \in \mathcal{D}(\Omega)$.
+
+This allows us to define a weak derivative to functions that are (in the classical
+sense) not differentiable (i.e. not in $C^1(\Omega)$). Consider for example the 
+absolute value function $|\cdot| \in L_2(K)$ where $K \subset \mathbb{R}$ is compact.
+Since
+
+\begin{align}
+    \int_K (\partial_x |x|) \varphi(x) dx &= -\int_K |x| \varphi'(x) dx \notag \\ 
+    &= - \int_{K \cap \mathbb{R}_+} x \varphi'(x) dx - \int_{K \cap \mathbb{R}_-} (-x) \varphi'(x) dx \notag \\ 
+    &= \int_{K \cap \mathbb{R}_+} \varphi(x) dx + \int_{K \cap \mathbb{R}_-} (-1) \varphi(x) dx \notag \\
+    &= \int_K \text{sign}(x) \varphi(x) dx
+\end{align}
+
+we may conclude that the weak derivative of the absolute value function is therefore
+the signum function. Notice, how the derivative of the absolute value function
+is only not well-defined at $x=0$, i.e. on a set of zero measure. This nuisance
+is circumvented when talking about the weak derivative, since the measure zero
+sets have zero integral.
 
 \section{Ideas}
 \label{sec:ideas}
@@ -316,7 +405,7 @@ In the covariant formulation of the Maxwell theory, the inhomogeneous Maxwell
 equations reduce to a single equation
 
 \begin{equation}
-    \partial_a F^{ab} = - \mu J^b
+    \partial_a F^{ab} = - J^b
 \end{equation}
 
 with the four current density $\mathbf{J} = (\mu c \rho, \mu \mathbf{j})$. The 
@@ -324,7 +413,7 @@ weak formulation of the problem could then be stated as (using Einstein's sum
 convention, i.e. summing over repeated indices)
 
 \begin{equation}
-    \int_{\Omega \times \mathbb{R}} F_{ab} \partial^a v^b = \int_{\Omega \times \mathbb{R}} \mu J_b v^b
+    \int_{\Omega \times \mathbb{R}} F^{ab} \partial_a v_b = \int_{\Omega \times \mathbb{R}} J^b v_b
 \end{equation}
 
 where boundary conditions are yet to be determined. If we somehow would manage
