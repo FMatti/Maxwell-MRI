@@ -248,8 +248,8 @@ We reduce this equation to its weak formulation, by multiplying it with a vector
 function $\mathbf{v} \in H_{\text{curl}}(\Omega)$, where we denoted
 
 \begin{equation}
-    H_{\text{curl}}(\Omega) = \{u : \Omega \to \mathbb{C}, ~\text{such that}~ u \in L^2(\mathbb{C}),
-    \nabla \times u \in L^2(\mathbb{C}) \}
+    H_{\text{curl}}(\Omega) = \{u : \Omega \to \mathbb{C}, ~\text{such that}~ u \in L^2(\mathbb{C})^3,
+    \nabla \times u \in L^2(\mathbb{C})^3 \}
 \end{equation}
 
 and by integrating over all of $\Omega$:
@@ -270,14 +270,16 @@ of the curl as
 \end{equation}
 
 where $\partial_i$ denotes the partial derivative with respect to the $i$-th coordinate
-direction. Rewriting the scalar product as a sum, we apply the product rule to get
+direction. Rewriting the scalar product as a sum and identifying $\mathbf{u} = \mu^{-1}
+\nabla \times \mathbf{A}$, we apply the product rule to get
 
 \begin{align}
     (\nabla \times \mathbf{u}) \cdot \mathbf{v} &= \sum_k (\nabla \times \mathbf{u})_k v_k \notag \\ 
     &= \sum_k (\sum_i \sum_j \varepsilon_{ijk} \partial_i u_j) v_k \notag \\ 
     &= \sum_k \sum_i \sum_j \partial_i (\varepsilon_{ijk} u_j v_k) - \sum_k \sum_i \sum_j u_j (\varepsilon_{ijk} \partial_i v_k) \notag \\ 
-    &= \sum_i \partial_i (\mathbf{u} \times \mathbf{v})_i - \sum_j u_j (\nabla \times \mathbf{v})_j \notag \\ 
-    &= \nabla \cdot (\mathbf{u} \times \mathbf{v}) - \mathbf{u} \cdot (\nabla \times \mathbf{v}) \label{equ:curlidentity} 
+    &= \sum_k \sum_i \sum_j \partial_i (\varepsilon_{jki} u_j v_k) - \sum_k \sum_i \sum_j u_j ((-\varepsilon_{ikj}) \partial_i v_k) \notag \\ 
+    &= \sum_i \partial_i (\mathbf{u} \times \mathbf{v})_i + \sum_j u_j (\nabla \times \mathbf{v})_j \notag \\ 
+    &= \nabla \cdot (\mathbf{u} \times \mathbf{v}) + \mathbf{u} \cdot (\nabla \times \mathbf{v}) \label{equ:curlidentity} 
 \end{align}
 
 Consequently, we may rewrite the double curl term in the weak formulation as 
@@ -285,37 +287,40 @@ Consequently, we may rewrite the double curl term in the weak formulation as
 \begin{align}
     \int_{\Omega} (\nabla \times ({\mu^{-1} \nabla \times \mathbf{A}})) \cdot \mathbf{v} &=
     \int_{\Omega} \nabla \cdot (({\mu^{-1} \nabla \times \mathbf{A}}) \times \mathbf{v})
-    - \int_{\Omega} ({\mu^{-1} \nabla \times \mathbf{A}}) \cdot (\nabla \times \mathbf{v}) \notag \\
+    + \int_{\Omega} ({\mu^{-1} \nabla \times \mathbf{A}}) \cdot (\nabla \times \mathbf{v}) \notag \\
     &= \int_{\partial \Omega} (({\mu^{-1} \nabla \times \mathbf{A}}) \times \mathbf{v}) \cdot \mathbf{n}
-    - \int_{\Omega} ({\mu^{-1} \nabla \times \mathbf{A}}) \cdot (\nabla \times \mathbf{v}) \notag \\
+    + \int_{\Omega} ({\mu^{-1} \nabla \times \mathbf{A}}) \cdot (\nabla \times \mathbf{v}) \notag \\
 \end{align}
 
 We will now have a look at what conditions $\mathbf{v}$ needs to satisfy, such that
 the boundary term (first integral) vanishes, and we would end up with
 
 \begin{equation}
-    - \int_{\Omega} ({\mu^{-1} \nabla \times \mathbf{A}}) \cdot (\nabla \times \mathbf{v})
+    \int_{\Omega} ({\mu^{-1} \nabla \times \mathbf{A}}) \cdot (\nabla \times \mathbf{v})
     - \omega^2 \int_{\Omega} \mathbf{A} \cdot \mathbf{v} 
     = \int_{\Omega} \mathbf{j} \cdot \mathbf{v} \label{equ:mwweaksimple}
 \end{equation}
 
-Let $\mathbf{n}$ and $\mathbf{t}$ denote the normal and tangential
-vectors to $\partial \Omega$ at a point $\mathbf{x} \in \partial \Omega$.
+Let $\mathbf{n}$ denote the normal
+vector to $\partial \Omega$ at a point $\mathbf{x} \in \partial \Omega$.
 For the boundary term to vanish, we require 
 
 \begin{equation}
     (({\mu^{-1} \nabla \times \mathbf{A}}) \times \mathbf{v}) \cdot \mathbf{n} = 0
 \end{equation}
 
-In other words, we need 
+for all $\mathbf{x} \in \partial \Omega$. Denoting $\mathbf{u} = \mu^{-1} \nabla \times \mathbf{A}$,
+we rearrange 
 
-\begin{equation}
-    (({\mu^{-1} \nabla \times \mathbf{A}}) \times \mathbf{v}) \perp \mathbf{n}
-\end{equation}
+\begin{align}
+    (\mathbf{u} \times \mathbf{v}) \cdot \mathbf{n} &= \sum_k (\sum_i \sum_j \varepsilon_{ijk} u_i v_j) n_k \notag \\
+     &= \sum_i u_i (\sum_j \sum_k \varepsilon_{jki} v_j n_k) \notag \\ 
+     &= \mathbf{u} \cdot (\mathbf{v} \times \mathbf{n}) \label{equ:label}
+\end{align}
 
-which is satisfied for all $\mathbf{v} \parallel \mathbf{n}$ on $\partial \Omega$.
-
-[Todo: Properly derive/verify this condition using Levi-Civita tensor]
+For non-trivial $\mathbf{u}$ and $\mathbf{v}$, this expression is zero if and only if 
+$\mathbf{v} \perp \mathbf{n}$, meaning $\mathbf{v}$ is orthogonal to $\partial \Omega$ 
+for all $\mathbf{x} \in \partial \Omega$. 
 
 \section{Weak derivative}
 \label{sec:weak}
