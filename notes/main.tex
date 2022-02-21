@@ -16,6 +16,98 @@
 \section{Finite element method}
 \label{sec:fem}
 
+\subsection{The general approach}
+\label{subsec:theory}
+
+\textit{Summarizes Chapter 1 in Quarteroni: Introduction to Finite Elements Method}
+
+Usually, the problems may be expressed in a simple equation 
+
+\begin{equation}
+    \begin{cases}
+        L u = f & in~\Omega \\
+        u = u_D & on~\partial \Omega
+    \end{cases}
+    \label{equ:strong}
+\end{equation}
+
+where $L$ denotes a linear differential operator (e.g. $-\Delta$ in the Poisson
+equation), $u$ the solution to be found, and $f$ is a source term independent
+of $u$. Some boundary condition $u_D$ is imposed on the solution $u$.
+
+However, equation (\ref{equ:strong}) usually does not allow all physically
+significant solutions (particularly non-differentiable ones). Therefore, we convert 
+the problem to a weak form. This is achieved by multiplying (\ref{equ:strong}) with 
+a test function $v \in V$, and integrating over the whole domain $\Omega$:
+
+\begin{equation}
+    \int_{\Omega} (L u) v = \int_{\Omega} f v, ~\forall v \in V \label{equ:initialweak}
+\end{equation}
+
+Usually, integration by parts allows us to \enquote{transfer} the derivatives from 
+the $L u$ term to the test function $v$, such that the order (with respect to 
+the derivatives taken) is more \enquote{balanced} between the two terms. As a
+trade-off, a boundary term appears and needs to be eliminated to facilitate the 
+finite element solution. This term can often be eliminated by restricting ourselves
+to test functions from a subspace $V' \subset V$. The weak problem then reads
+
+\begin{equation}
+    \int_{\Omega} (L_u u) (L_v v) = \int_{\Omega} f v, ~\forall v \in V' \label{equ:weak}
+\end{equation}
+
+with a linear differential operator $L_u$ acts on the solution $u$, and a linear 
+differential operator $L_v$, appearing due to the integration by parts, acts on 
+the test function $v$. For simplicity, we refer to the left-hand side as the 
+bilinear form
+
+\begin{equation}
+    a(u, v) = \int_{\Omega} (L_u u) (L_v v)
+\end{equation}
+
+and the right-hand side as the linear form
+
+\begin{equation}
+    F(v) = \int_{\Omega} f v
+\end{equation}
+
+To solve (\ref{equ:weak}), we prefer to look for approximate solutions $u_h$ in a finite 
+dimensional space $V_h$ with $dim(V_h) = N_h$ \textcolor{red}{(what role does $V_h'$,
+the space wherein $v$ lies to satisfy the boundary conditions, play? as far as I can tell
+$V_h'$ is the subspace of $V_h$, in which all functions vanish at the boundary where
+$u$ is known)}. Choosing a basis $\{\varphi_i\}_{i \leq N_h}$
+then allows us to represent the approximate solution as 
+
+\begin{equation}
+    u_h = \sum_{j \leq N_h} u_j \varphi_j
+\end{equation}
+
+for some coefficients $u_i$ that need to be determined. We thus see, that 
+(\ref{equ:weak}) turns into a linear system, since we only need to test the 
+equality for the basis elements $\varphi_i$ of $V_h$:
+
+\begin{equation}
+    \sum_{j=1}^{N_h} u_j a(\varphi_j, \varphi_i) = F(\varphi_i),~i \in \{1, \dots, N_h\}
+\end{equation}
+
+If we write $A_{ij} = a(\varphi_j, \varphi_i)$ and $\mathbf{F} = (F(\varphi_1), \dots, F(\varphi_{N_h}))^T$,
+we have reduced the problem to finding $\mathbf{u} = (u_1, \dots, u_{N_h})^T$,
+such that 
+
+\begin{equation}
+    \mathbb{A}\mathbf{u} = \mathbf{F}
+\end{equation}
+
+and have identified an approximate solution to (\ref{equ:strong}) as
+$u \approx u_h = \sum_{j \leq N_h} u_j \varphi_j$.
+
+Choosing the space $V_h$ is fundamental to have an accurate method that 
+gives a good approximation $u_h$ of $u$. Furthermore, the choice of basis 
+$\{\varphi_i\}_{i \leq N_h}$ influences how $\mathbb{A}$ ends up looking.
+Of particular interest are bases for which $a(\varphi_j, \varphi_i)$ vanishes 
+for almost all $i$ and $j$, thus yielding a sparse matrix $\mathbb{A}$. The
+choice of basis also controls the conditioning of $\mathbb{A}$
+\textcolor{red}{(need to find an example to illustrate this)}.
+
 \subsection{The poisson equation}
 \label{subsec:poisson}
 
@@ -234,7 +326,7 @@ scalar potential $\phi$. Plugging these identities into (\ref{equ:mw4}), we get
     \partial_t^2 \mathbf{A} + \mathbf{j} \label{equ:mwvecpot}
 \end{equation}
 
-We may choose $\nabla \phi = 0$ as a gauge, and introduce a harmonic time dependence
+We may choose $\nabla \phi = 0$ \textcolor{red}{(why?)} as a gauge, and introduce a harmonic time dependence
 of $\mathbf{A}$ and $\mathbf{j}$ with frequencies $\omega$, such that $\mathbf{A}(\mathbf{x}, t) = 
 \mathbf{A}(\mathbf{x})\exp(i \omega t)$ and $\mathbf{j}(\mathbf{x}, t) = 
 \mathbf{j}(\mathbf{x})\exp(i \omega t)$. Plugging this into (\ref{equ:mwvecpot})
@@ -375,7 +467,7 @@ for all $\varphi \in \mathcal{D}(\Omega)$.
 
 This allows us to define a weak derivative to functions that are (in the classical
 sense) not differentiable (i.e. not in $C^1(\Omega)$). Consider for example the 
-absolute value function $|\cdot| \in L_2(K)$ where $K \subset \mathbb{R}$ is compact.
+absolute value function $|\cdot| \in L^2(K)$ where $K \subset \mathbb{R}$ is compact.
 Since
 
 \begin{align}
