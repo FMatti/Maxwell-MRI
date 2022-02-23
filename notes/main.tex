@@ -108,7 +108,7 @@ for almost all $i$ and $j$, thus yielding a sparse matrix $\mathbb{A}$. The
 choice of basis also controls the conditioning of $\mathbb{A}$
 \textcolor{red}{(need to find an example to illustrate this)}.
 
-\subsection{The poisson equation}
+\subsection{The Poisson equation}
 \label{subsec:poisson}
 
 \textit{Taken from FEniCS manual (too lazy for bibtex...)}
@@ -162,7 +162,7 @@ and also the bilinear form $a: V \times V \to \mathbb{R}$
     a(u, v) = \int_{\Omega} \nabla u(\mathbf{x}) \nabla v(\mathbf{x}) d\mathbf{x}
 \end{equation}
 
-\subsection{Example: One dimensional poisson equation}
+\subsection{Example: One dimensional Poisson equation}
 \label{subsec:1dpoiss}
 
 \textit{Initial idea taken from Wikipedia article about FEM.}
@@ -311,22 +311,35 @@ $\mathbf{j} = (j_1, j_2, j_3)^T$ the electric current density.
 We suppose Maxwell's equations hold:
 
 \begin{align}
-    \nabla \cdot (\epsilon \mathbf{E}) &= \rho \\
-    \nabla \cdot \mathbf{B} &= 0 \\
-    \nabla \times \mathbf{E} &= -\partial_t \mathbf{B} \\
+    \nabla \cdot (\epsilon \mathbf{E}) &= \rho \label{equ:mw1} \\
+    \nabla \cdot \mathbf{B} &= 0 \label{equ:mw2} \\
+    \nabla \times \mathbf{E} &= -\partial_t \mathbf{B} \label{equ:mw3} \\
     \nabla \times (\mu^{-1} \mathbf{B}) &= \partial_t (\epsilon \mathbf{E}) + \mathbf{j} \label{equ:mw4}
 \end{align}
 
-We can therefore write $\mathbf{B} = \nabla \times \mathbf{A}$ for some vector
-potential $\mathbf{A}$, and $\mathbf{E} = -\nabla \phi - \partial_t \mathbf{A}$ for some
-scalar potential $\phi$. Plugging these identities into (\ref{equ:mw4}), we get 
+\subsection{Vector potential formulation (flawed)}
+\label{subsec:vectorpot}
 
+We can therefore use (\ref{equ:mw2}) to write $\mathbf{B} = \nabla \times \mathbf{A}$ for some vector
+potential $\mathbf{A}$. Furthermore, we can identify from (\ref{equ:mw3}) that
+$\mathbf{E} = -\nabla \phi - \partial_t \mathbf{A}$ can be written for some
+scalar potential $\phi$. Plugging these identities into (\ref{equ:mw4}), we get
+ 
 \begin{equation}
-    \nabla \times (\mu^{-1} \nabla \times \mathbf{A}) = \partial_t \nabla \phi -
-    \partial_t^2 \mathbf{A} + \mathbf{j} \label{equ:mwvecpot}
+    \nabla \times (\mu^{-1} \nabla \times \mathbf{A}) = - \epsilon (\partial_t \nabla \phi +
+    \partial_t^2 \mathbf{A}) + \mathbf{j} \label{equ:mwvecpot}
 \end{equation}
 
-We may choose $\nabla \phi = 0$ \textcolor{red}{(why?)} as a gauge, and introduce a harmonic time dependence
+\textcolor{red}{Here is where the whole derivation falls apart. We cannot possibly
+justify letting $\nabla \phi$ vanish, except if we are in a Coulomb gauge and if 
+$\mu$ is a constant. In particular, there exists no gauge transformation
+$\mathbf{A}' = \mathbf{A} + \nabla f$ and $\phi' = \phi - \partial_t f$ for 
+which $E = - \nabla \phi - \partial_t \mathbf{A} = -\partial_t \mathbf{A}'$, since
+(obviously) $E$ is supposed to remain invariant under such transformations...
+Furthermore the $\epsilon$, whose name, let alone its value, I cannot remember
+was unintentionally dropped from here on.}
+
+We may want to introduce a harmonic time dependence
 of $\mathbf{A}$ and $\mathbf{j}$ with frequencies $\omega$, such that $\mathbf{A}(\mathbf{x}, t) = 
 \mathbf{A}(\mathbf{x})\exp(i \omega t)$ and $\mathbf{j}(\mathbf{x}, t) = 
 \mathbf{j}(\mathbf{x})\exp(i \omega t)$. Plugging this into (\ref{equ:mwvecpot})
@@ -413,6 +426,108 @@ we rearrange
 For non-trivial $\mathbf{u}$ and $\mathbf{v}$, this expression is zero if and only if 
 $\mathbf{v} \perp \mathbf{n}$, meaning $\mathbf{v}$ is orthogonal to $\partial \Omega$ 
 for all $\mathbf{x} \in \partial \Omega$. 
+
+\subsection{Electric field formulation}
+\label{subsec:electricfield}
+
+Multiplying both sides of (\ref{equ:mw3}) with $\mu^{-1}$ and taking the curl
+allows us to substitute (\ref{equ:mw4}) in, such that we get 
+
+\begin{align}
+    \nabla \times (\mu^{-1} \nabla \times \mathbf{E})
+    &= - \partial_t (\nabla \times (\mu^{-1} \mathbf{B})) \notag \\
+    &= - \partial_t (\partial_t (\epsilon \mathbf{E}) + \mathbf{j}) \notag \\
+    &= - \partial_t^2 (\epsilon \mathbf{E}) + \partial_t \mathbf{j}
+\end{align}
+
+Introducing a harmonic time dependence
+of $\mathbf{E}$ and $\mathbf{j}$ with frequencies $\omega$, such that $\mathbf{E}(\mathbf{x}, t) = 
+\mathbf{E}(\mathbf{x})\exp(i \omega t)$ and $\mathbf{j}(\mathbf{x}, t) = 
+\mathbf{j}(\mathbf{x})\exp(i \omega t)$, we obtain 
+
+\begin{align}
+    \nabla \times (\mu^{-1} \nabla \times \mathbf{E}) - \omega^2 \epsilon \mathbf{E} = i \omega \mathbf{j}
+\end{align}
+
+The $i$ on the right-hand side is giving me (and most likely FEniCS too) a major
+headache, hence why I will try my luck with finding a formulation involving 
+$\mathbf{B}$ in the next section.
+
+\subsection{Magnetic field formulation}
+\label{subsec:magneticfield}
+
+Multiply both sides of (\ref{equ:mw4}) with $\epsilon^{-1}$ and take the curl to obtain,
+with the help of (\ref{equ:mw3}), the expression
+
+\begin{align}
+    \nabla \times (\epsilon^{-1} \nabla \times (\mu^{-1} \mathbf{B}))
+    &= \nabla \times (\partial_t \mathbf{E} + \epsilon^{-1} \mathbf{j}) \notag \\ 
+    &= \partial_t (\nabla \times \mathbf{E}) + \nabla \times (\epsilon^{-1} \mathbf{j}) \notag \\ 
+    &= -\partial_t^2 \mathbf{B} + \nabla \times (\epsilon^{-1} \mathbf{j})
+\end{align}
+
+Introducing a harmonic time dependence
+of $\mathbf{B}$ and $\mathbf{j}$ with frequencies $\omega$, such that $\mathbf{B}(\mathbf{x}, t) = 
+\mathbf{B}(\mathbf{x})\exp(i \omega t)$ and $\mathbf{j}(\mathbf{x}, t) = 
+\mathbf{j}(\mathbf{x})\exp(i \omega t)$, we obtain 
+
+\begin{equation}
+    \nabla \times (\epsilon^{-1} \nabla \times (\mu^{-1} \mathbf{B})) - \omega^2 \mathbf{B}
+    = \nabla \times (\epsilon^{-1} \mathbf{j})
+\end{equation}
+
+Converting this equation to its weak form by multiplying both sides with a
+vector valued function $\mathbf{v} \in H_{\text{curl}}(\Omega)$ and integrating
+over all of $\Omega$ yields
+
+\begin{equation}
+    \int_{\Omega} (\nabla \times (\epsilon^{-1} \nabla \times (\mu^{-1} \mathbf{B}))) \cdot \mathbf{v}
+    - \omega^2 \int_{\Omega} \mathbf{B} \cdot \mathbf{v}
+    = \int_{\Omega} (\nabla \times (\epsilon^{-1} \mathbf{j})) \cdot \mathbf{v}
+\end{equation}
+
+Using the above derived identity
+
+\begin{equation}
+    (\nabla \times \mathbf{u}) \cdot \mathbf{v}
+    = \nabla \cdot (\mathbf{u} \times \mathbf{v})
+    + \mathbf{u} \cdot (\nabla \times \mathbf{v})
+\end{equation}
+
+we may write using Gauss' theorem
+
+\begin{align}
+    \int_{\Omega} (\nabla \times (\epsilon^{-1} \nabla \times (\mu^{-1} \mathbf{B}))) \cdot \mathbf{v}
+    &= \int_{\Omega} \nabla \cdot ((\epsilon^{-1} \nabla \times (\mu^{-1} \mathbf{B})) \times \mathbf{v}) \notag \\ 
+    &+ \int_{\Omega} (\epsilon^{-1} \nabla \times (\mu^{-1} \mathbf{B})) \cdot (\nabla \times \mathbf{v}) \notag \\ 
+    &= \int_{\partial \Omega} ((\epsilon^{-1} \nabla \times (\mu^{-1} \mathbf{B})) \times \mathbf{v}) \cdot \mathbf{n} \notag \\ 
+    &+ \int_{\Omega} (\epsilon^{-1} \nabla \times (\mu^{-1} \mathbf{B})) \cdot (\nabla \times \mathbf{v}) \notag \\ 
+\end{align}
+
+and 
+
+\begin{align}
+    \int_{\Omega} (\nabla \times (\epsilon^{-1} \mathbf{j})) \cdot \mathbf{v}
+    &= \int_{\Omega} \nabla \cdot ((\epsilon^{-1} \mathbf{j}) \times \mathbf{v})
+    + \int_{\Omega} (\epsilon^{-1} \mathbf{j}) \cdot (\nabla \times \mathbf{v}) \notag \\ 
+    &= \int_{\partial \Omega} ((\epsilon^{-1} \mathbf{j}) \times \mathbf{v}) \cdot \mathbf{n}
+    + \int_{\Omega} (\epsilon^{-1} \mathbf{j}) \cdot (\nabla \times \mathbf{v})
+\end{align}
+
+Since $(\mathbf{u} \times \mathbf{v}) \cdot \mathbf{n} = \mathbf{u} \cdot (\mathbf{v} \times \mathbf{n})$
+(as was shown above), the boundary integrals vanish if we have
+
+\begin{equation}
+    \mathbf{v} \times \mathbf{n} = 0, ~\text{on}~\partial\Omega
+\end{equation}
+
+In that case, we end up with the following (simplified) weak form
+
+\begin{equation}
+    \int_{\Omega} (\epsilon^{-1} \nabla \times (\mu^{-1} \mathbf{B})) \cdot (\nabla \times \mathbf{v})
+    - \omega^2 \int_{\Omega} \mathbf{B} \cdot \mathbf{v}
+    = \int_{\Omega} (\epsilon^{-1} \mathbf{j}) \cdot (\nabla \times \mathbf{v})
+\end{equation}
 
 \section{Weak derivative}
 \label{sec:weak}
