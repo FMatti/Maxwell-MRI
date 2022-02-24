@@ -323,21 +323,31 @@ We suppose Maxwell's equations hold:
 We can therefore use (\ref{equ:mw2}) to write $\mathbf{B} = \nabla \times \mathbf{A}$ for some vector
 potential $\mathbf{A}$. Furthermore, we can identify from (\ref{equ:mw3}) that
 $\mathbf{E} = -\nabla \phi - \partial_t \mathbf{A}$ can be written for some
-scalar potential $\phi$. Plugging these identities into (\ref{equ:mw4}), we get
- 
+scalar potential $\phi$.
+
+The physical quantities $\mathbf{E}$ and $\mathbf{B}$ remain unchanged 
+if we transform $\mathbf{A} \to \mathbf{A}' = \mathbf{A} + \nabla \psi$ and
+$\phi \to \phi' = \phi - \partial_t \psi$ (gauge transformations), 
+as can be explicitly verified by plugging these transformed potentials into the
+definitions of $\mathbf{E}$ and $\mathbf{B}$. Choosing as the gauge field as 
+
 \begin{equation}
-    \nabla \times (\mu^{-1} \nabla \times \mathbf{A}) = - \epsilon (\partial_t \nabla \phi +
-    \partial_t^2 \mathbf{A}) + \mathbf{j} \label{equ:mwvecpot}
+    \psi = \int_0^t \phi dt'
 \end{equation}
 
-\textcolor{red}{Here is where the whole derivation falls apart. We cannot possibly
-justify letting $\nabla \phi$ vanish, except if we are in a Coulomb gauge and if 
-$\mu$ is a constant. In particular, there exists no gauge transformation
-$\mathbf{A}' = \mathbf{A} + \nabla f$ and $\phi' = \phi - \partial_t f$ for 
-which $E = - \nabla \phi - \partial_t \mathbf{A} = -\partial_t \mathbf{A}'$, since
-(obviously) $E$ is supposed to remain invariant under such transformations...
-Furthermore the $\epsilon$, whose name, let alone its value, I cannot remember
-was unintentionally dropped from here on.}
+we see that $\phi' = \phi - \partial_t \int_0^t \phi dt' = \phi - \phi = 0$.
+Hence, if we now express the electric field $\mathbf{E}$ in terms of these transformed 
+potentials, we realize that $\mathbf{E} = -\nabla \phi' - \partial_t \mathbf{A}' = -\partial_t \mathbf{A}'$
+(because we have transformed $\phi$ exactly in such a way, which makes $\phi'$ vanish).
+As for the magnetic field $\mathbf{B}$, we have $\mathbf{B} = \nabla \times \mathbf{A}'$.
+
+Plugging these identities into (\ref{equ:mw4}), and for simplicity replacing 
+the symbol $\mathbf{A}'$ with $\mathbf{A}$ again, we get
+ 
+\begin{equation}
+    \nabla \times (\mu^{-1} \nabla \times \mathbf{A}) = - \epsilon
+    \partial_t^2 \mathbf{A} + \mathbf{j} \label{equ:mwvecpot}
+\end{equation}
 
 We may want to introduce a harmonic time dependence
 of $\mathbf{A}$ and $\mathbf{j}$ with frequencies $\omega$, such that $\mathbf{A}(\mathbf{x}, t) = 
@@ -346,7 +356,7 @@ of $\mathbf{A}$ and $\mathbf{j}$ with frequencies $\omega$, such that $\mathbf{A
 yields us
 
 \begin{equation}
-    \nabla \times (\mu^{-1} \nabla \times \mathbf{A}) - \omega^2 \mathbf{A} = \mathbf{j} \label{equ:mwtimeharm}
+    \nabla \times (\mu^{-1} \nabla \times \mathbf{A}) -  \epsilon \omega^2 \mathbf{A} = \mathbf{j} \label{equ:mwtimeharm}
 \end{equation}
 
 We reduce this equation to its weak formulation, by multiplying it with a vector-valued 
@@ -361,7 +371,7 @@ and by integrating over all of $\Omega$:
 
 \begin{equation}
     \int_{\Omega} (\nabla \times ({\mu^{-1} \nabla \times \mathbf{A}})) \cdot \mathbf{v}
-    - \omega^2 \int_{\Omega} \mathbf{A} \cdot \mathbf{v} = \int_{\Omega} \mathbf{j} \cdot \mathbf{v} \label{equ:mwweak}
+    - \epsilon \omega^2 \int_{\Omega} \mathbf{A} \cdot \mathbf{v} = \int_{\Omega} \mathbf{j} \cdot \mathbf{v} \label{equ:mwweak}
 \end{equation}
 
 To further simplify this expression, we will derive an identity for the scalar product
@@ -387,7 +397,7 @@ direction. Rewriting the scalar product as a sum and identifying $\mathbf{u} = \
     &= \nabla \cdot (\mathbf{u} \times \mathbf{v}) + \mathbf{u} \cdot (\nabla \times \mathbf{v}) \label{equ:curlidentity} 
 \end{align}
 
-Consequently, we may rewrite the double curl term in the weak formulation as 
+Consequently, we may rewrite the double curl term as 
 
 \begin{align}
     \int_{\Omega} (\nabla \times ({\mu^{-1} \nabla \times \mathbf{A}})) \cdot \mathbf{v} &=
@@ -397,35 +407,36 @@ Consequently, we may rewrite the double curl term in the weak formulation as
     + \int_{\Omega} ({\mu^{-1} \nabla \times \mathbf{A}}) \cdot (\nabla \times \mathbf{v}) \notag \\
 \end{align}
 
-We will now have a look at what conditions $\mathbf{v}$ needs to satisfy, such that
-the boundary term (first integral) vanishes, and we would end up with
-
-\begin{equation}
-    \int_{\Omega} ({\mu^{-1} \nabla \times \mathbf{A}}) \cdot (\nabla \times \mathbf{v})
-    - \omega^2 \int_{\Omega} \mathbf{A} \cdot \mathbf{v} 
-    = \int_{\Omega} \mathbf{j} \cdot \mathbf{v} \label{equ:mwweaksimple}
-\end{equation}
-
-Let $\mathbf{n}$ denote the normal
-vector to $\partial \Omega$ at a point $\mathbf{x} \in \partial \Omega$.
-For the boundary term to vanish, we require 
-
-\begin{equation}
-    (({\mu^{-1} \nabla \times \mathbf{A}}) \times \mathbf{v}) \cdot \mathbf{n} = 0
-\end{equation}
-
-for all $\mathbf{x} \in \partial \Omega$. Denoting $\mathbf{u} = \mu^{-1} \nabla \times \mathbf{A}$,
-we rearrange 
+Again denoting $\mathbf{u} = \mu^{-1} \nabla \times \mathbf{A}$, we can rearrange 
 
 \begin{align}
     (\mathbf{u} \times \mathbf{v}) \cdot \mathbf{n} &= \sum_k (\sum_i \sum_j \varepsilon_{ijk} u_i v_j) n_k \notag \\
-     &= \sum_i u_i (\sum_j \sum_k \varepsilon_{jki} v_j n_k) \notag \\ 
-     &= \mathbf{u} \cdot (\mathbf{v} \times \mathbf{n}) \label{equ:label}
+     &= \sum_j (\sum_i \sum_k (-\varepsilon_{ikj}) u_i n_k) v_j \notag \\ 
+     &= - (\mathbf{u} \times \mathbf{n}) \cdot \mathbf{v} 
 \end{align}
 
-For non-trivial $\mathbf{u}$ and $\mathbf{v}$, this expression is zero if and only if 
-$\mathbf{v} \perp \mathbf{n}$, meaning $\mathbf{v}$ is orthogonal to $\partial \Omega$ 
-for all $\mathbf{x} \in \partial \Omega$. 
+and therefore have
+
+\begin{equation}
+    \int_{\partial \Omega} (({\mu^{-1} \nabla \times \mathbf{A}}) \times \mathbf{v}) \cdot \mathbf{n}
+    = - \int_{\partial \Omega} (({\mu^{-1} \nabla \times \mathbf{A}}) \times \mathbf{n}) \cdot \mathbf{v}
+\end{equation}
+
+We can finally identify the weak form of the problem as
+
+\begin{equation}
+    \int_{\Omega} ({\mu^{-1} \nabla \times \mathbf{A}}) \cdot (\nabla \times \mathbf{v})
+    - \epsilon \omega^2 \int_{\Omega} \mathbf{A} \cdot \mathbf{v} 
+    = \int_{\Omega} \mathbf{j} \cdot \mathbf{v}
+    + \underbrace{\int_{\partial \Omega} (({\mu^{-1} \nabla \times \mathbf{A}}) \times \mathbf{n}) \cdot \mathbf{v}}_{\text{boundary integral term}} \label{equ:mwweaksimple}
+\end{equation}
+
+where $\mathbf{n}$ denotes the normal vector to $\partial \Omega$. Notice how we placed
+the boundary integral term on the right hand side, since along the border 
+$\partial \Omega$ we usually either know $\nabla \times \mathbf{A} = \mathbf{B} = \mathbf{B}_D$
+(or even only $\mathbf{B} \times \mathbf{n}$) as the Neumann boundary condition
+or $\mathbf{A} = \mathbf{A}_D$ as the Dirichlet boundary condition (for which,
+conveniently, the boundary integral term vanishes).
 
 \subsection{Electric field formulation}
 \label{subsec:electricfield}
@@ -597,6 +608,36 @@ the signum function. Notice, how the derivative of the absolute value function
 is only not well-defined at $x=0$, i.e. on a set of zero measure. This nuisance
 is circumvented when talking about the weak derivative, since the measure zero
 sets have zero integral.
+
+\section{Random}
+\label{sec:random}
+
+Consider, for instance, solving the following equation:
+
+\begin{equation}
+    \nabla \times (\nabla \times \mathbf{A}) - \mathbf{A} = \mathbf{j}
+\end{equation}
+
+Even if we only care about the quantity $\mathbf{B} = \nabla \times \mathbf{A}$,
+and therefore would not even \enquote{realize} if $\mathbf{A}$ was modified to
+$\mathbf{A}' = \mathbf{A} + \mathbf{c}$ for a constant vector $\mathbf{c}$, this
+modification significantly changes the solution to the equation, because 
+
+\begin{equation}
+    \nabla \times (\nabla \times \mathbf{A}') - \mathbf{A}' = \mathbf{j}
+\end{equation}
+
+turns, when plugging in the above-mentioned expression for $\mathbf{A}'$, into 
+
+\begin{equation}
+    \nabla \times (\nabla \times \mathbf{A}) - \mathbf{A} = \mathbf{j} + \mathbf{c}
+\end{equation}
+
+yielding a possibly entirely different solution $\mathbf{A}$ than initially wanted.
+
+Therefore, we cannot adjust $\mathbf{A}$ in such a way that it vanishes on the
+boundary of a radial symmetric domain, because we would implicitly change the 
+physical outcome of the solution.
 
 \section{Ideas}
 \label{sec:ideas}
