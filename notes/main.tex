@@ -317,7 +317,7 @@ We suppose Maxwell's equations hold:
     \nabla \times (\mu^{-1} \mathbf{B}) &= \partial_t (\epsilon \mathbf{E}) + \mathbf{j} \label{equ:mw4}
 \end{align}
 
-\subsection{Vector potential formulation (flawed)}
+\subsection{Vector potential formulation}
 \label{subsec:vectorpot}
 
 We can therefore use (\ref{equ:mw2}) to write $\mathbf{B} = \nabla \times \mathbf{A}$ for some vector
@@ -611,7 +611,22 @@ From this, we can calculate the function $g_z$ on the \enquote{inlet} boundary t
 $\mathbf{B}$ in deriving (\ref{equ:mwweakwaveguidesimple}))
 
 \begin{equation}
-    \mathbf{g} = \mu^{-1} \mathbf{B} \times \mathbf{n} = \mu^{-1} B_0 (\mathbf{e}_y \times \mathbf{e}_x) = -\mu^{-1} B_0 \mathbf{e}_z
+    \mathbf{g}_{\text{inlet}} = \mu^{-1} \mathbf{B} \times \mathbf{n} = \mu^{-1} B_0 (\mathbf{e}_y \times \mathbf{e}_x) = -\mu^{-1} B_0 \mathbf{e}_z
+\end{equation}
+
+Referring to Section \ref{subsec:boundary}, we know that for perfectly conducting 
+walls the magnetic field $\mathbf{B}$ in our case (with walls on top and bottom)
+must satisfy 
+
+\begin{equation}
+    n \cdot \mathbf{B} = 0 ~ \implies ~ B_y = 0
+\end{equation}
+
+This, in turn, means that \textcolor{red}{different orientation of $\mathbf{n}$
+for bottom wall!}
+
+\begin{equation}
+    \mathbf{g}_{\text{walls}} = \mu^{-1} \mathbf{B} \times \mathbf{n} = \mu^{-1} B_x (\mathbf{e}_x \times e_y) = \mu^{-1} B_x e_z
 \end{equation}
 
 Therefore, in general, we have (assuming all other walls to be perfect conductors) 
@@ -619,6 +634,64 @@ Therefore, in general, we have (assuming all other walls to be perfect conductor
 \begin{equation}
     g_z = \begin{cases} -\mu^{-1} B_0, & \text{at the inlet} \\ 0 & \text{at the walls} \end{cases}
 \end{equation}
+
+\textcolor{red}{Ok, this is not entirely right, because this implicitly assumes that 
+$B_x = 0$ at the walls (which would be correct for purely transversal waves in the
+waveguide, but not in general). Will somehow have to find a way to  correct this later.}
+
+Alternatively, the problem can be equivalently solved using Dirichlet instead of 
+Neumann boundary conditions (mental note: the function $\mathbf{g}$ encodes a Neumann 
+boundary condition, since it contains $\nabla \times \mathbf{A}$, hence partial
+derivatives of $\mathbf{A}$). Here, we no longer have a right-hand side term in 
+(\ref{equ:mwweakwaveguidesimple}), because for Dirichlet boundary conditions we 
+\textcolor{red}{require the test functions $\mathbf{v}$ to vanish wherever we already 
+know the exact value of $\mathbf{A}$ (i.e. on the boundary $\partial \Omega$)}.
+
+Because we only consider time-harmonic electric fields
+$\mathbf{A} = \mathbf{A}(\mathbf{x}) \exp(i \omega t)$, and the relation 
+$\mathbf{E} = -\partial_t \mathbf{A} = - i \omega \mathbf{A}$ holds, we should
+be able to impose boundary conditions on $\mathbf{A}$ based on an unput field
+$\mathbf{E}$. Again making use of the two-dimensionality of the problem, we allow 
+an input field $\mathbf{E}(t) = (0, 0, E_0)^T \sin(\omega t)$ (because I currently 
+do not feel too comfortable dealing with complex numbers in FEniCS), and have to 
+therefore impose a boundary condition $A_z = - E_0 / \omega$ at $x=0$ for $y \in [0, w]$.
+
+\subsection{Boundary conditions}
+\label{subsec:boundary}
+
+\textit{Monk2003, Page 8}
+
+At an interface $\partial \Omega$, separating the waveguide $\Omega$ from its
+environment, the electric field $\mathbf{E}$
+and the magnetic field $\mathbf{B}$ satisfy the following boundary
+conditions:
+
+\begin{align}
+    \mathbf{n} \times (\mathbf{E} - \mathbf{E}_{\text{ext}}) &= 0, ~\text{on}~ \partial \Omega \\
+    \mathbf{n} \cdot (\mathbf{B} - \mathbf{B}_{\text{ext}}) &= 0, ~\text{on}~ \partial \Omega
+\end{align}
+
+\url{https://farside.ph.utexas.edu/teaching/jk1/Electromagnetism/node112.html}
+Inside perfect conductors, the electric fields vanish. Therefore, also the curl 
+of the electric field vanishes, and for time-harmonic problems it follows that 
+also the magnetic field is zero.
+
+Consequently, supposing the waveguide's walls are perfectly conducting, we end 
+up with the simplified boundary conditions
+
+\begin{align}
+     \mathbf{n} \times \mathbf{E} &= 0, ~\text{on}~ \partial \Omega \\
+     \mathbf{n} \cdot \mathbf{B} &= 0, ~\text{on}~ \partial \Omega
+\end{align}
+
+Expressing the fields $\mathbf{E}$ and $\mathbf{B}$ in terms of the vector 
+potential $\mathbf{A}$ (using the time-harmonic relations $\mathbf{E} = - i \omega \mathbf{A}$
+and $\mathbf{B} = \nabla \times \mathbf{A}$), we have 
+
+\begin{align}
+    \mathbf{n} \times \mathbf{A} &= 0, ~\text{on}~ \partial \Omega \\
+    \mathbf{n} \cdot (\nabla \times \mathbf{A}) &= 0, ~\text{on}~ \partial \Omega
+\end{align}
 
 \section{Weak derivative}
 \label{sec:weak}
@@ -692,6 +765,9 @@ sets have zero integral.
 \section{Random}
 \label{sec:random}
 
+\subsection{Modified potential}
+\label{subsec:modpot}
+
 Consider, for instance, solving the following equation:
 
 \begin{equation}
@@ -718,6 +794,15 @@ yielding a possibly entirely different solution $\mathbf{A}$ than initially want
 Therefore, we cannot adjust $\mathbf{A}$ in such a way that it vanishes on the
 boundary of a radial symmetric domain, because we would implicitly change the 
 physical outcome of the solution.
+
+\subsection{Kernel of curl operator}
+\label{subsec:curl}
+
+Supposedly, the kernel of the curl operator $\nabla \times$ is precisely
+$\nabla F$ in simply connected regions, meaning $\nabla \times f = 0$ iff 
+$f = \nabla F$ for some twice differentiable $F$. Vague parallel to complex 
+analysis:  On simply connected domains any holomorphic function $f$ may be written
+as $f = F'$ for a holomorphic antiderivative $F$.
 
 \section{Ideas}
 \label{sec:ideas}
