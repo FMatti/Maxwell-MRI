@@ -561,7 +561,10 @@ a vacuum (depicted in Figure \ref{fig:waveguide}).
         \draw[|-|] (0, -0.25) to node[below] {$l$} (6, -0.25);
         \draw[|-|] (-0.25, 0) to node[left] {$w$} (-0.25, 2);
         \fill[black!10!white] (0, 0) rectangle (6, 2);
-        \draw[ultra thick] (6, 2) to (0, 2) to (0, 0) to (6, 0);
+        \draw[ultra thick] (6, 2) rectangle (0, 0);
+        \draw[<-] (6.15, 1.75) to (7, 3);
+        \draw[<-] (5.75, 2.25) to (7, 3) node[above] {$\partial \Omega_{\text{walls}}$};
+        \draw[<-] (0.15, 1) to (0.5, 1.25) node[right] {$\partial \Omega_{\text{inlet}}$};
     \end{tikzpicture}
     \caption{Waveguide}
     \label{fig:waveguide}
@@ -598,8 +601,8 @@ We thus end up with the following simplified weak form of the problem
     = \int_{\partial \Omega} g_z v_z \label{equ:mwweakwaveguidesimple}
 \end{equation}
 
-\subsubsection{Constant field}
-\label{subsubsec:constfield}
+\subsubsection{Constant field (old and flawed version)}
+\label{subsubsec:constfieldold}
 
 Suppose we observe an electromagnetic wave at frequency $\omega$ and with the magnetic 
 field of strength $B_0$ aligned with the $y$-direction incident on the waveguide
@@ -655,6 +658,62 @@ $\mathbf{E}$. Again making use of the two-dimensionality of the problem, we allo
 an input field $\mathbf{E}(t) = (0, 0, E_0)^T \sin(\omega t)$ (because I currently 
 do not feel too comfortable dealing with complex numbers in FEniCS), and have to 
 therefore impose a boundary condition $A_z = - E_0 / \omega$ at $x=0$ for $y \in [0, w]$.
+
+\subsubsection{Constant field (new version)}
+\label{subsubsec:constfield}
+
+We consider two types of boundaries. An inlet $\partial \Omega_{\text{inlet}}$ at $x=0$
+(left boundary) and perfectly conducting walls $\partial \Omega_{\text{walls}}$
+at all other boundaries.
+
+Suppose we observe an electromagnetic wave at frequency $\omega$ and with the magnetic 
+field of strength $B_0$ aligned with the $y$-direction incident on the waveguide
+at $x=0$. Symbolically, we thus have $\mathbf{B}(t) = (0, B_0, 0)^T \exp(i \omega t)$
+at $\partial \Omega_{\text{inlet}}$.
+
+From this, we can calculate the function $g_z$ on the inlet boundary $\partial \Omega_{\text{inlet}}$ to be 
+(knowing that we have already taken account of the harmonic time-dependence of 
+$\mathbf{B}$ in deriving (\ref{equ:mwweakwaveguidesimple}))
+
+\begin{equation}
+    g_z = (\mu^{-1} \mathbf{B} \times \mathbf{n})_z = \mu^{-1} B_0 (\mathbf{e}_y \times \mathbf{e}_x)_z = -\mu^{-1} B_0, ~\text{on}~\partial \Omega_{\text{inlet}}
+\end{equation}
+
+For the other boundaries $\partial \Omega_{\text{walls}}$, we preferably use the boundary
+conditions on $\mathbf{A}$ derived in Section \ref{subsec:boundary}. Particularly 
+the one following from looking at $\mathbf{E}$, i.e.
+
+\begin{equation}
+    \mathbf{n} \times \mathbf{A} = 0
+\end{equation}
+
+is useful, since it tells us that $\mathbf{A} = (0, 0, A_z)^T = 0 \implies A_z = 0$
+on $\partial \Omega_{\text{walls}}$ (because $\mathbf{n}$ points either in the $x$- or
+$y$-direction, so the curl of $\mathbf{n}$ with $\mathbf{A}$ will always explicitly 
+contain $A_z$ in one of its components that are required to vanish).
+
+\begin{table}[h]
+    \caption{Boundary conditions for a waveguide with a field $\mathbf{B}(t) = (0, B_y, 0)^T \exp(i \omega t)$
+    incident on an inlet $\partial \Omega_{\text{inlet}}$ and perfectly conducting 
+    walls  $\partial \Omega_{\text{walls}}$ otherwise.}
+    \label{tab:label}
+    \centering
+    \renewcommand{\arraystretch}{1.2}
+    \begin{tabular}{@{}lcc@{}}
+        \toprule
+        Type & $\partial \Omega_{\text{inlet}}$ & $\partial \Omega_{\text{walls}}$ \\
+        \midrule
+        Dirichlet & $A_z = -\frac{1}{i\omega} E_z$ & $A_z = 0$  \\
+        Neumann & $g_z = -\mu^{-1} B_y$ & $g_z = \mu^{-1} B_x$ \\
+        \bottomrule
+    \end{tabular}
+\end{table}
+
+Only the combination of Neumann boundary conditions for $\partial \Omega_{\text{inlet}}$
+and Dirichlet boundary conditions for $\partial \Omega_{\text{walls}}$ seem to be practical
+for now, since we do not have to deal with complex numbers, and do not have to know 
+the $B_x$ component at the walls (since setting it to zero is only really viable
+for $\mathbf{B}$-fields that exclusively oscillate in the $y$-direction).
 
 \subsection{Boundary conditions}
 \label{subsec:boundary}
