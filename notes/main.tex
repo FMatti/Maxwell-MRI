@@ -676,7 +676,7 @@ From this, we can calculate the function $g_z$ on the inlet boundary $\partial \
 $\mathbf{B}$ in deriving (\ref{equ:mwweakwaveguidesimple}))
 
 \begin{equation}
-    g_z = (\mu^{-1} \mathbf{B} \times \mathbf{n})_z = \mu^{-1} B_0 (\mathbf{e}_y \times \mathbf{e}_x)_z = -\mu^{-1} B_0, ~\text{on}~\partial \Omega_{\text{inlet}}
+    g_z = (\mu^{-1} \mathbf{B} \times \mathbf{n})_z = \mu^{-1} B_0 (\mathbf{e}_y \times (-\mathbf{e}_x))_z = \mu^{-1} B_0, ~\text{on}~\partial \Omega_{\text{inlet}}
 \end{equation}
 
 For the other boundaries $\partial \Omega_{\text{walls}}$, we preferably use the boundary
@@ -704,7 +704,7 @@ contain $A_z$ in one of its components that are required to vanish).
         Type & $\partial \Omega_{\text{inlet}}$ & $\partial \Omega_{\text{walls}}$ \\
         \midrule
         Dirichlet & $A_z = -\frac{1}{i\omega} E_z$ & $A_z = 0$  \\
-        Neumann & $g_z = -\mu^{-1} B_y$ & $g_z = \mu^{-1} B_x$ \\
+        Neumann & $g_z = \mu^{-1} B_y$ & $g_z = \pm \mu^{-1} B_x$ (-$\mu^{-1} B_y$ for outlet) \\
         \bottomrule
     \end{tabular}
 \end{table}
@@ -714,6 +714,9 @@ and Dirichlet boundary conditions for $\partial \Omega_{\text{walls}}$ seem to b
 for now, since we do not have to deal with complex numbers, and do not have to know 
 the $B_x$ component at the walls (since setting it to zero is only really viable
 for $\mathbf{B}$-fields that exclusively oscillate in the $y$-direction).
+
+(Remark: The Neumann boundary condition for $\partial \Omega$ may
+be compactly summarized as $g_z = \mu^{-1} (-B_y, B_x, 0)^T \cdot \mathbf{n} = (\mathbf{e}_z \times \mu^{-1} \mathbf{B}) \cdot \mathbf{n }$.)
 
 \subsection{Boundary conditions}
 \label{subsec:boundary}

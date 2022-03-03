@@ -69,7 +69,7 @@ cubby.mark(boundary, 5)
 ds = fen.Measure('ds', subdomain_data=boundary)
 
 # Neumann boundary condition
-g_z = fen.Expression('-(1/mu)*B_inlet', degree=2, B_inlet=B_inlet, mu=mu)
+g_z = fen.Expression('(1/mu)*B_inlet', degree=2, B_inlet=B_inlet, mu=mu)
 L = g_z*v_z*ds(1)
 
 # Dirichlet boundary conditions
