@@ -755,6 +755,46 @@ and $\mathbf{B} = \nabla \times \mathbf{A}$), we have
     \mathbf{n} \cdot (\nabla \times \mathbf{A}) &= 0, ~\text{on}~ \partial \Omega
 \end{align}
 
+\subsection{Eigenvalue problem}
+\label{subsec:evp}
+
+We want to find the resonant modes of a waveguide. For the unforced case,
+we have only sinusoidal oscillations in the $x$- and $y$-direction. Therefore,
+the axial frequencies must be integer multiples of $\pi/w$ or $\pi/l$ respectively,
+yielding the superimposed frequency modes
+
+\begin{equation}
+    \omega_{nm} = \sqrt{\left(\frac{n}{w}\right)^2 + \left(\frac{m}{l}\right)^2}
+\end{equation}
+
+Also, we could numerically obtain these eigenfrequencies using the generalized
+eigenvalue problem
+
+\begin{equation}
+    \int_{\Omega} (\mu^{-1} \nabla \times \boldsymbol{\varphi}) \cdot (\nabla \times \mathbf{v})
+    = \lambda \int_{\Omega} \boldsymbol{\varphi} \cdot \mathbf{v}
+\end{equation}
+
+for all $\mathbf{v} \in V$, which then yields $\omega = \sqrt{\lambda}$.
+With the finite element discretization of the above integrals, we obtain a
+generalized eigenvalue problem of the form
+
+\begin{equation}
+    \mathbb{L} \boldsymbol{\varphi} = \lambda \mathbb{M} \boldsymbol{\varphi}
+\end{equation}
+
+For the forced problem, the inlet acts as an oscillation amplitude. The $x$-direction 
+modes must therefore lie between two integer multiples of $\pi/l$, for a resonant 
+mode. The general rule is 
+
+\begin{equation}
+    \omega_{nm} = \sqrt{\left(\frac{n}{w}\right)^2 + \left(\frac{m+1/2}{l}\right)^2}
+\end{equation}
+
+\textcolor{red}{Find out why scipy's standard sparse hermitian eigenvalue solver
+struggles with finding the smallest magnitude eigenvalue (which happens to be
+zero for this problem), while the shift-invert mode has no trouble.}
+
 \section{Weak derivative}
 \label{sec:weak}
 
@@ -865,6 +905,38 @@ $\nabla F$ in simply connected regions, meaning $\nabla \times f = 0$ iff
 $f = \nabla F$ for some twice differentiable $F$. Vague parallel to complex 
 analysis:  On simply connected domains any holomorphic function $f$ may be written
 as $f = F'$ for a holomorphic antiderivative $F$.
+
+\subsection{Complex systems}
+\label{subsec:complex}
+
+We want to be able to solve $\mathbb{A} \mathbf{x} = \mathbf{b}$ for a complex-valued
+system. Since 
+
+\begin{align}
+    w z &= (\Re(w) + i \Im(w))(\Re(z) + i \Im(z))
+        &= \Re(w)\Re(z) - \Im(w)\Im(z) + i (\Re(w)\Im(z) + Im(w)\Re(z))
+\end{align}
+
+and both $\Re$ and $\Im$ are linear, we can split the system into its real and
+imaginary components: 
+
+\begin{align}
+    \Re(\mathbb{A} \mathbf{x}) &= \Re(\mathbb{A})\Re(\mathbf{x}) - \Im(\mathbb{A})\Im(\mathbf{x}) = \Re(\mathbf{b}) \\
+    \Im(\mathbb{A} \mathbf{x}) &= \Re(\mathbb{A})\Im(\mathbf{x}) + \Im(\mathbb{A})\Re(\mathbf{x}) = \Im(\mathbf{b}) 
+\end{align}
+
+This is easily rewritten as a purely real system twice the size of the old one 
+
+\begin{align}
+    \begin{pmatrix} \Re(\mathbb{A}) & - \Im(\mathbb{A}) \\ 
+                    \Im(\mathbb{A}) & \Re(\mathbb{A}) \end{pmatrix}
+    \begin{pmatrix} \Re(\mathbf{x}) \\ \Im(\mathbf{x}) \end{pmatrix}
+    = 
+    \begin{pmatrix} \Re(\mathbf{b}) \\ \Im(\mathbf{b}) \end{pmatrix}
+\end{align}
+
+This now also allows us to enforce complex boundary conditions on $\mathbf{x}$,
+which we can do by appropriately conditioning on the real or imaginary part of it.
 
 \section{Ideas}
 \label{sec:ideas}
