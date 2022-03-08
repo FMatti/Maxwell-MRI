@@ -803,7 +803,39 @@ mode. The general rule is
 \end{equation}
 
 \subsection{Three-dimensional perfectly conducting waveguide}
-\label{subsec:2dwaveguide}
+\label{subsec:3dwaveguide}
+
+We again start from 
+
+\begin{equation}
+    \int_{\Omega} (\mu^{-1} \nabla \times \mathbf{A}) \cdot (\nabla \times \mathbf{v})
+    - \omega^2 \int_{\Omega}  \epsilon \mathbf{A} \cdot \mathbf{v} 
+    = \int_{\partial \Omega} \mathbf{g} \cdot \mathbf{v}
+\end{equation}
+
+where we defined $\mathbf{g} = ({\mu^{-1} \nabla \times \mathbf{A}}) \times \mathbf{n} =
+\mu^{-1} \mathbf{B} \times \mathbf{n}$ on the boundary $\partial \Omega$.
+
+Yet again, for perfectly (electrically) conducting walls we have (see boundary
+conditions from Section \ref{subsec:boundary})
+
+\begin{equation}
+    \mathbf{n} \times \mathbf{A} = 0, ~\text{on}~ \partial \Omega \label{equ:3dboundary}
+\end{equation}
+
+We can split $\mathbf{A}$ into its normal and tangential component
+$\mathbf{A} = A_n \mathbf{n} + A_t \mathbf{t}$ with $\mathbf{n} \perp \mathbf{t}$.
+(\ref{equ:3dboundary}) then reads $A_t = 0$, meaning all tangential components of
+the vector potential $\mathbf{A}$ with respect to the boundary $\partial \Omega$
+must vanish. (Problem: Only two degrees of freedom are restricted in this way,
+when implementing the Dirichlet boundary condition. Need to find an expression
+or condition on $A_n$ as well\dots)
+
+As for the inlet, if $\mathbf{n}|_{\text{inlet}} = \mathbf{e}_z$, then we have 
+
+\begin{equation}
+    \mathbf{g} = \mu^{-1} \mathbf{B} \times \mathbf{e}_z = \mu^{-1}(B_y, 0, -B_x)^T
+\end{equation}
 
 \section{Weak derivative}
 \label{sec:weak}
