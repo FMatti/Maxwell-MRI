@@ -547,7 +547,7 @@ In Section \ref{sec:maxwell} we have derived the weak form of the time-harmonic
 Maxwell equation for the vector potential $\mathbf{A}$. Let us now apply it to
 a small collection of illustrative examples.
 
-\subsection{Two-dimensional open-ended waveguide}
+\subsection{Two-dimensional perfectly conducting waveguide}
 \label{subsec:2dwaveguide}
 
 Consider a two-dimensional rectangular box of length $l$ and width $w$ enclosing
@@ -783,6 +783,17 @@ generalized eigenvalue problem of the form
     \mathbb{L} \boldsymbol{\varphi} = \lambda \mathbb{M} \boldsymbol{\varphi}
 \end{equation}
 
+There is a small pitfall when using scipy's sparse hermitian eigenvalue solver:
+When trying to find the smallest magnitude eigenvalue (which is zero, because
+similarly to what was seen in Section \ref{subsec:1dpoiss}, the stiffness matrix
+$\mathbb{L}$ has row sums identically equal to 0, such that a constant solution 
+would always yield zero eigenvalues. This is also obvious from the explicit problem,
+since constant functions let the left-hand side vanish, and for non-zero 
+$\boldsymbol{\varphi}$, the eigenvalue must essentially be zero.)
+the method does not seem
+to converge \textcolor{red}{(why is that so?)}. However, when switching to the 
+shift-invert mode, this problem no longer presists.
+
 For the forced problem, the inlet acts as an oscillation amplitude. The $x$-direction 
 modes must therefore lie between two integer multiples of $\pi/l$, for a resonant 
 mode. The general rule is 
@@ -791,9 +802,8 @@ mode. The general rule is
     \omega_{nm} = \sqrt{\left(\frac{n}{w}\right)^2 + \left(\frac{m+1/2}{l}\right)^2}
 \end{equation}
 
-\textcolor{red}{Find out why scipy's standard sparse hermitian eigenvalue solver
-struggles with finding the smallest magnitude eigenvalue (which happens to be
-zero for this problem), while the shift-invert mode has no trouble.}
+\subsection{Three-dimensional perfectly conducting waveguide}
+\label{subsec:2dwaveguide}
 
 \section{Weak derivative}
 \label{sec:weak}
