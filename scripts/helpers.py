@@ -38,3 +38,8 @@ def export_field_as_png_plot(A, fname):
     plt.figure()
     plt.colorbar(fen.plot(A))
     plt.savefig(fname + '.png', dpi=100)
+    
+def export_field_as_pvd_plot(A, fname):
+    file = fen.File(fname + '.pvd')
+    file << A
+    
