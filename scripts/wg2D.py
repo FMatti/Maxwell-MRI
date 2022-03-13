@@ -28,22 +28,27 @@ def create(mesh, inlet):
     
     return boundary, V, bc
 
-def setup(boundary, g_z_inlet, mu, eps, V):    
+def setup(boundary, g_z_inlet, mu, eps, V, bc=None):    
     A_z = fen.TrialFunction(V)
     v_z = fen.TestFunction(V)
 
     # Neumann boundary condition for linear form
     ds = fen.Measure('ds', subdomain_data=boundary)
-    L = g_z_inlet*v_z*ds(1)
+    L = fen.assemble(g_z_inlet*v_z*ds(1))
 
     # Neumann boundary condition for bilinear form
-    K = (1 / mu)*fen.dot(fen.grad(A_z), fen.grad(v_z))*fen.dx
-    M = eps*A_z*v_z*fen.dx
+    K = fen.assemble((1 / mu)*fen.dot(fen.grad(A_z), fen.grad(v_z))*fen.dx)
+    M = fen.assemble(eps*A_z*v_z*fen.dx)
+    
+    if bc is not None:
+        bc.apply(K)
+        bc.zero(M)
+        bc.apply(L)
     
     return K, M, L
 
-def solve(omega, K, M, L, bc, V):  
+def solve(omega, K, M, L, V):  
     a = K - omega**2 * M  
     A_z = fen.Function(V)
-    fen.solve(a == L, A_z, bc)
+    fen.solve(a, A_z.vector(), L)
     return A_z
