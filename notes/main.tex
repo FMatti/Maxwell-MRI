@@ -775,12 +775,12 @@ eigenvalue problem
     = \lambda \int_{\Omega} \boldsymbol{\varphi} \cdot \mathbf{v}
 \end{equation}
 
-for all $\mathbf{v} \in V$, which then yields $\omega = \sqrt{\lambda}$.
+for all $\mathbf{v} \in V$, which then yields $\lambda = \sqrt{\omega}$.
 With the finite element discretization of the above integrals, we obtain a
 generalized eigenvalue problem of the form
 
 \begin{equation}
-    \mathbb{L} \boldsymbol{\varphi} = \lambda \mathbb{M} \boldsymbol{\varphi}
+    \mathbb{K} \mathbf{u} = \lambda \mathbb{M} \mathbf{u}
 \end{equation}
 
 There is a small pitfall when using scipy's sparse hermitian eigenvalue solver:
@@ -789,7 +789,7 @@ similarly to what was seen in Section \ref{subsec:1dpoiss}, the stiffness matrix
 $\mathbb{L}$ has row sums identically equal to 0, such that a constant solution 
 would always yield zero eigenvalues. This is also obvious from the explicit problem,
 since constant functions let the left-hand side vanish, and for non-zero 
-$\boldsymbol{\varphi}$, the eigenvalue must essentially be zero.)
+$\mathbf{u}$, the eigenvalue must essentially be zero.)
 the method does not seem
 to converge \textcolor{red}{(why is that so?)}. However, when switching to the 
 shift-invert mode, this problem no longer presists.
@@ -802,10 +802,53 @@ mode. The general rule is
     \omega_{nm} = \sqrt{\left(\frac{n}{w}\right)^2 + \left(\frac{m+1/2}{l}\right)^2}
 \end{equation}
 
+\subsection{Eigenvalues of the forced system}
+\label{subsec:eigenvalues}
+
+In the presence of a boundary term $L = \int_{\partial \Omega} \mathbf{g} \mathbf{v}$,
+the eigenvalue problem becomes
+
+\begin{equation}
+    \mathbb{K} \mathbf{u} - \omega^2 \mathbb{M} \mathbf{u}
+    = \mathbf{L} \label{equ:forcedeigen}
+\end{equation}
+
+Suppose we know a complete set of eigenpairs $\{\mathbf{u}_j, \lambda_j\}_{j \in \mathbb{N}}$
+that solve the system with $\mathbf{L}=0$. We may then expand any $\mathbf{u}$ 
+in this eigenbasis to $\mathbf{u} = \sum_j \alpha_j \mathbf{u}_j$.
+Consequently, we may rewrite (\ref{equ:forcedeigen}) as 
+
+\begin{align}
+    \mathbf{L} &= \sum_j \alpha_j (\mathbb{K} \mathbf{u}_j - \omega^2 \mathbb{M} \mathbf{u}_j) \notag \\
+      &= \sum_j \alpha_j (\lambda_j \mathbb{M} \mathbf{u}_j - \omega^2 \mathbb{M} \mathbf{u}_j) \notag \\ 
+      &= \sum_j \alpha_j (\lambda_j - \omega^2) \mathbb{M} \mathbf{u}_j
+\end{align}
+
+Taking the scalar product with $\mathbf{u}_i$, we conclude that 
+
+\begin{align}
+    \langle \mathbf{u}_i, \mathbf{L} \rangle
+    &= \sum_j \alpha_j (\lambda_j - \omega^2) \langle \mathbf{u}_i, \mathbb{M} \mathbf{u}_j \rangle \notag \\
+    &= \alpha_i (\lambda_i - \omega^2) 
+\end{align}
+
+where we used the fact that there exist $\mathbf{u}_i$, that are $\mathbb{M}$-orthonormal.
+Consequently, we may write
+
+\begin{equation}
+    \mathbf{u} = \sum_j \alpha_j \mathbf{u}_j ~\text{with}~\alpha_j = \frac{\langle \mathbf{u}_j, \mathbf{L} \rangle}{\lambda_j - \omega^2}
+\end{equation}
+
+What we recognize is that for frequencies $\omega^2$ close to one of the
+eigenvalues $\lambda_j$, the solution $\mathbf{u}$ will \enquote{explode} in magnitude,
+provided $\mathbf{u}_j$ is not orthogonal to $\mathbf{L}$. If, however,
+$\langle \mathbf{u}_j, \mathbf{L} \rangle = 0$, we may observe that there is no 
+peak to be found at $\omega^2 = \lambda_j$ in the L2-norm frequency sweep $||\mathbf{u}(\omega)||_2$.
+
 \subsection{Three-dimensional perfectly conducting waveguide}
 \label{subsec:3dwaveguide}
 
-We again start from 
+We again start from
 
 \begin{equation}
     \int_{\Omega} (\mu^{-1} \nabla \times \mathbf{A}) \cdot (\nabla \times \mathbf{v})
@@ -979,6 +1022,13 @@ This is easily rewritten as a purely real system twice the size of the old one
 
 This now also allows us to enforce complex boundary conditions on $\mathbf{x}$,
 which we can do by appropriately conditioning on the real or imaginary part of it.
+
+\subsection{Mirroring}
+\label{subsec:mirroring}
+
+If a waveguide composition is symmetric along one axis, then we could mirror it
+and apply Neumann boundary conditions to the one side which would have been in 
+the center.
 
 \section{Ideas}
 \label{sec:ideas}
