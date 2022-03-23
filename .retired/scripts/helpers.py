@@ -53,9 +53,9 @@ def export_field_as_pvd_plot(A, fname):
 """Waveguides"""
     
 def get_2d_analytical_resonant_frequencies(Lx, Ly, a, b):
-    freqs = lambda n, m: np.pi*pow(n**2/(Lx)**2 + (m+0.5)**2/(Ly)**2 , 0.5)
-    n_max = np.ceil(b * Lx / np.pi).astype('int')
-    m_max = np.ceil(b * Ly / np.pi - 0.5).astype('int')
+    freqs = lambda n, m: np.pi*pow(n**2/(Ly)**2 + (m+0.5)**2/(Lx)**2 , 0.5)
+    n_max = np.ceil(b * Ly / np.pi).astype('int')
+    m_max = np.ceil(b * Lx / np.pi - 0.5).astype('int')
     eigs = np.unique(np.frompyfunc(freqs, 2, 1).outer(range(1, n_max+1), range(m_max+1)))
     return [e for e in eigs if a <= e and e <= b]
 
@@ -72,7 +72,7 @@ def get_3d_analytical_eigenvalues(Lx, Ly, Lz, a, b):
     eigs = np.unique(eigs_nml)
     return [x for x in eigs if a <= x and x <= b]
 
-def solve_eigenvalue_problem(K, M, V, bc, a, b, k=10):
+def solve_eigenvalue_problem(K, M, V, bc, a, b, k=10, v0=None):
     boundary_points = bc.get_boundary_values().keys()
     all_points = V.dofmap().dofs()
     inner_points = list(set(all_points) - set(boundary_points))
@@ -81,6 +81,7 @@ def solve_eigenvalue_problem(K, M, V, bc, a, b, k=10):
     #                ones[:] = 1
     #                bc.apply(ones)
     #                inner_points = np.array(ones.get_local(), dtype=bool)
+    # Alternative 3: inptr[i]==indptr[i+1]
 
     Mmat = fen.as_backend_type(M).mat().getValuesCSR()[::-1]
     M_sparse = scipy.sparse.csr_matrix(Mmat)
@@ -90,7 +91,7 @@ def solve_eigenvalue_problem(K, M, V, bc, a, b, k=10):
     K_sparse = scipy.sparse.csr_matrix(Kmat)
     K_reduced = K_sparse[inner_points, :][:, inner_points]
     
-    eigvals, eigvecs = scipy.sparse.linalg.eigsh(K_reduced, k=k, M=M_reduced, sigma=(a+b)/2)
+    eigvals, eigvecs = scipy.sparse.linalg.eigsh(K_reduced, k=k, M=M_reduced, sigma=(a+b)/2, v0=v0[inner_points])
 
     eigvals_inside = [e1 for e1 in eigvals if a <= e1 and e1 <= b]
     eigvecs_inside = [e2 for e1, e2 in zip(eigvals, eigvecs.T) if a <= e1 and e1 <= b]
@@ -153,8 +154,8 @@ def plot_solution_L2_norms(omegas, K, M, L, V, bc):
     ax[0].set_yscale('log')
     ax[0].set_ylabel('L2-norm of solution')
 
-    eigvals, eigvecs = solve_eigenvalue_problem(K, M, V, bc, omegas[0]**2, omegas[-1]**2, k=20)
-
+    eigvals, eigvecs = solve_eigenvalue_problem(K, M, V, bc, omegas[0]**2, omegas[-1]**2, k=20, v0=L)
+    
     ax[0].vlines(np.sqrt(eigvals), 0, np.max(L2_norms), linewidth=0.5, colors='k', alpha=0.5)
     ax[0].set_xticks(np.sqrt(eigvals), minor=True)
     ax[0].margins(x=0, y=0)

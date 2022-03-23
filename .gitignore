@@ -133,3 +133,6 @@ dmypy.json
 *.aux
 *.out
 *.gz
+*.pvd
+*.vtu
+*.png
