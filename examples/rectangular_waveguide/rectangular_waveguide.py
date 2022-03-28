@@ -12,6 +12,8 @@ class RectangularWaveguide(TimeHarmonicMaxwellProblem):
     def __init__(self, Lx, Ly, Nx, Ny, g_N):
         self.Lx = Lx
         self.Ly = Ly
+        self.Nx = Nx
+        self.Ny = Ny
         mesh = fen.RectangleMesh(fen.Point(0.0, 0.0), fen.Point(self.Lx, self.Ly), Nx, Ny, 'crossed')
         V = fen.FunctionSpace(mesh, 'P', 1)
 

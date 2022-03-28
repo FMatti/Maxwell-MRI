@@ -111,6 +111,7 @@ class TimeHarmonicMaxwellProblem(object):
         self.F_norm = None
         self.bc = None
         self.omega = None
+        self.inner_product_matrix = fen.assemble(fen.dot(fen.TrialFunction(self.V), fen.TestFunction(self.V)) * fen.dx)
 
     def setup(self):
         """Assemble the stiffness and mass matrices with boundary conditions"""
@@ -217,3 +218,67 @@ class TimeHarmonicMaxwellProblem(object):
         A_vec_inserted[valid_indices] = A_vec
         A_vec_inserted[boundary_indices] = boundary_values
         return A_vec_inserted
+    
+    def inner_product(self, v, w):
+        """Compute inner product of two vectors v and w"""
+        return ((self.inner_product_matrix*v)*w).sum()
+    
+    def norm(self, v):
+        """Compute norm of a vector v"""
+        return pow(self.inner_product(v, v), 0.5)
+    
+    def gram_schmidt(self, E):
+        """M-orthonormalize the elements of a list E"""
+        E = [fen.Vector(e) for e in E]
+        E_on = [E[0] / self.norm(E[0])]
+        for i in range(1, len(E)):
+            for j in range(i):
+                E[i] -= self.inner_product(E_on[j], E[i]) * E_on[j]
+            E_on.append(E[i] / self.norm(E[i]))
+        return E_on
+    
+    def get_orthonormal_vectors(self, N, seed=0):
+        """Produce list of N orthonormal elements"""
+        np.random.seed(seed)
+        E = []
+        for i in range(N):
+            e = fen.Function(self.V).vector()
+            e[:] = np.random.randn(e.size())
+            E.append(e)
+        return self.gram_schmidt(E)
+
+    def householder_triangularization(self, omegas):
+        """Compute the matrix R of a QR-decomposition of solutions at given frequencies"""
+        N = len(omegas)
+        A = []
+        for omega in omegas:
+            self.solve(omega)
+            A.append(self.get_solution().vector())
+        E = self.get_orthonormal_vectors(N)
+        R = np.zeros((N, N))
+
+        G = np.array([[self.inner_product(A[i], A[j]) for i in range(N)] for j in range(N)])
+        
+        for k in range(N):
+            R[k, k] = self.norm(A[k])
+
+            alpha = self.inner_product(E[k], A[k])
+            if abs(alpha) > 1e-17:
+                E[k] *= - alpha / abs(alpha)
+
+            v = R[k, k] * E[k] - A[k]
+            for j in range(k):
+                v -= self.inner_product(E[j], v) * E[j]
+
+            sigma = self.norm(v)
+            if abs(sigma) > 1e-17:
+                v /= sigma
+            else:
+                v = E[k]
+
+            for j in range(k+1, N):
+                A[j] -= 2 * v * self.inner_product(v, A[j])
+                R[k, j] = self.inner_product(E[k], A[j])
+                A[j] -= E[k] * R[k, j]
+                
+        return R
