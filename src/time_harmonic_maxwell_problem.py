@@ -18,7 +18,7 @@ class TimeHarmonicMaxwellProblem(object):
     -------
     V : dolfin.functions.functionspace.FunctionSpace
         Real FE space.
-    A : dolfin.functions.function.TrialFunction
+    A : list[dolfin.functions.function.TrialFunction]
         Trial function.
     v : dolfin.functions.function.TestFunction
         Test function.
@@ -50,8 +50,10 @@ class TimeHarmonicMaxwellProblem(object):
         Matrix used to compute L2-norm of A_sol.
     bc : dolfin.fem.bcs.DirichletBC
         Dirichlet boundary condition object.
-    omega : float
+    omega : list[float] or float
         Frequency for which the variational problem is solved.
+    inner_product_matrix : dolfin.cpp.la.Matrix
+        Matrix representation of the inner product in function space V.
 
     Methods
     -------
@@ -141,11 +143,18 @@ class TimeHarmonicMaxwellProblem(object):
 
     def solve(self, omega):
         """Solve the variational problem defined with .setup()"""
+        if isinstance(omega, int) or isinstance(omega, float):
+            omega = [omega]
         self.omega = omega
-        LHS = self.K - omega**2 * self.M
-        RHS = self.L + self.N
-        self.A_sol = fen.Function(self.V)
-        fen.solve(LHS, self.A_sol.vector(), RHS)
+        self.A_sol = []
+        for o in omega:
+            LHS = self.K - o**2 * self.M
+            RHS = self.L + self.N
+            A = fen.Function(self.V)
+            fen.solve(LHS, A.vector(), RHS)
+            self.A_sol.append(A)
+        if len(self.A_sol) == 1:
+            self.A_sol = self.A_sol[0]
 
     @staticmethod
     def tosparse(A):
@@ -162,34 +171,32 @@ class TimeHarmonicMaxwellProblem(object):
         """Return the stiffness matrix K"""
         if tosparse:
             return self.tosparse(self.K)
-        else:
-            return self.K
+        return self.K
     
     def get_M(self, tosparse=True):
         """Return the mass matrix M"""
         if tosparse:
             return self.tosparse(self.M)
-        else:
-            return self.M
+        return self.M
     
-    def get_L(self, get_local=True):
+    def get_L(self, tonumpy=True):
         """Return the source integral term L"""
-        if get_local:
+        if tonumpy:
             return self.L.get_local()
-        else:
-            return self.L
+        return self.L
 
-    def get_N(self, get_local=True):
+    def get_N(self, tonumpy=True):
         """Return the Neumann boundary integral term N"""
-        if get_local:
+        if tonumpy:
             return self.N.get_local()
-        else:
-            return self.N
+        return self.N
      
-    def get_solution(self):
+    def get_solution(self, tonumpy=True):
         """Return the solution obtained with .solve()"""
+        if tonumpy:
+            return np.array([a.vector().get_local() for a in self.A_sol])
         return self.A_sol
-
+            
     def compute_solution_norm(self):
         """Compute the L2-norm of the solution obtained with .solve()"""
         if self.F_norm is None:
@@ -247,18 +254,13 @@ class TimeHarmonicMaxwellProblem(object):
             E.append(e)
         return self.gram_schmidt(E)
 
-    def householder_triangularization(self, omegas):
+    def householder_triangularization(self):
         """Compute the matrix R of a QR-decomposition of solutions at given frequencies"""
-        N = len(omegas)
-        A = []
-        for omega in omegas:
-            self.solve(omega)
-            A.append(self.get_solution().vector())
+        N = len(self.omega)
+        A = [fen.Vector(a.vector()) for a in self.A_sol]
         E = self.get_orthonormal_vectors(N)
         R = np.zeros((N, N))
 
-        G = np.array([[self.inner_product(A[i], A[j]) for i in range(N)] for j in range(N)])
-        
         for k in range(N):
             R[k, k] = self.norm(A[k])
 
