@@ -2,15 +2,18 @@ import numpy as np
 import fenics as fen
 import scipy.sparse
 
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath('__file__')))))
+from src.rational_function import RationalFunction
+
 class TimeHarmonicMaxwellProblem(object):
     """
     Finite element solver for solutions to the time harmonic
     Maxwell's equations formulated in the vector potential A
     
         \/ x ((1 / mu) \/ x A) - eps * omega^2 * A = j
-
     with boundary conditions
-
         A = A_D                     (Dirichlet boundaries, B_D)
         ((1 / mu) \/ x A) x n = g_N   (Neumann boundaries, B_N)
  
@@ -46,14 +49,14 @@ class TimeHarmonicMaxwellProblem(object):
         Neumann boundary condition.
     A_sol : dolfin.functions.function.Function
         Solution to the variational problem.
-    F_norm : dolfin.cpp.la.Matrix
-        Matrix used to compute L2-norm of A_sol.
+    M_inner : dolfin.cpp.la.Matrix
+        Matrix used to compute L2-norm in V.
     bc : dolfin.fem.bcs.DirichletBC
         Dirichlet boundary condition object.
     omega : list[float] or float
         Frequency for which the variational problem is solved.
-    inner_product_matrix : dolfin.cpp.la.Matrix
-        Matrix representation of the inner product in function space V.
+    RI : RationalFunction
+        The rational interpolant in barycentric coordinates.
 
     Methods
     -------
@@ -64,7 +67,6 @@ class TimeHarmonicMaxwellProblem(object):
      tosparse(A) : dolfin.cpp.la.Matrix -> scipy.sparse.csr_matrix
         Convert dolfin matrix to scipy sparse matrix in the CSR format.
     ...
-
     References
     ----------
     [1] FEniCS Project 2021: https://fenicsproject.org/
@@ -73,7 +75,6 @@ class TimeHarmonicMaxwellProblem(object):
     Usage
     -----
     Square waveguide with perfectly conducting walls and an inlet.
-
     >>> V = fen.FunctionSpace(fen.UnitSquareMesh(10, 10), 'P', 1)
     >>> mu = eps = fen.Constant(1.0)
     >>> j = fen.Constant(0.0)
@@ -110,10 +111,10 @@ class TimeHarmonicMaxwellProblem(object):
         self.A_D = A_D
         self.g_N = g_N
         self.A_sol = None
-        self.F_norm = None
+        self.M_inner = None
         self.bc = None
         self.omega = None
-        self.inner_product_matrix = fen.assemble(fen.dot(fen.TrialFunction(self.V), fen.TestFunction(self.V)) * fen.dx)
+        self.RI = None
 
     def setup(self):
         """Assemble the stiffness and mass matrices with boundary conditions"""
@@ -199,9 +200,7 @@ class TimeHarmonicMaxwellProblem(object):
             
     def compute_solution_norm(self):
         """Compute the L2-norm of the solution obtained with .solve()"""
-        if self.F_norm is None:
-            self.F_norm = fen.assemble(fen.dot(fen.TrialFunction(self.V), fen.TestFunction(self.V)) * fen.dx)
-        return pow((self.A_sol.vector()*(self.F_norm*self.A_sol.vector())).sum(), 0.5)
+        return self.norm(self.A_sol.vector())
     
     def get_boundary_indices_and_values(self):
         """Return list of indices and values of boundary points"""
@@ -228,7 +227,9 @@ class TimeHarmonicMaxwellProblem(object):
     
     def inner_product(self, v, w):
         """Compute inner product of two vectors v and w"""
-        return ((self.inner_product_matrix*v)*w).sum()
+        if self.M_inner is None:
+            self.M_inner = fen.assemble(fen.dot(fen.TrialFunction(self.V), fen.TestFunction(self.V)) * fen.dx)
+        return ((self.M_inner*v)*w).sum()
     
     def norm(self, v):
         """Compute norm of a vector v"""
@@ -284,3 +285,15 @@ class TimeHarmonicMaxwellProblem(object):
                 A[j] -= E[k] * R[k, j]
                 
         return R
+    
+    def compute_rational_interpolant(self):
+        """Compute the rational interpolant based on the solution snapshots"""
+        R = self.householder_triangularization()
+        _, _, Vt = np.linalg.svd(R)
+        q = Vt[-1, :]
+        P = self.get_solution(tonumpy=True).T * q
+        self.RI = RationalFunction(self.omega, q, P)
+
+    def get_interpolatory_eigenfrequencies(self):
+        """Compute the eigenfrequencies based on the roots of the rational interpolant"""
+        return self.RI.roots(filtered=True)
