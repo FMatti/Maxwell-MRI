@@ -36,6 +36,7 @@ class RectangularWaveguide(TimeHarmonicMaxwellProblem):
     def plot_solution(self):
         plt.figure()
         plt.title(f'Solution to system at frequency \u03C9 = {self.omega} rad/s')
+        #fig = fen.plot(self.A_sol[0])
         fig = fen.plot(self.A_sol)
         plt.colorbar(fig, orientation='horizontal')
         plt.show()
@@ -48,8 +49,7 @@ class RectangularWaveguide(TimeHarmonicMaxwellProblem):
         if not contains_boundary_values:
             A_vec = self.insert_boundary_values(A_vec)
         A_func.vector()[:] = A_vec
-        fen.plot(A_func)
-        fig = fen.plot(self.A_sol)
+        fig = fen.plot(A_func)
         plt.colorbar(fig, orientation='horizontal')
         plt.show()
 

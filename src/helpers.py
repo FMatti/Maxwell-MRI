@@ -57,6 +57,31 @@ def plot_numerical_eigenfrequencies(ax, THMP, a, b, k=50, timer=False, **kwargs)
     if timer:
         return dt
     
+def plot_rational_interpolant(ax, THMP, S, omegas, **kwargs):
+    THMP.solve(np.linspace(np.min(omegas), np.max(omegas), S))
+    THMP.compute_rational_interpolant()
+    L2_norms = np.empty(len(omegas))
+    for i, omega in enumerate(omegas):
+        L2_norms[i] = THMP.norm(THMP.RI(omega))
+    ax.plot(omegas, L2_norms, **kwargs)
+    ax.set_yscale('log')
+    
+def plot_interpolatory_eigenfrequencies(ax, THMP, a, b, S, timer=False, **kwargs):
+    omegas = np.linspace(a, b, S)
+    if timer:
+        t0 = time.time()
+        THMP.solve(omegas)
+        THMP.compute_rational_interpolant()
+        eigfreqs = THMP.get_interpolatory_eigenfrequencies()
+        dt = time.time() - t0
+    else:
+        THMP.solve(omegas)
+        THMP.compute_rational_interpolant()
+        eigfreqs = THMP.get_interpolatory_eigenfrequencies()
+    ax.vlines(eigfreqs, ymin=0, ymax=1, **kwargs)
+    if timer:
+        return dt
+    
 def vec_dot_N(A_vec, THMP):
     A_vec_inserted = THMP.insert_boundary_values(A_vec)
     return np.inner(A_vec_inserted, THMP.get_N())

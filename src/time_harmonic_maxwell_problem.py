@@ -294,6 +294,6 @@ class TimeHarmonicMaxwellProblem(object):
         P = self.get_solution(tonumpy=True).T * q
         self.RI = RationalFunction(self.omega, q, P)
 
-    def get_interpolatory_eigenfrequencies(self):
+    def get_interpolatory_eigenfrequencies(self, filtered=True):
         """Compute the eigenfrequencies based on the roots of the rational interpolant"""
-        return self.RI.roots(filtered=True)
+        return self.RI.roots(filtered)
