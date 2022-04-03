@@ -891,6 +891,119 @@ Monk: \url{https://www.sciencedirect.com/science/article/pii/037704279390093Q}
 we need only set those degrees of freedom associated with edges and faces on $\partial \Omega$
 to zero.}
 
+\section{Rational interpolation}
+\label{sec:ratinterp}
+
+\textit{Bonizzoni, Pradovera, Ruggeri: Rational-based model order reduction of
+Helmholtz frequency response problems with adaptive finite element snapshots}
+
+Our aim is to find an alternative way of determining the frequency response of a
+frequency dependent system on an alternative way, which does not require us to
+solve a potentially large generalized eigenvalue problem. This can be achieved 
+by \enquote{sampling} $N$ approximate finite element solutions of the system at
+a set of support points/frequencies $\omega_1$, $\omega_2$, \dots, $\omega_N$.
+Performing a generalized QR-decomposition (Householder triangularization) on the
+snapshot matrix $\mathbf{A} = [A(\omega_1), A(\omega_2), \dots, A(\omega_N)] =
+\mathbf{Q} \mathbf{R}$. In a singular value decomposition the smallest right
+singular vector of $\mathbf{R}$ is used to define a barycentric
+rational interpolant of the solution $A(\omega)$. 
+
+Our goal is to find the last column of the matrix $\mathbf{V}$ in the singular
+value decomposition of the Gramian matrix
+
+\begin{equation}
+    G_{ij} = \langle A(\omega_i), A(\omega_j) \rangle 
+     = \int_{\Omega} A(\omega_i) \cdot A(\omega_j) \approx A(\omega_i)^T \mathbf{M} A(\omega_j)
+\end{equation}
+
+denoted as $\mathbf{G} = \mathbf{A}^T \mathbf{M} \mathbf{A} = \mathbf{V} \boldsymbol{\Sigma} \mathbf{V}^T$ with
+the matrix $\mathbf{M}$ approximating the inner product in $L^2(\Omega)$.
+By computing a Householder triangularization of the snapshot matrix $\mathbf{A} =
+\mathbf{Q} \mathbf{R}$ with $\mathbf{R}$ being an upper triangular matrix and 
+the columns of $\mathbf{Q}$ satisfying $\langle Q_i, Q_j \rangle = \delta_{ij}$. 
+Then, we can realize that 
+
+\begin{equation}
+    \mathbf{G} = \mathbf{A}^T \mathbf{M} \mathbf{A} 
+               = \mathbf{R}^T \mathbf{Q}^T \mathbf{M} \mathbf{Q} \mathbf{R}
+               = \mathbf{R}^T \mathbf{R}
+\end{equation}
+
+coincides with the Cholesky decomposition of the Gramian matrix $\mathbf{G}$.
+Consequently, computing the singular value decomposition of
+$\mathbf{R} = \mathbf{U} \mathbf{S} \mathbf{V}^T$ will give us
+
+\begin{equation}
+    \mathbf{G} = \mathbf{R}^T \mathbf{R}
+               = \mathbf{V} \mathbf{S}^T \mathbf{U}^T \mathbf{U} \mathbf{S} \mathbf{V}^T
+               = \mathbf{V} \mathbf{S}^2 \mathbf{V}^T
+               = \mathbf{V} \boldsymbol{\Sigma} \mathbf{V}^T
+\end{equation}
+
+In summary, we perform the following algorithm:
+
+\begin{algorithm}
+    \caption{Minimal rational interpolation}\label{alg:MRI}
+    \begin{algorithmic}
+        \Require Support points $\{\omega_i\}_{i=1}^N$
+        \Require Finite element formulation of the problem $a(A, v; \omega) = L(v)$
+        \State Solve $a(A, v; \omega_i) = L(v)$ to obtain $A(\omega_i)$ for $i\in\{1,2, \dots, N\}$ 
+        \State Assemble snapshot matrix $\mathbf{A} = [A(\omega_1), A(\omega_2), \dots, A(\omega_N)]$
+        \State Compute Householder triangularization $\mathbf{A} = \mathbf{Q} \mathbf{R}$
+        \State Compute singular value decomposition of $\mathbf{R} = \mathbf{U} \boldsymbol{\Sigma} \mathbf{V}^T$
+        \State Define $\mathbf{q} = (q_1, q_2, \dots, q_N)^T = V(:, N)$ \\
+        \Return $\sum_i \frac{q_i A(\omega_i)}{\omega - \omega_i} / \sum_i \frac{q_i}{\omega - \omega_i}$
+    \end{algorithmic}
+\end{algorithm}
+
+\subsection{Householder triangularization}
+
+\textit{Trefethen: Householder triangularization of a quasimatrix}
+
+The goal is to obtain the QR factorization of a matrix $\mathbf{A} = \mathbf{Q} \mathbf{R}$,
+where the matrix $\mathbf{Q}$ is orthonormal. The Householder triangularization
+offers a numerically stable and robust way to perform this factorization even for
+matrices that are rank-defincient or ill-conditioned.
+
+\subsection{Singular value decomposition}
+
+\textcolor{red}{Why the last (smallest singular value) column?}
+
+\subsection{Barycentric root finding}
+
+\textit{Klein G: Applications of Linear Barycentric Rational Interpolation}
+
+Given a rational function $r$ in barycentric coordinates representation
+
+\begin{equation}
+    r(z) = \frac{\sum_{i=1}^N \frac{p_i}{z - z_i}}{\sum_{i=1}^N \frac{q_i}{z - z_i}}
+\end{equation}
+
+we are interested in finding $z$ for which $r(z)$ exhibits a singularity. To do so,
+we need only analyze the roots of the denominator. This problem may be elegantly 
+converted to a generalized eigenvalue problem by translating
+
+\begin{align}
+    0 &=\sum_{i=1}^N q_i v_i \notag \\
+    1 &= v_i(z - z_i), i\in\{1, 2, \dots, N\}
+\end{align}
+
+into the generalized eigenvalue problem
+
+\begin{equation}
+    \begin{pmatrix} 0 & q_1 & q_2 & \hdots & q_N \\
+                    1 & \omega_1 &  &  & \\
+                    1 &  & \omega_2  & &  \\
+                    \vdots & &  & \ddots &   \\
+                    1 &  &  & & \omega_N \end{pmatrix} \mathbf{v}
+    = z \begin{pmatrix}0 & & & & \\
+                     & 1 & & & \\
+                     & & 1  & & \\
+                     & & & \ddots & \\
+                     & & & & 1 \end{pmatrix} \mathbf{v}
+\end{equation}
+
+whose solutions $z$ satisfy $r(z)=0$.
 
 \section{Weak derivative}
 \label{sec:weak}
@@ -1076,6 +1189,6 @@ where boundary conditions are yet to be determined. If we somehow would manage
 to find a suitable function space for the four-dimensional $\mathbf{v}$, it might 
 be possible to find both $\mathbf{E}$ and $\mathbf{B}$ from a finite element method.
 
-\bibliography{biblio.bib}
+%\bibliography{biblio.bib}
 
 \end{document}
