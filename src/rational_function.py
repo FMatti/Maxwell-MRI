@@ -26,7 +26,6 @@ class RationalFunction(object):
     roots() : None -> float
         Return (filtered) roots of rational function. Filtered
         only returns roots between the smallest and largest node.
-    ...
 
     References
     ----------
@@ -68,7 +67,5 @@ class RationalFunction(object):
 
         eigvals = scipy.linalg.eigvals(A, b=B)
         if filtered:
-            valid_idx = np.all([np.min(self.nodes) < eigvals,
-                                eigvals < np.max(self.nodes)], axis=0)
-            return np.real(eigvals[valid_idx])
+            eigvals[~np.isinf(eigvals)]
         return eigvals

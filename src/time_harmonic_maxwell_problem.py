@@ -57,6 +57,8 @@ class TimeHarmonicMaxwellProblem(object):
         Frequency for which the variational problem is solved.
     RI : RationalFunction
         The rational interpolant in barycentric coordinates.
+    sigma : np.ndarray
+        Singular values of the triangular matrix R.
 
     Methods
     -------
@@ -67,6 +69,7 @@ class TimeHarmonicMaxwellProblem(object):
      tosparse(A) : dolfin.cpp.la.Matrix -> scipy.sparse.csr_matrix
         Convert dolfin matrix to scipy sparse matrix in the CSR format.
     ...
+    
     References
     ----------
     [1] FEniCS Project 2021: https://fenicsproject.org/
@@ -115,7 +118,8 @@ class TimeHarmonicMaxwellProblem(object):
         self.bc = None
         self.omega = None
         self.RI = None
-
+        self.sigma = None
+        
     def setup(self):
         """Assemble the stiffness and mass matrices with boundary conditions"""
         # Boundary function to identify Dirichlet and Neumann boundaries
@@ -157,6 +161,27 @@ class TimeHarmonicMaxwellProblem(object):
         if len(self.A_sol) == 1:
             self.A_sol = self.A_sol[0]
 
+    def restrict_solution_to_trace(self, trace):
+        """Restrict the solution to a trace in the domain"""
+        coords = self.V.tabulate_dof_coordinates()
+        is_in_trace = [True if trace.inside(x, 'on_boundary') else False for x in coords]
+        for i in range(len(self.A_sol)):
+            A = self.A_sol[i].vector()
+            #WG.A_sol[i] = fen.Function(WG.V)
+            #WG.A_sol[i].vector()[:] = [a for j, a in enumerate(A) if trace.inside(coords[j], 'on_boundary')]
+            self.A_sol[i] = [a for j, a in enumerate(A) if trace.inside(coords[j], 'on_boundary')]
+
+    def restrict_solution_to_trace_integral(self, trace):
+        mesh = self.V.mesh()
+        boundary_type = fen.MeshFunction('size_t', mesh, mesh.topology().dim() - 1)
+        boundary_type.set_all(0)
+        trace.mark(boundary_type, 1)
+        ds = fen.Measure('ds', subdomain_data=boundary_type)
+        L_norm = fen.assemble(fen.dot(fen.TrialFunction(self.V), fen.TestFunction(self.V)) * ds(1))
+        for i in range(len(self.A_sol)):
+            A = self.A_sol[i].vector()
+            self.A_sol[i] = pow(((L_norm*A)*A).sum(), 0.5)
+        
     @staticmethod
     def tosparse(A):
         """Convert dolfin matrix to a sparse SciPy matrix in CSR format"""
@@ -224,17 +249,17 @@ class TimeHarmonicMaxwellProblem(object):
         A_vec_inserted[valid_indices] = A_vec
         A_vec_inserted[boundary_indices] = boundary_values
         return A_vec_inserted
-    
+
     def inner_product(self, v, w):
         """Compute inner product of two vectors v and w"""
         if self.M_inner is None:
             self.M_inner = fen.assemble(fen.dot(fen.TrialFunction(self.V), fen.TestFunction(self.V)) * fen.dx)
         return ((self.M_inner*v)*w).sum()
-    
+
     def norm(self, v):
         """Compute norm of a vector v"""
         return pow(self.inner_product(v, v), 0.5)
-    
+
     def gram_schmidt(self, E):
         """M-orthonormalize the elements of a list E"""
         E = [fen.Vector(e) for e in E]
@@ -244,7 +269,7 @@ class TimeHarmonicMaxwellProblem(object):
                 E[i] -= self.inner_product(E_on[j], E[i]) * E_on[j]
             E_on.append(E[i] / self.norm(E[i]))
         return E_on
-    
+
     def get_orthonormal_vectors(self, N, seed=0):
         """Produce list of N orthonormal elements"""
         np.random.seed(seed)
@@ -285,12 +310,12 @@ class TimeHarmonicMaxwellProblem(object):
                 A[j] -= E[k] * R[k, j]
                 
         return R
-    
+
     def compute_rational_interpolant(self):
         """Compute the rational interpolant based on the solution snapshots"""
         R = self.householder_triangularization()
-        _, _, Vt = np.linalg.svd(R)
-        q = Vt[-1, :]
+        _, self.sigma, V = np.linalg.svd(R)
+        q = V[-1, :].conj()
         P = self.get_solution(tonumpy=True).T * q
         self.RI = RationalFunction(self.omega, q, P)
 

@@ -12,8 +12,8 @@ class CircularWaveguide(TimeHarmonicMaxwellProblem):
     def __init__(self, mesh, B_N, g_N):
         V = fen.FunctionSpace(mesh, 'N1curl', 1)
 
-        mu = fen.Expression('1.0', degree=2)
-        eps = fen.Expression('1.0', degree=2)
+        mu = fen.Expression('4e-7*pi', degree=2)
+        eps = fen.Expression('8.854187e-12', degree=2)
         j = fen.Expression(('0.0', '0.0', '0.0'), degree=2)
 
         class B_D(fen.SubDomain):

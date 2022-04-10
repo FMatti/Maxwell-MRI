@@ -78,7 +78,8 @@ def plot_interpolatory_eigenfrequencies(ax, THMP, a, b, S, timer=False, **kwargs
         THMP.solve(omegas)
         THMP.compute_rational_interpolant()
         eigfreqs = THMP.get_interpolatory_eigenfrequencies()
-    ax.vlines(eigfreqs, ymin=0, ymax=1, **kwargs)
+    real_eigfreqs = np.real(eigfreqs[np.isreal(eigfreqs)])
+    ax.vlines(real_eigfreqs, ymin=0, ymax=1, **kwargs)
     if timer:
         return dt
     
