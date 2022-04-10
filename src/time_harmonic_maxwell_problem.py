@@ -58,7 +58,7 @@ class TimeHarmonicMaxwellProblem(object):
         Frequency for which the variational problem is solved.
     RI : RationalFunction
         The rational interpolant in barycentric coordinates.
-    sigma : np.ndarray
+    sv : np.ndarray
         Singular values of the triangular matrix R.
 
     Methods
@@ -117,7 +117,7 @@ class TimeHarmonicMaxwellProblem(object):
         self.bc = None
         self.omega = None
         self.RI = None
-        self.sigma = None
+        self.sv = None
 
     def setup(self):
         """Assemble the stiffness and mass matrices with boundary conditions"""
@@ -208,7 +208,7 @@ class TimeHarmonicMaxwellProblem(object):
         if tonumpy:
             return np.array([a.vector().get_local() for a in self.A_sol])
         return self.A_sol
-    
+
     def get_frequency(self):
         """Return the frequencies corresponding to the solutions"""
         return self.omega
@@ -240,7 +240,7 @@ class TimeHarmonicMaxwellProblem(object):
         """Compute the rational surrogate based on previously computed snapshots"""
         A = self.get_solution(tonumpy=True, trace=VS.get_trace())
         R = helpers.householder_triangularization(A, VS)
-        _, self.sigma, V = np.linalg.svd(R)
+        _, self.sv, V = np.linalg.svd(R)
         q = V[-1, :].conj()
         P = self.get_solution(tonumpy=True, trace=VS.get_trace()).T * q
         omega = self.get_frequency()
@@ -249,3 +249,16 @@ class TimeHarmonicMaxwellProblem(object):
     def get_interpolatory_eigenfrequencies(self, filtered=True):
         """Compute the eigenfrequencies based on the roots of the rational interpolant"""
         return self.RI.roots(filtered)
+
+    def get_error(self, VS):
+        N = len(self.omega)
+        A = self.get_solution(tonumpy=True, trace=VS.get_trace())
+        relative_error = np.empty(N)
+        FE_norm = np.empty(N)
+        RI_norm = np.empty(N)
+        for i in range(N):
+            FE_norm[i] = VS.norm(A[i])
+            RI_norm[i] = VS.norm(self.RI(self.omega[i]))
+            relative_error[i] = VS.norm(A[i] - self.RI(self.omega[i])) / FE_norm[i]
+        return relative_error, FE_norm, RI_norm
+    
