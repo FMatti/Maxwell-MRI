@@ -74,7 +74,9 @@ class TimeHarmonicMaxwellProblem(object):
     References
     ----------
     [1] FEniCS Project 2021: https://fenicsproject.org/
-    [2] ...
+    [2] Pradovera D. and Nobile F. Frequency-domain non-intrusive greedy
+        Model Order Reduction based on minimal rational approximation
+    [3] ...
     
     Usage
     -----
@@ -236,8 +238,9 @@ class TimeHarmonicMaxwellProblem(object):
         A_vec_inserted[boundary_indices] = boundary_values
         return A_vec_inserted
 
-    def compute_surrogate(self, VS):
-        """Compute the rational surrogate based on previously computed snapshots"""
+    def compute_surrogate(self, VS, support_points):
+        """Compute the rational surrogate with given support points"""
+        self.solve(support_points)
         A = self.get_solution(tonumpy=True, trace=VS.get_trace())
         R = helpers.householder_triangularization(A, VS)
         _, self.sv, V = np.linalg.svd(R)
@@ -245,6 +248,29 @@ class TimeHarmonicMaxwellProblem(object):
         P = self.get_solution(tonumpy=True, trace=VS.get_trace()).T * q
         omega = self.get_frequency()
         self.RI = RationalFunction(omega, q, P)
+        
+    @staticmethod
+    def get_numerator_argmin(RF, choices):
+        tiled_choices = np.tile(choices, (len(RF.nodes), 1)).T
+        index_min = np.argmin(np.abs(RF.q @ (tiled_choices - RF.nodes).T**(-1)))
+        return index_min
+
+    def compute_greedy_surrogate(self, VS, a, b, tol=1e-2):
+        """Compute the rational surrogate in a greedy manner [2]"""
+        omegas = [a, b]
+        self.solve(omegas)
+        self.compute_surrogate(VS, omegas)
+        choices = np.linspace(a, b, 1000)[1:-1]
+        while len(choices) > 0:
+            index_min = self.get_numerator_argmin(self.RI, choices)
+            omega_min = choices[index_min]
+            self.solve(omega_min, accumulate=True)
+            A = self.get_solution(tonumpy=True)[-1]
+            if VS.norm(A - self.RI(omega_min)) <= tol*VS.norm(A):
+                break
+            choices = np.delete(choices, index_min)
+            omegas.append(omega_min)
+            self.compute_surrogate(VS, omegas)
 
     def get_interpolatory_eigenfrequencies(self, filtered=True):
         """Compute the eigenfrequencies based on the roots of the rational interpolant"""
