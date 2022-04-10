@@ -6,6 +6,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath('__file__')))))
 from src.rational_function import RationalFunction
+import src.helpers as helpers
 
 class TimeHarmonicMaxwellProblem(object):
     """
@@ -162,37 +163,6 @@ class TimeHarmonicMaxwellProblem(object):
             fen.solve(LHS, A.vector(), RHS)
             self.A_sol.append(A)
 
-    def reset(self, **kwargs):
-        """Clear all previous solutions and update attributes"""
-        self.A_sol = []
-        self.M_inner = None
-        self.omega = []
-        self.RI = None
-        self.sigma = None
-        self.__dict__.update(kwargs)
-        self.setup()
-            
-    def restrict_solution_to_trace(self, trace):
-        """Restrict the solution to a trace in the domain"""
-        coords = self.V.tabulate_dof_coordinates()
-        is_in_trace = [True if trace.inside(x, 'on_boundary') else False for x in coords]
-        for i in range(len(self.A_sol)):
-            A = self.A_sol[i].vector()
-            #WG.A_sol[i] = fen.Function(WG.V)
-            #WG.A_sol[i].vector()[:] = [a for j, a in enumerate(A) if trace.inside(coords[j], 'on_boundary')]
-            self.A_sol[i] = [a for j, a in enumerate(A) if trace.inside(coords[j], 'on_boundary')]
-
-    def restrict_solution_to_trace_integral(self, trace):
-        mesh = self.V.mesh()
-        boundary_type = fen.MeshFunction('size_t', mesh, mesh.topology().dim() - 1)
-        boundary_type.set_all(0)
-        trace.mark(boundary_type, 1)
-        ds = fen.Measure('ds', subdomain_data=boundary_type)
-        L_norm = fen.assemble(fen.dot(fen.TrialFunction(self.V), fen.TestFunction(self.V)) * ds(1))
-        for i in range(len(self.A_sol)):
-            A = self.A_sol[i].vector()
-            self.A_sol[i] = pow(((L_norm*A)*A).sum(), 0.5)
-        
     @staticmethod
     def tosparse(A):
         """Convert dolfin matrix to a sparse SciPy matrix in CSR format"""
@@ -228,11 +198,20 @@ class TimeHarmonicMaxwellProblem(object):
             return self.N.get_local()
         return self.N
 
-    def get_solution(self, tonumpy=True):
+    def get_solution(self, tonumpy=True, trace=None):
         """Return the solution obtained with .solve()"""
+        if trace is not None:
+            coords = self.V.tabulate_dof_coordinates()
+            is_on_trace = lambda x: trace.inside(x, 'on_boundary')
+            on_trace = np.apply_along_axis(is_on_trace, 1, coords)
+            return np.array([a.vector().get_local()[on_trace] for a in self.A_sol])
         if tonumpy:
             return np.array([a.vector().get_local() for a in self.A_sol])
         return self.A_sol
+    
+    def get_frequency(self):
+        """Return the frequencies corresponding to the solutions"""
+        return self.omega
 
     def get_boundary_indices_and_values(self):
         """Return list of indices and values of boundary points"""
@@ -257,71 +236,16 @@ class TimeHarmonicMaxwellProblem(object):
         A_vec_inserted[boundary_indices] = boundary_values
         return A_vec_inserted
 
-    def gram_schmidt(self, E, inner_product):
-        """M-orthonormalize the columns of a matrix E"""
-        E[0] /= pow(inner_product(E[0], E[0]), 0.5)
-        for i in range(1, E.shape[0]):
-            for j in range(i):
-                E[i] -= inner_product(E[j], E[i]) * E[j]
-            E[i] /= pow(inner_product(E[i], E[i]), 0.5)
-
-    def get_orthonormal_matrix(self, shape, inner_product, seed=0):
-        """Produce list of N orthonormal elements"""
-        np.random.seed(seed)
-        n1, n2 = shape
-        E = np.random.randn(n1, n2)
-        self.gram_schmidt(E, inner_product)
-        return E
-
-    def householder_triangularization(self, A, inner_product):
-        """Compute the matrix R of a QR-decomposition of solutions at given frequencies"""
-        N = A.shape[0]
-        E = self.get_orthonormal_matrix(A.shape, inner_product)
-        R = np.zeros((N, N))
-
-        for k in range(N):
-            R[k, k] = pow(inner_product(A[k], A[k]), 0.5)
-
-            alpha = inner_product(E[k], A[k])
-            if abs(alpha) > 1e-17:
-                E[k] *= - alpha / abs(alpha)
-
-            v = R[k, k] * E[k] - A[k]
-            for j in range(k):
-                v -= inner_product(E[j], v) * E[j]
-
-            sigma = pow(inner_product(v, v), 0.5)
-            if abs(sigma) > 1e-17:
-                v /= sigma
-            else:
-                v = E[k]
-
-            for j in range(k+1, N):
-                A[j] -= 2 * v * inner_product(v, A[j])
-                R[k, j] = inner_product(E[k], A[j])
-                A[j] -= E[k] * R[k, j]
-                
-        return R
-
-    def get_R(self):
-        u = fen.TrialFunction(self.V)
-        v = fen.TestFunction(self.V)
-        M = self.tosparse(fen.assemble(fen.dot(u, v)*fen.dx))
-        def inner_product(u, v):
-            return (M.dot(u)).dot(v)
-        A = self.get_solution(tonumpy=True)
-        return self.householder_triangularization(A, inner_product)
-    
-    def compute_rational_interpolant(self):
-        """Compute the rational interpolant based on the solution snapshots"""
-        R = self.householder_triangularization()
+    def compute_surrogate(self, VS):
+        """Compute the rational surrogate based on previously computed snapshots"""
+        A = self.get_solution(tonumpy=True, trace=VS.get_trace())
+        R = helpers.householder_triangularization(A, VS)
         _, self.sigma, V = np.linalg.svd(R)
         q = V[-1, :].conj()
-        P = self.get_solution(tonumpy=True).T * q
-        self.RI = RationalFunction(self.omega, q, P)
+        P = self.get_solution(tonumpy=True, trace=VS.get_trace()).T * q
+        omega = self.get_frequency()
+        self.RI = RationalFunction(omega, q, P)
 
     def get_interpolatory_eigenfrequencies(self, filtered=True):
         """Compute the eigenfrequencies based on the roots of the rational interpolant"""
         return self.RI.roots(filtered)
-    
-
