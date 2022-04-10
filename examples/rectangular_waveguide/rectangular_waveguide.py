@@ -34,12 +34,13 @@ class RectangularWaveguide(TimeHarmonicMaxwellProblem):
         TimeHarmonicMaxwellProblem.__init__(self, V, mu, eps, j, B_D(), B_N(), A_D, g_N)
 
     def plot_solution(self):
-        plt.figure()
-        plt.title(f'Solution to system at frequency \u03C9 = {self.omega} rad/s')
-        #fig = fen.plot(self.A_sol[0])
-        fig = fen.plot(self.A_sol)
-        plt.colorbar(fig, orientation='horizontal')
-        plt.show()
+        A_sol = self.get_solution(tonumpy=False)
+        for i, A in enumerate(A_sol):
+            plt.figure()
+            plt.title(f'Solution to system at frequency \u03C9 = {self.omega[i]} rad/s')
+            fig = fen.plot(A)
+            plt.colorbar(fig, orientation='horizontal')
+            plt.show()
 
     def plot_external_solution(self, A_vec, contains_boundary_values=False, omega=None):
         plt.figure()

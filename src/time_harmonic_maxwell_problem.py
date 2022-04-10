@@ -31,8 +31,8 @@ class TimeHarmonicMaxwellProblem(object):
         Mass matrix.
     L : dolfin.cpp.la.Vector
         Source term.
-    L : dolfin.cpp.la.Vector
-        Neumann boundary term.
+    N : dolfin.cpp.la.Vector
+        Neumann boundary integral term.
     mu : dolfin.functions.expression.Expression
         Permeability.
     eps : dolfin.functions.expression.Expression
@@ -45,7 +45,7 @@ class TimeHarmonicMaxwellProblem(object):
         SubDomain object locating the Neumann boundary.
     A_0 : dolfin.functions.expression.Expression
         Dirichlet boundary condition.
-    g : dolfin.functions.expression.Expression
+    g_N : dolfin.functions.expression.Expression
         Neumann boundary condition.
     A_sol : dolfin.functions.function.Function
         Solution to the variational problem.
@@ -66,7 +66,7 @@ class TimeHarmonicMaxwellProblem(object):
         Assemble the stiffness, mass, and source terms.
     solve(omega) : float -> None
         Computes the solution to the weak variational problem at omega.
-     tosparse(A) : dolfin.cpp.la.Matrix -> scipy.sparse.csr_matrix
+    tosparse(A) : dolfin.cpp.la.Matrix -> scipy.sparse.csr_matrix
         Convert dolfin matrix to scipy sparse matrix in the CSR format.
     ...
     
@@ -100,8 +100,6 @@ class TimeHarmonicMaxwellProblem(object):
 
     def __init__(self, V, mu, eps, j, B_D, B_N, A_D, g_N):
         self.V = V
-        self.A = fen.TrialFunction(self.V)
-        self.v = fen.TestFunction(self.V)
         self.K = None
         self.M = None
         self.L = None
@@ -119,7 +117,7 @@ class TimeHarmonicMaxwellProblem(object):
         self.omega = None
         self.RI = None
         self.sigma = None
-        
+
     def setup(self):
         """Assemble the stiffness and mass matrices with boundary conditions"""
         # Boundary function to identify Dirichlet and Neumann boundaries
@@ -129,38 +127,51 @@ class TimeHarmonicMaxwellProblem(object):
         self.B_D.mark(boundary_type, 1)
         self.B_N.mark(boundary_type, 2)
 
+        A = fen.TrialFunction(self.V)
+        v = fen.TestFunction(self.V)
+        
         # Dirichlet boundary conditions
         self.bc = fen.DirichletBC(self.V, self.A_D, boundary_type, 1)
 
         # Neumann boundary conditions
         ds = fen.Measure('ds', subdomain_data=boundary_type)
-        self.N = fen.assemble(fen.dot(self.g_N, self.v) * ds(2))
+        self.N = fen.assemble(fen.dot(self.g_N, v) * ds(2))
 
         # Assembly of stiffness, mass, and forcing term
-        self.K = fen.assemble(1/self.mu * fen.dot(fen.curl(self.A), fen.curl(self.v)) * fen.dx)
+        self.K = fen.assemble(1/self.mu * fen.dot(fen.curl(A), fen.curl(v)) * fen.dx)
         self.bc.apply(self.K)
 
-        self.M = fen.assemble(self.eps * fen.dot(self.A, self.v) * fen.dx)
+        self.M = fen.assemble(self.eps * fen.dot(A, v) * fen.dx)
         self.bc.zero(self.M)
 
-        self.L = fen.assemble(fen.dot(self.j, self.v) * fen.dx)
+        self.L = fen.assemble(fen.dot(self.j, v) * fen.dx)
         self.bc.apply(self.L)
 
-    def solve(self, omega):
+    def solve(self, omega, accumulate=False):
         """Solve the variational problem defined with .setup()"""
-        if isinstance(omega, int) or isinstance(omega, float):
+        if not accumulate:
+            self.A_sol = []
+            self.omega = []
+        if isinstance(omega, (float, int)):
             omega = [omega]
-        self.omega = omega
-        self.A_sol = []
-        for o in omega:
-            LHS = self.K - o**2 * self.M
+        self.omega.extend(omega)
+        for omg in omega:
+            LHS = self.K - omg**2 * self.M
             RHS = self.L + self.N
             A = fen.Function(self.V)
             fen.solve(LHS, A.vector(), RHS)
             self.A_sol.append(A)
-        if len(self.A_sol) == 1:
-            self.A_sol = self.A_sol[0]
 
+    def reset(self, **kwargs):
+        """Clear all previous solutions and update attributes"""
+        self.A_sol = []
+        self.M_inner = None
+        self.omega = []
+        self.RI = None
+        self.sigma = None
+        self.__dict__.update(kwargs)
+        self.setup()
+            
     def restrict_solution_to_trace(self, trace):
         """Restrict the solution to a trace in the domain"""
         coords = self.V.tabulate_dof_coordinates()
@@ -192,19 +203,19 @@ class TimeHarmonicMaxwellProblem(object):
     def get_V(self):
         """Return the finite element function space V"""
         return self.V
-    
+
     def get_K(self, tosparse=True): 
         """Return the stiffness matrix K"""
         if tosparse:
             return self.tosparse(self.K)
         return self.K
-    
+
     def get_M(self, tosparse=True):
         """Return the mass matrix M"""
         if tosparse:
             return self.tosparse(self.M)
         return self.M
-    
+
     def get_L(self, tonumpy=True):
         """Return the source integral term L"""
         if tonumpy:
@@ -216,17 +227,13 @@ class TimeHarmonicMaxwellProblem(object):
         if tonumpy:
             return self.N.get_local()
         return self.N
-     
+
     def get_solution(self, tonumpy=True):
         """Return the solution obtained with .solve()"""
         if tonumpy:
             return np.array([a.vector().get_local() for a in self.A_sol])
         return self.A_sol
-            
-    def compute_solution_norm(self):
-        """Compute the L2-norm of the solution obtained with .solve()"""
-        return self.norm(self.A_sol.vector())
-    
+
     def get_boundary_indices_and_values(self):
         """Return list of indices and values of boundary points"""
         boundary_dict = self.bc.get_boundary_values()
@@ -250,67 +257,61 @@ class TimeHarmonicMaxwellProblem(object):
         A_vec_inserted[boundary_indices] = boundary_values
         return A_vec_inserted
 
-    def inner_product(self, v, w):
-        """Compute inner product of two vectors v and w"""
-        if self.M_inner is None:
-            self.M_inner = fen.assemble(fen.dot(fen.TrialFunction(self.V), fen.TestFunction(self.V)) * fen.dx)
-        return ((self.M_inner*v)*w).sum()
-
-    def norm(self, v):
-        """Compute norm of a vector v"""
-        return pow(self.inner_product(v, v), 0.5)
-
-    def gram_schmidt(self, E):
-        """M-orthonormalize the elements of a list E"""
-        E = [fen.Vector(e) for e in E]
-        E_on = [E[0] / self.norm(E[0])]
-        for i in range(1, len(E)):
+    def gram_schmidt(self, E, inner_product):
+        """M-orthonormalize the columns of a matrix E"""
+        E[0] /= pow(inner_product(E[0], E[0]), 0.5)
+        for i in range(1, E.shape[0]):
             for j in range(i):
-                E[i] -= self.inner_product(E_on[j], E[i]) * E_on[j]
-            E_on.append(E[i] / self.norm(E[i]))
-        return E_on
+                E[i] -= inner_product(E[j], E[i]) * E[j]
+            E[i] /= pow(inner_product(E[i], E[i]), 0.5)
 
-    def get_orthonormal_vectors(self, N, seed=0):
+    def get_orthonormal_matrix(self, shape, inner_product, seed=0):
         """Produce list of N orthonormal elements"""
         np.random.seed(seed)
-        E = []
-        for i in range(N):
-            e = fen.Function(self.V).vector()
-            e[:] = np.random.randn(e.size())
-            E.append(e)
-        return self.gram_schmidt(E)
+        n1, n2 = shape
+        E = np.random.randn(n1, n2)
+        self.gram_schmidt(E, inner_product)
+        return E
 
-    def householder_triangularization(self):
+    def householder_triangularization(self, A, inner_product):
         """Compute the matrix R of a QR-decomposition of solutions at given frequencies"""
-        N = len(self.omega)
-        A = [fen.Vector(a.vector()) for a in self.A_sol]
-        E = self.get_orthonormal_vectors(N)
+        N = A.shape[0]
+        E = self.get_orthonormal_matrix(A.shape, inner_product)
         R = np.zeros((N, N))
 
         for k in range(N):
-            R[k, k] = self.norm(A[k])
+            R[k, k] = pow(inner_product(A[k], A[k]), 0.5)
 
-            alpha = self.inner_product(E[k], A[k])
+            alpha = inner_product(E[k], A[k])
             if abs(alpha) > 1e-17:
                 E[k] *= - alpha / abs(alpha)
 
             v = R[k, k] * E[k] - A[k]
             for j in range(k):
-                v -= self.inner_product(E[j], v) * E[j]
+                v -= inner_product(E[j], v) * E[j]
 
-            sigma = self.norm(v)
+            sigma = pow(inner_product(v, v), 0.5)
             if abs(sigma) > 1e-17:
                 v /= sigma
             else:
                 v = E[k]
 
             for j in range(k+1, N):
-                A[j] -= 2 * v * self.inner_product(v, A[j])
-                R[k, j] = self.inner_product(E[k], A[j])
+                A[j] -= 2 * v * inner_product(v, A[j])
+                R[k, j] = inner_product(E[k], A[j])
                 A[j] -= E[k] * R[k, j]
                 
         return R
 
+    def get_R(self):
+        u = fen.TrialFunction(self.V)
+        v = fen.TestFunction(self.V)
+        M = self.tosparse(fen.assemble(fen.dot(u, v)*fen.dx))
+        def inner_product(u, v):
+            return (M.dot(u)).dot(v)
+        A = self.get_solution(tonumpy=True)
+        return self.householder_triangularization(A, inner_product)
+    
     def compute_rational_interpolant(self):
         """Compute the rational interpolant based on the solution snapshots"""
         R = self.householder_triangularization()
@@ -322,3 +323,5 @@ class TimeHarmonicMaxwellProblem(object):
     def get_interpolatory_eigenfrequencies(self, filtered=True):
         """Compute the eigenfrequencies based on the roots of the rational interpolant"""
         return self.RI.roots(filtered)
+    
+
