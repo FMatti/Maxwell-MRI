@@ -238,7 +238,7 @@ class TimeHarmonicMaxwellProblem(object):
         A_vec_inserted[boundary_indices] = boundary_values
         return A_vec_inserted
 
-    def compute_surrogate(self, VS, support_points):
+    def _compute_surrogate(self, VS, support_points):
         """Compute the rational surrogate with given support points"""
         self.solve(support_points)
         A = self.get_solution(tonumpy=True, trace=VS.get_trace())
@@ -248,6 +248,35 @@ class TimeHarmonicMaxwellProblem(object):
         P = self.get_solution(tonumpy=True, trace=VS.get_trace()).T * q
         omega = self.get_frequency()
         self.RI = RationalFunction(omega, q, P)
+
+    def compute_surrogate(self, VS, additive=False, R=None, E=None, V=None):
+        """Compute the rational surrogate with previously computed snapshots"""
+        A = self.get_solution(tonumpy=True, trace=VS.get_trace())
+        if additive:
+            R, E, V = helpers.householder_triangularization(A, VS, R, E, V, returns=True)
+        else:
+            R = helpers.householder_triangularization(A, VS)
+        _, self.sv, V_ = np.linalg.svd(R)
+        q = V_[-1, :].conj()
+        P = A.T * q
+        omega = self.get_frequency()
+        self.RI = RationalFunction(omega, q, P)
+        if additive:
+            return R, E, V
+
+    def compute_greedy_surrogate(self, VS, a, b, tol=1e-2, n=1000):
+        """Compute the rational surrogate with the greedy algorithm"""
+        self.solve([a, b])
+        R, E, V = self.compute_surrogate(VS, additive=True)
+        samples = np.linspace(a, b, n)[1:-1]
+        while len(samples) > 0:
+            samples_min, index_min = self.RI.get_numerator_min(samples)
+            self.solve(samples_min, accumulate=True)
+            a = self.get_solution(tonumpy=True)[-1]
+            if VS.norm(a - self.RI(samples_min)) <= tol*VS.norm(a):
+                break
+            samples = np.delete(samples, index_min)
+            R, E, V = self.compute_surrogate(VS, additive=True, R=None, E=None, V=None)
 
     @staticmethod
     def get_numerator_argmin(RF, choices):

@@ -42,11 +42,11 @@ def plot_L2_norms(ax, THMP, omegas, VS, **kwargs):
         L2_norms[i] = VS.norm(A[0])
     ax.plot(omegas, L2_norms, **kwargs)
     ax.set_yscale('log')
-    
+
 def plot_analytical_eigenfrequencies(ax, THMP, a, b, **kwargs):
     eigfreqs = THMP.get_analytical_eigenfrequencies(a, b)
     ax.vlines(eigfreqs, ymin=0, ymax=1, **kwargs)
-    
+
 def plot_numerical_eigenfrequencies(ax, THMP, a, b, k=50, timer=False, **kwargs):
     K = THMP.get_K()
     M = THMP.get_M()
@@ -58,26 +58,27 @@ def plot_numerical_eigenfrequencies(ax, THMP, a, b, k=50, timer=False, **kwargs)
     ax.vlines(eigfreqs, ymin=0, ymax=1, **kwargs)
     if timer:
         return dt
-    
+
 def plot_surrogate_L2_norms(ax, THMP, supports, omegas, VS, **kwargs):
     THMP.solve(supports)
-    THMP.compute_surrogate(VS, supports)
+    THMP.compute_surrogate(VS)
+    #THMP.compute_greedy_surrogate(VS, omegas[0], omegas[-1])
     L2_norms = np.empty(len(omegas))
     for i, omega in enumerate(omegas):
         L2_norms[i] = VS.norm(THMP.RI(omega))
     ax.plot(omegas, L2_norms, **kwargs)
     ax.set_yscale('log')
-    
+
 def plot_interpolatory_eigenfrequencies(ax, THMP, supports, VS, timer=False, **kwargs):
     if timer:
         t0 = time.time()
         THMP.solve(supports)
-        THMP.compute_surrogate(VS, supports)
+        THMP.compute_surrogate(VS)
         eigfreqs = THMP.get_interpolatory_eigenfrequencies()
         dt = time.time() - t0
     else:
         THMP.solve(supports)
-        THMP.compute_surrogate(VS, supports)
+        THMP.compute_surrogate(VS)
         eigfreqs = THMP.get_interpolatory_eigenfrequencies()
     real_eigfreqs = np.real(eigfreqs[np.isreal(eigfreqs)])
     ax.vlines(real_eigfreqs, ymin=0, ymax=1, **kwargs)

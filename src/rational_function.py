@@ -64,8 +64,14 @@ class RationalFunction(object):
         A[0, 1:] = self.q
         A[1:, 0] = 1
         B = np.diag(np.append(0, np.ones(N)))
-
         eigvals = scipy.linalg.eigvals(A, b=B)
         if filtered:
             eigvals[~np.isinf(eigvals)]
         return eigvals
+
+    def get_numerator_min(self, samples):
+        tiled_samples = np.tile(samples, (len(self.nodes), 1)).T
+        B = self.q @ ((tiled_samples - self.nodes)**(-1)).T
+        index_min = np.argmin(np.abs(B))
+        return samples[index_min], index_min
+    
