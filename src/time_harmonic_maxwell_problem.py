@@ -238,17 +238,6 @@ class TimeHarmonicMaxwellProblem(object):
         A_vec_inserted[boundary_indices] = boundary_values
         return A_vec_inserted
 
-    def _compute_surrogate(self, VS, support_points):
-        """Compute the rational surrogate with given support points"""
-        self.solve(support_points)
-        A = self.get_solution(tonumpy=True, trace=VS.get_trace())
-        R = helpers.householder_triangularization(A, VS)
-        _, self.sv, V = np.linalg.svd(R)
-        q = V[-1, :].conj()
-        P = self.get_solution(tonumpy=True, trace=VS.get_trace()).T * q
-        omega = self.get_frequency()
-        self.RI = RationalFunction(omega, q, P)
-
     def compute_surrogate(self, VS, additive=False, R=None, E=None, V=None):
         """Compute the rational surrogate with previously computed snapshots"""
         A = self.get_solution(tonumpy=True, trace=VS.get_trace())
@@ -274,10 +263,14 @@ class TimeHarmonicMaxwellProblem(object):
             self.solve(samples_min, accumulate=True)
             a = self.get_solution(tonumpy=True)[-1]
             if VS.norm(a - self.RI(samples_min)) <= tol*VS.norm(a):
+                # Compute surrogate using the last snapshot before termination
+                self.compute_surrogate(VS, additive=True, R=R, E=E, V=V)
                 break
             samples = np.delete(samples, index_min)
-            R, E, V = self.compute_surrogate(VS, additive=True, R=None, E=None, V=None)
-
+            R, E, V = self.compute_surrogate(VS, additive=True, R=R, E=E, V=V)
+            # if [surrogate could not be built in stable way, maybe np.isclose(WG.sv[-2:], WG.sv[-1:])]
+            #    go back to last surrogate?!
+            
     @staticmethod
     def get_numerator_argmin(RF, choices):
         tiled_choices = np.tile(choices, (len(RF.nodes), 1)).T
