@@ -248,7 +248,7 @@ class TimeHarmonicMaxwellProblem(object):
         P = self.get_solution(tonumpy=True, trace=VS.get_trace()).T * q
         omega = self.get_frequency()
         self.RI = RationalFunction(omega, q, P)
-        
+
     @staticmethod
     def get_numerator_argmin(RF, choices):
         tiled_choices = np.tile(choices, (len(RF.nodes), 1)).T
