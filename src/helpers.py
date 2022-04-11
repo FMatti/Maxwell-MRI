@@ -84,7 +84,7 @@ def plot_interpolatory_eigenfrequencies(ax, THMP, a, b, S, VS, timer=False, **kw
     ax.vlines(real_eigfreqs, ymin=0, ymax=1, **kwargs)
     if timer:
         return dt
-    
+
 def vec_dot_N(A_vec, THMP):
     A_vec_inserted = THMP.insert_boundary_values(A_vec)
     return np.inner(A_vec_inserted, THMP.get_N())
@@ -111,8 +111,10 @@ def get_orthonormal_matrix(shape, VS, seed=0):
     gram_schmidt(E, VS)
     return E
 
-def householder_triangularization(A, VS):
+def householder_triangularization(A_, VS):
     """Compute the matrix R of a QR-decomposition of A"""
+    A = A_.copy()
+    
     N = A.shape[0]
     E = get_orthonormal_matrix(A.shape, VS)
     R = np.zeros((N, N))
