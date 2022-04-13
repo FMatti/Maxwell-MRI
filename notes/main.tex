@@ -952,7 +952,7 @@ In summary, we perform the following algorithm:
         \State Compute Householder triangularization $\mathbf{A} = \mathbf{Q} \mathbf{R}$
         \State Compute singular value decomposition of $\mathbf{R} = \mathbf{U} \boldsymbol{\Sigma} \mathbf{V}^T$
         \State Define $\mathbf{q} = (q_1, q_2, \dots, q_N)^T = V(:, N)$ \\
-        \Return $\sum_i \frac{q_i A(\omega_i)}{\omega - \omega_i} / \sum_i \frac{q_i}{\omega - \omega_i}$
+        \Return $\tilde{A}(\omega) = \sum_i \frac{q_i A(\omega_i)}{\omega - \omega_i} / \sum_i \frac{q_i}{\omega - \omega_i}$
     \end{algorithmic}
 \end{algorithm}
 
@@ -1004,6 +1004,58 @@ into the generalized eigenvalue problem
 \end{equation}
 
 whose solutions $z$ satisfy $r(z)=0$.
+
+\subsection{Greedy approach}
+\label{subsec:greedy}
+
+\textit{Pradovera, Nobile: Frequency-domain non-intrusive greedy Model Order
+Reduction based on minimal rational approximation}
+
+In order to algorithmically find out where (and how many) support points/frequencies
+are needed to achieve a certain interpolation precision, one can employ the following
+greedy strategy: As the next support point to be added to an existing set of
+support points, choose the minimizer $\omega^\ast$ of the absolute value of the denominator 
+rational polynomial $Q(\omega)$ in the barycentric representation of the surrogate
+$\tilde{A}(\omega) = \tilde{P}(\omega) / \tilde{Q}(\omega)$:
+
+\begin{equation}
+    \omega^\ast = \text{argmin}_{\omega} |\tilde{Q}(\omega)|
+\end{equation}
+
+The stopping criterion is based on the relative deviation in the L2-norm of the
+surrogate $\tilde{A}(\omega)$ from the finite element solution $A(\omega)$
+exhibited at $\omega^\ast$:
+
+\begin{equation}
+    \frac{\lVert A(\omega^{\ast}) - \tilde{A}(\omega^{\ast}) \rVert}{\lVert A(\omega^{\ast}) \rVert}
+\end{equation}
+
+\begin{algorithm}
+    \caption{Greedy minimal rational interpolation}\label{alg:MRI}
+    \begin{algorithmic}
+        \Require Tolerance $\tau$
+        \Require Test points $\Omega_{test} = \{\omega_i\}_{i=1}^N$
+        \Require Initial support points $\omega_a, \omega_b \not\in \Omega_{test}$
+        \State Build initial surrogate $\tilde{A}_2(\omega) = \tilde{P}_2(\omega) / \tilde{Q}_2(\omega)$ using $\omega_a, \omega_b$
+        \State $s = 2$
+        \While {$\Omega_{test} \neq \emptyset$}
+            \State Find $\omega^{\ast} = \text{argmin}_{\omega \in \Omega_{test}} |\tilde{Q}_s(\omega)|$
+            \State Remove $\omega^{\ast}$ from $\Omega_{test}$
+            \State Compute $A(\omega^{\ast})$
+            \If {$\lVert A(\omega^{\ast}) - \tilde{A}_s(\omega^{\ast}) \rVert \leq \tau \lVert A(\omega^{\ast}) \rVert$}
+                \State $s = s + 1$
+                \State Build surrogate $\tilde{A}_s(\omega)$ using additional support point $\omega^{\ast}$ 
+                \State \Return $\tilde{A}_s(\omega)$
+            \EndIf
+            \State Build surrogate $\tilde{A}_{s+1}(\omega)$ using additional support point $\omega^{\ast}$
+            \If {$\tilde{A}_{s+1}(\omega)$ could not be built in a stable way}
+                \State \Return $\tilde{A}_s(\omega)$
+            \EndIf
+            \State $s = s + 1$
+        \EndWhile
+        \State \Return $\tilde{A}_s(\omega)$
+    \end{algorithmic}
+\end{algorithm}
 
 \section{Weak derivative}
 \label{sec:weak}
