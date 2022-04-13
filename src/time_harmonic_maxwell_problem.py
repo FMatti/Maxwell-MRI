@@ -271,29 +271,6 @@ class TimeHarmonicMaxwellProblem(object):
             R, E, V = self.compute_surrogate(VS, additive=True, R=R, E=E, V=V)
             # if [surrogate could not be built in stable way, maybe np.isclose(WG.sv[-2:], WG.sv[-1:])]
             #    go back to last surrogate?!
-            
-    @staticmethod
-    def get_numerator_argmin(RF, choices):
-        tiled_choices = np.tile(choices, (len(RF.nodes), 1)).T
-        index_min = np.argmin(np.abs(RF.q @ (tiled_choices - RF.nodes).T**(-1)))
-        return index_min
-
-    def compute_greedy_surrogate(self, VS, a, b, tol=1e-2):
-        """Compute the rational surrogate in a greedy manner [2]"""
-        omegas = [a, b]
-        self.solve(omegas)
-        self.compute_surrogate(VS, omegas)
-        choices = np.linspace(a, b, 1000)[1:-1]
-        while len(choices) > 0:
-            index_min = self.get_numerator_argmin(self.RI, choices)
-            omega_min = choices[index_min]
-            self.solve(omega_min, accumulate=True)
-            A = self.get_solution(tonumpy=True, trace=VS.get_trace())[-1]
-            if VS.norm(A - self.RI(omega_min)) <= tol*VS.norm(A):
-                break
-            choices = np.delete(choices, index_min)
-            omegas.append(omega_min)
-            self.compute_surrogate(VS, omegas)
 
     def get_interpolatory_eigenfrequencies(self, filtered=True):
         """Compute the eigenfrequencies based on the roots of the rational interpolant"""
@@ -307,7 +284,6 @@ class TimeHarmonicMaxwellProblem(object):
         RI_norm = np.empty(N)
         for i in range(N):
             FE_norm[i] = VS.norm(A[i])
-            RI_norm[i] = VS.norm(self.RI(self.omega[i]))
             relative_error[i] = VS.norm(A[i] - self.RI(self.omega[i])) / FE_norm[i]
-        return relative_error, FE_norm, RI_norm
+        return relative_error
     

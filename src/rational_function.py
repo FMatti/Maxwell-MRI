@@ -69,6 +69,9 @@ class RationalFunction(object):
             eigvals[~np.isinf(eigvals)]
         return eigvals
 
+    def get_nodes(self):
+        return self.nodes
+
     def get_numerator_min(self, samples):
         tiled_samples = np.tile(samples, (len(self.nodes), 1)).T
         B = self.q @ ((tiled_samples - self.nodes)**(-1)).T
