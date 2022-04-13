@@ -169,7 +169,8 @@ class TimeHarmonicMaxwellProblem(object):
     def tosparse(A):
         """Convert dolfin matrix to a sparse SciPy matrix in CSR format"""
         A_mat = fen.as_backend_type(A).mat()
-        A_sparse = scipy.sparse.csr_matrix(A_mat.getValuesCSR()[::-1])
+        A_shape = (A.size(0), A.size(1))
+        A_sparse = scipy.sparse.csr_matrix(A_mat.getValuesCSR()[::-1], shape=A_shape)
         return A_sparse
 
     def get_V(self):
@@ -261,7 +262,7 @@ class TimeHarmonicMaxwellProblem(object):
         while len(samples) > 0:
             samples_min, index_min = self.RI.get_numerator_min(samples)
             self.solve(samples_min, accumulate=True)
-            a = self.get_solution(tonumpy=True)[-1]
+            a = self.get_solution(tonumpy=True, trace=VS.get_trace())[-1]
             if VS.norm(a - self.RI(samples_min)) <= tol*VS.norm(a):
                 # Compute surrogate using the last snapshot before termination
                 self.compute_surrogate(VS, additive=True, R=R, E=E, V=V)
@@ -287,7 +288,7 @@ class TimeHarmonicMaxwellProblem(object):
             index_min = self.get_numerator_argmin(self.RI, choices)
             omega_min = choices[index_min]
             self.solve(omega_min, accumulate=True)
-            A = self.get_solution(tonumpy=True)[-1]
+            A = self.get_solution(tonumpy=True, trace=VS.get_trace())[-1]
             if VS.norm(A - self.RI(omega_min)) <= tol*VS.norm(A):
                 break
             choices = np.delete(choices, index_min)
