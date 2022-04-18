@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 import numpy as np
 import fenics as fen
 import scipy.sparse
@@ -247,6 +249,7 @@ class TimeHarmonicMaxwellProblem(object):
         else:
             R = helpers.householder_triangularization(A, VS)
         _, self.sv, V_ = np.linalg.svd(R)
+        # Check stability
         q = V_[-1, :].conj()
         P = A.T * q
         omega = self.get_frequency()
@@ -260,7 +263,7 @@ class TimeHarmonicMaxwellProblem(object):
         R, E, V = self.compute_surrogate(VS, additive=True)
         samples = np.linspace(a, b, n)[1:-1]
         while len(samples) > 0:
-            samples_min, index_min = self.RI.get_numerator_min(samples)
+            samples_min, index_min = self.RI.get_denominator_argmin(samples)
             self.solve(samples_min, accumulate=True)
             a = self.get_solution(tonumpy=True, trace=VS.get_trace())[-1]
             if VS.norm(a - self.RI(samples_min)) <= tol*VS.norm(a):

@@ -1,14 +1,14 @@
-import os
-import sys
+# -*- coding: utf-8 -*-
+
 import numpy as np
-import fenics as fen
-import mshr
 import matplotlib.pyplot as plt
 
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath('__file__')))))
+import fenics as fen
+
+from context import src
 from src.time_harmonic_maxwell_problem import TimeHarmonicMaxwellProblem
 
-class RectangularWaveguide(TimeHarmonicMaxwellProblem):
+class RectangularCavity(TimeHarmonicMaxwellProblem):
     def __init__(self, Lx, Ly, Nx, Ny, g_N):
         self.Lx = Lx
         self.Ly = Ly

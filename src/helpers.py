@@ -109,32 +109,62 @@ def gram_schmidt(E, VS, k=None):
         for j in range(i):
             E[i] -= VS.inner_product(E[j], E[i]) * E[j]
         E[i] /= VS.norm(E[i])
+        # Twice is enough
+        for j in range(i):
+            E[i] -= VS.inner_product(E[j], E[i]) * E[j]
+        E[i] /= VS.norm(E[i])
 
-def get_orthonormal_matrix(shape, VS, seed=0):
-    """Produce list of N orthonormal elements"""
-    np.random.seed(seed)
+def get_orthonormal_matrix(shape, VS, E=None):
+    """Produce (extension of) orthonormal matrix with given shape"""
     n1, n2 = shape
-    E = np.random.randn(n1, n2)
-    gram_schmidt(E, VS)
-    return E
-
-def extend_orthonormal_basis(E, VS, n):
-    """Extend an existing orthonormal basis by n more rows"""
-    E_ext = np.r_[E, np.random.randn(n, E.shape[1])]
-    gram_schmidt(E_ext, VS, n)
-    return E_ext
+    if E is None:
+        E_on = np.random.randn(n1, n2)
+    else:
+        # Extend orthonormal matrix E to orthonormal matrix with given shape
+        n1 -= E.shape[0]
+        E_on = np.r_[E, np.random.randn(n1, n2)]
+    gram_schmidt(E_on, VS, n1)
+    return E_on
 
 def householder_triangularization(A_, VS, R=None, E=None, V=None, returns=False):
-    """Compute the matrix R of a QR-decomposition of A"""
+    """
+    (Sequentially) compute the upper triangular matrix of a QR-decomposition
+    of a matrix A_. 
+    
+    Parameters
+    ----------
+    A_ : np.ndarray
+        Snapshot matrix.
+    VS : VectorSpace
+        Vector space object.
+    R : None or np.ndarray
+        Upper triangular matrix (N_R x N_R) obtained from the Householder
+        triangularization of the first N_R columns in A_.
+    E : np.ndarray
+        Orthonormal matrix created in Householder triangularization.
+    V : np.ndarray
+        Householder matrix created in Householder triangularization.
+    returns : bool
+        If True, return E and V in addition to R.
+    
+    Returns
+    -------
+    R : np.ndarray
+        Upper triangular matrix R of the QR-decomposition of A_.
+    (E) : np.ndarray
+        Orthonormal matrix created in Householder triangularization.
+    (V) : np.ndarray
+        Householder matrix created in Householder triangularization.
+    
+    References
+    ----------
+    [1] Lloyd N. Trefethen: Householder triangularization of a quasimatrix.
+        IMA Journal of Numerical Analysis (2008). DOI: 10.1093/imanum/dri017
+    """
     A = A_.copy()
     N_A = A.shape[0]
 
-    if E is None:
-        E = get_orthonormal_matrix(A.shape, VS)
-    else:
-        N_E = E.shape[0]
-        E = extend_orthonormal_basis(E, VS, N_A-N_E)
-
+    # Declare matrix R or extend it with zeros if it already exists
     if R is None:
         N_R = 0
         R = np.zeros((N_A, N_A)) 
@@ -142,33 +172,40 @@ def householder_triangularization(A_, VS, R=None, E=None, V=None, returns=False)
         N_R = R.shape[0]
         R = np.pad(R, (0, N_A-N_R), mode='constant')
 
+    # Get (or extend) an orthonormal matrix of the same shape as snapshot matrix
+    E = get_orthonormal_matrix(A.shape, VS, E)
+
+    # Declare matrix V for Householder vectors or extend it if it already exists
     if V is None:
         V = np.empty((N_A, A.shape[1]))
     else:
         V = np.pad(V, ((0, N_A-N_R), (0, 0)), mode='constant')
 
     for j in range(N_R, N_A):
-
+        # Apply the reflection to j-th snapshot
         for k in range(j):
             A[j] -= 2 * V[k] * VS.inner_product(V[k], A[j])
             R[k, j] = VS.inner_product(E[k], A[j])
             A[j] -= E[k] * R[k, j]
-
+        
         R[j, j] = VS.norm(A[j])
-
+        
+        # Modify E to take account of sign
         alpha = VS.inner_product(E[j], A[j])
         if abs(alpha) > 1e-17:
             E[j] *= - alpha / abs(alpha)
 
+        # Vector defining next reflection
         V[j] = R[j, j] * E[j] - A[j]
         for i in range(j):
-            V[j]  -= VS.inner_product(E[i], V[j] ) * E[i]
+            V[j] -= VS.inner_product(E[i], V[j]) * E[i]
 
+        # If zero vector, reflection is j-th column in orthonormal matrix
         sigma = VS.norm(V[j])
         if abs(sigma) > 1e-17:
-            V[j]  /= sigma
+            V[j] /= sigma
         else:
-            V[j]  = E[j]
+            V[j] = E[j]
 
     if returns:
         return R, E, V

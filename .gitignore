@@ -136,3 +136,11 @@ dmypy.json
 *.pvd
 *.vtu
 *.png
+*.bbl
+*.blg
+
+# Modelling
+*.FCStd
+*.FCStd1
+*.geo.opt
+*.msh

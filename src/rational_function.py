@@ -1,15 +1,16 @@
+# -*- coding: utf-8 -*-
+
 import numpy as np
-import fenics as fen
 import scipy.linalg
 
 class RationalFunction(object):
     """
     Encodes rational functions of the shape
     
-                 sum_j P_ij / (z - z_j)
-        r(z)_i = ----------------------
-                 sum_j q_j / (z - z_j)
- 
+                 P(z)   sum_j P_ij / (z - z_j)
+        r(z)_i = ---- = ----------------------
+                 q(z)   sum_j q_j / (z - z_j)
+
     Members
     -------
     nodes : list[float] or np.ndarray
@@ -26,13 +27,17 @@ class RationalFunction(object):
     roots() : None -> float
         Return (filtered) roots of rational function. Filtered
         only returns roots between the smallest and largest node.
+    get_nodes() : None -> np.ndarray
+        Return the nodes z_j of the rational polynomial.
+    get_denominator_argmin(samples) : list[float] -> float, float
+        Return the sample (and its position) in a list of samples which
+        minimizes the denominator polynomial q(z). 
 
     References
     ----------
     [1] Klein G. Applications of Linear Barycentric Rational Interpolation
         https://core.ac.uk/download/pdf/20659062.pdf
-    [2] ...
-    
+
     Usage
     -----
     Define rational function r(z) = (1/z + 2/(z+1)) / (1/z + 1/(z+1))
@@ -72,7 +77,7 @@ class RationalFunction(object):
     def get_nodes(self):
         return self.nodes
 
-    def get_numerator_min(self, samples):
+    def get_denominator_argmin(self, samples):
         tiled_samples = np.tile(samples, (len(self.nodes), 1)).T
         B = self.q @ ((tiled_samples - self.nodes)**(-1)).T
         index_min = np.argmin(np.abs(B))
