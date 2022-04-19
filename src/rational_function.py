@@ -80,6 +80,5 @@ class RationalFunction(object):
     def get_denominator_argmin(self, samples):
         tiled_samples = np.tile(samples, (len(self.nodes), 1)).T
         B = self.q @ ((tiled_samples - self.nodes)**(-1)).T
-        index_min = np.argmin(np.abs(B))
-        return samples[index_min], index_min
+        return np.argmin(np.abs(B))
     

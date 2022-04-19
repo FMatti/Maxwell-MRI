@@ -10,6 +10,9 @@ from src.time_harmonic_maxwell_problem import TimeHarmonicMaxwellProblem
 
 class CircularWaveguideFilter(TimeHarmonicMaxwellProblem):
     def __init__(self, mesh, B_N, g_N):
+        # Import mesh and scale its units to meters
+        mesh = fen.Mesh(mesh)
+        mesh.coordinates()[:] = mesh.coordinates()[:] * 1e-3
         V = fen.FunctionSpace(mesh, 'N1curl', 1)
 
         mu = fen.Expression('4e-7*pi', degree=2)

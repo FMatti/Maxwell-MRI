@@ -1,21 +1,19 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
-import fenics as fen
-import scipy.sparse
 
 from .rational_function import RationalFunction
 
 class MinimalRationalInterpolation(object):
     """
-    Minimal rational interpolator for time-harmonic Maxwell problems.
+    Minimal rational interpolation.
 
     Members
     -------
-    A_ : np.ndarray
-        Snapshot matrix.
     VS : VectorSpace
         Vector space object.
+    RI : RationalFunction
+        The rational interpolant in barycentric coordinates.
     R : None or np.ndarray
         Upper triangular matrix (N_R x N_R) obtained from the Householder
         triangularization of the first N_R columns in A_.
@@ -23,10 +21,18 @@ class MinimalRationalInterpolation(object):
         Orthonormal matrix created in Householder triangularization.
     V : np.ndarray
         Householder matrix created in Householder triangularization.
+    sv : np.ndarray
+        Singular values of the triangular matrix R.
 
     Methods
     -------
-    
+    compute_surrogate(snapshots, omegas) : np.ndarray, np.ndarray -> None
+        Compute the rational interpolation surrogate for a snapshot matrix.
+    get_surrogate() : None -> RationalFunction
+        Returns the computed rational interpolation surrogate.
+    get_interpolatory_eigenfrequencies() : None -> np.ndarray
+        Returns the eigenfrequencies determined with the surrogate.
+
     References
     ----------
     [1] Pradovera D. and Nobile F.: Frequency-domain non-intrusive greedy
@@ -34,10 +40,10 @@ class MinimalRationalInterpolation(object):
     [2] Giraud L. and Langou J. and Rozloznk M.: On the round-off error
         analysis of the Gram-Schmidt algorithm with reorthogonalization.
         URL: https://www.cerfacs.fr/algor/reports/2002/TR_PA_02_33.pdf
+    [3] Lloyd N. Trefethen: Householder triangularization of a quasimatrix.
+        IMA Journal of Numerical Analysis (2008). DOI: 10.1093/imanum/dri017
     """
-
-    def __init__(self, THMP, VS):
-        self.THMP = THMP
+    def __init__(self, VS):
         self.VS = VS
         self.RI = None
         self.R = None
@@ -51,12 +57,10 @@ class MinimalRationalInterpolation(object):
             k = E.shape[0]
             E[0] /= self.VS.norm(E[0])
         for i in range(E.shape[0]-k, E.shape[0]):
-            for j in range(i):
-                E[i] -= self.VS.inner_product(E[j], E[i]) * E[j]
+            E[i] -= E[:i].T.dot(self.VS.inner_product(E[:i], E[i]))
             E[i] /= self.VS.norm(E[i])
-            # Repeat orthonormalization: "Twice is enough" [2]
-            for j in range(i):
-                E[i] -= self.VS.inner_product(E[j], E[i]) * E[j]
+            # Repeat orthonormalization. Mantra: "Twice is enough" [2]
+            E[i] -= E[:i].T.dot(self.VS.inner_product(E[:i], E[i]))
             E[i] /= self.VS.norm(E[i])
 
     def _set_orthonormal_matrix(self, shape):
@@ -71,15 +75,8 @@ class MinimalRationalInterpolation(object):
         self._gram_schmidt(self.E, n1)
 
     def _householder_triangularization(self, A_):
-        """
-        (Sequentially) compute the upper triangular matrix of a QR-decomposition
-        of the snapshot matrix A of a time-harmonic Maxwell problem. 
-
-        References
-        ----------
-        [1] Lloyd N. Trefethen: Householder triangularization of a quasimatrix.
-            IMA Journal of Numerical Analysis (2008). DOI: 10.1093/imanum/dri017
-        """
+        """(Sequentially) compute the upper triangular matrix of a QR-decomposition
+        of the snapshot matrix A of a time-harmonic Maxwell problem."""
         A = A_.copy()
         N_A = A.shape[0]
 
@@ -126,55 +123,50 @@ class MinimalRationalInterpolation(object):
             else:
                 self.V[j] = self.E[j]
 
-    def _build_surrogate(self, additive=False):
+    def _build_surrogate(self, snapshots, omegas, additive=False):
         """Compute the rational surrogate with pre-computed snapshots"""
-        A = self.THMP.get_solution(tonumpy=True, trace=self.VS.get_trace())
         if not additive:
             self.R = None
             self.E = None
             self.V = None
-        self._householder_triangularization(A)
+        self._householder_triangularization(snapshots)
         _, self.sv, V_conj = np.linalg.svd(self.R)
-        # Check stability [TODO]
-        omega = self.THMP.get_frequency()
+        # Check stability of build [TODO]
         q = V_conj[-1, :].conj()
-        P = A.T * q
-        self.RI = RationalFunction(omega, q, P)
+        P = snapshots.T * q
+        self.RI = RationalFunction(omegas, q, P)
 
-    def compute_surrogate(self, mode='snapshots', a=None, b=None, tol=1e-2, n=1000):
+    def compute_surrogate(self, snapshots, omegas, greedy=True, tol=1e-2, n=1000):
         """Compute the rational surrogate"""
-        if mode is not 'greedy':
-            self.build_surrogate()
+        if not greedy:
+            self._build_surrogate(snapshots, omegas, additive=False)
             return
-        self.THMP.solve([a, b])
-        self._build_surrogate()
-        samples = np.linspace(a, b, n)[1:-1]
-        while len(samples) > 0:
-            samples_min, index_min = self.RI.get_denominator_argmin(samples)
-            self.THMP.solve(samples_min, accumulate=True)
-            a = self.THMP.get_solution(tonumpy=True, trace=self.VS.get_trace())[-1]
-            if self.VS.norm(a - self.RI(samples_min)) <= tol*self.VS.norm(a):
+
+        # Take smallest and largest omegas as initial support points
+        supports = [np.argmin(omegas), np.argmax(omegas)]
+        is_eligible = np.ones(len(omegas), dtype=bool)
+        is_eligible[supports] = False
+        self._build_surrogate(snapshots[supports], omegas[supports], additive=False)
+
+        # Greedily add support points until relative surrogate error below tolerance
+        while np.any(is_eligible):
+            reduced_argmin = self.RI.get_denominator_argmin(omegas[is_eligible])
+            argmin = np.arange(len(omegas))[is_eligible][reduced_argmin]
+            supports.append(argmin)
+            is_eligible[argmin] = False
+            a = snapshots[argmin]
+            if self.VS.norm(a - self.RI(omegas[argmin])) <= tol*self.VS.norm(a):
                 # Compute surrogate using the last snapshot before termination
-                self._build_surrogate(additive=True)
+                self._build_surrogate(snapshots[supports], omegas[supports], additive=True)
                 break
-            samples = np.delete(samples, index_min)
-            self._build_surrogate(additive=True)
+            self._build_surrogate(snapshots[supports], omegas[supports], additive=True)
 
     def get_surrogate(self):
         return self.RI
-
-    def get_vectorspace(self):
-        return self.VS
     
-    def get_interpolatory_eigenfrequencies(self, filtered=True):
+    def get_interpolatory_eigenfrequencies(self, filtered=True, only_real=False):
         """Compute the eigenfrequencies based on the roots of the rational interpolant"""
-        return self.RI.roots(filtered)
-
-    def plot_surrogate_norm(self, ax, a=None, b=None, N=1000, **kwargs):
-        if a is None:
-            a = np.min(self.RI.get_nodes())
-        if b is None:
-            b = np.max(self.RI.get_nodes())
-        linspace = np.linspace(a, b, N)
-        ax.plot(linspace, [self.VS.norm(self.RI(x)) for x in linspace], **kwargs)
-        ax.set_yscale('log')
+        eigfreqs = self.RI.roots(filtered)
+        if only_real:
+            return np.real(eigfreqs[np.isreal(eigfreqs)])
+        return eigfreqs
