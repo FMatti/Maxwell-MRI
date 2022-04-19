@@ -2,7 +2,6 @@
 
 import numpy as np
 import fenics as fen
-import scipy.linalg
 
 class VectorSpace(object):
     """

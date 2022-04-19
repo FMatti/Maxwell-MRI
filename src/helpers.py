@@ -66,21 +66,32 @@ def plot_numerical_eigenfrequencies(ax, THMP, a, b, k=50, timer=False, **kwargs)
     if timer:
         return dt
 
-def plot_surrogate_norms(ax, THMP, omegas, VS, **kwargs):
-    """Plot norm of surrogate at a set of frequencies"""
-    norms = np.empty(len(omegas))
-    for i, omega in enumerate(omegas):
-        norms[i] = VS.norm(THMP.RI(omega))
-    ax.plot(omegas, norms, **kwargs)
+def plot_surrogate_norms(ax, MRI, VS=None, a=None, b=None, N=1000, **kwargs):
+    """Plot vectorspace norm of surrogate at N uniform points in [a, b]"""
+    if VS is None:
+        VS = MRI.get_vectorspace()
+    if a is None:
+        a = np.min(self.RI.get_nodes())
+    if b is None:
+        b = np.max(self.RI.get_nodes())
+    norms = np.empty(N)
+    RI = MRI.get_surrogate()
+    linspace = np.linspace(a, b, N)
+    ax.plot(linspace, [VS.norm(MRI.RI(x)) for x in linspace], **kwargs)
     ax.set_yscale('log')
 
-def plot_surrogate_error_norms(ax, THMP, VS, **kwargs):
+def plot_surrogate_error_norms(ax, THMP, MRI, VS, **kwargs):
     """Plot relative error norm of surrogate"""
     omegas = THMP.get_frequency()
-    norms = THMP.get_error(VS)
-    ax.plot(omegas, norms, **kwargs)
+    A = THMP.get_solution(tonumpy=True, trace=VS.get_trace())
+    RI = MRI.get_surrogate()
+    err = [VS.norm(A[i] - RI(x)) / VS.norm(A[i]) for i, x in enumerate(omegas)]
+    ax.plot(omegas, err, **kwargs)
     ax.set_yscale('log')
 
+    
+    
+    
 def plot_surrogate_support_points(ax, THMP, **kwargs):
     supports = THMP.RI.get_nodes()
     ax.vlines(supports, ymin=0, ymax=1, **kwargs)
@@ -99,114 +110,3 @@ def plot_eigvecs_dot_N(ax, THMP, a, b, **kwargs):
     dotproducts = [vec_dot_N(vec, THMP) for vec in eigvecs]    
     ax.bar(eigvals, np.abs(dotproducts), **kwargs)
     ax.set_yscale('log')
-
-def gram_schmidt(E, VS, k=None):
-    """M-orthonormalize the (k last) rows of a matrix E"""
-    if k is None or k == E.shape[0]:
-        k = E.shape[0]
-        E[0] /= VS.norm(E[0])
-    for i in range(E.shape[0]-k, E.shape[0]):
-        for j in range(i):
-            E[i] -= VS.inner_product(E[j], E[i]) * E[j]
-        E[i] /= VS.norm(E[i])
-        # Twice is enough
-        for j in range(i):
-            E[i] -= VS.inner_product(E[j], E[i]) * E[j]
-        E[i] /= VS.norm(E[i])
-
-def get_orthonormal_matrix(shape, VS, E=None):
-    """Produce (extension of) orthonormal matrix with given shape"""
-    n1, n2 = shape
-    if E is None:
-        E_on = np.random.randn(n1, n2)
-    else:
-        # Extend orthonormal matrix E to orthonormal matrix with given shape
-        n1 -= E.shape[0]
-        E_on = np.r_[E, np.random.randn(n1, n2)]
-    gram_schmidt(E_on, VS, n1)
-    return E_on
-
-def householder_triangularization(A_, VS, R=None, E=None, V=None, returns=False):
-    """
-    (Sequentially) compute the upper triangular matrix of a QR-decomposition
-    of a matrix A_. 
-    
-    Parameters
-    ----------
-    A_ : np.ndarray
-        Snapshot matrix.
-    VS : VectorSpace
-        Vector space object.
-    R : None or np.ndarray
-        Upper triangular matrix (N_R x N_R) obtained from the Householder
-        triangularization of the first N_R columns in A_.
-    E : np.ndarray
-        Orthonormal matrix created in Householder triangularization.
-    V : np.ndarray
-        Householder matrix created in Householder triangularization.
-    returns : bool
-        If True, return E and V in addition to R.
-    
-    Returns
-    -------
-    R : np.ndarray
-        Upper triangular matrix R of the QR-decomposition of A_.
-    (E) : np.ndarray
-        Orthonormal matrix created in Householder triangularization.
-    (V) : np.ndarray
-        Householder matrix created in Householder triangularization.
-    
-    References
-    ----------
-    [1] Lloyd N. Trefethen: Householder triangularization of a quasimatrix.
-        IMA Journal of Numerical Analysis (2008). DOI: 10.1093/imanum/dri017
-    """
-    A = A_.copy()
-    N_A = A.shape[0]
-
-    # Declare matrix R or extend it with zeros if it already exists
-    if R is None:
-        N_R = 0
-        R = np.zeros((N_A, N_A)) 
-    else:
-        N_R = R.shape[0]
-        R = np.pad(R, (0, N_A-N_R), mode='constant')
-
-    # Get (or extend) an orthonormal matrix of the same shape as snapshot matrix
-    E = get_orthonormal_matrix(A.shape, VS, E)
-
-    # Declare matrix V for Householder vectors or extend it if it already exists
-    if V is None:
-        V = np.empty((N_A, A.shape[1]))
-    else:
-        V = np.pad(V, ((0, N_A-N_R), (0, 0)), mode='constant')
-
-    for j in range(N_R, N_A):
-        # Apply the reflection to j-th snapshot
-        for k in range(j):
-            A[j] -= 2 * V[k] * VS.inner_product(V[k], A[j])
-            R[k, j] = VS.inner_product(E[k], A[j])
-            A[j] -= E[k] * R[k, j]
-        
-        R[j, j] = VS.norm(A[j])
-        
-        # Modify E to take account of sign
-        alpha = VS.inner_product(E[j], A[j])
-        if abs(alpha) > 1e-17:
-            E[j] *= - alpha / abs(alpha)
-
-        # Vector defining next reflection
-        V[j] = R[j, j] * E[j] - A[j]
-        for i in range(j):
-            V[j] -= VS.inner_product(E[i], V[j]) * E[i]
-
-        # If zero vector, reflection is j-th column in orthonormal matrix
-        sigma = VS.norm(V[j])
-        if abs(sigma) > 1e-17:
-            V[j] /= sigma
-        else:
-            V[j] = E[j]
-
-    if returns:
-        return R, E, V
-    return R
