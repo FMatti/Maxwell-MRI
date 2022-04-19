@@ -1057,6 +1057,31 @@ exhibited at $\omega^\ast$:
     \end{algorithmic}
 \end{algorithm}
 
+\subsection{Mesh size}
+\label{sec:mesh}
+
+Given a frequency $\omega$, we want to find out the largest tolerable mesh-size 
+$\Delta x$ that is still able to sufficiently \enquote{resolve} the frequency
+dependence of the system.
+
+We know the wavelength (spatial period) of electromagnetic waves is given as
+
+\begin{equation}
+     \lambda = \frac{2\pi c}{\omega}
+\end{equation}
+
+where $c$ is the speed of light in the medium. The mesh-size $\Delta x$ should 
+be around one order of magnitude smaller than the smallest spatial period.
+Using $\omega_{max} \approx 8\times10^{10}$ rad/s and $c \approx 3\times10^8$ m/s, we deduce 
+
+\begin{equation}
+    \lambda_{\text{min}} = \frac{2\pi c}{\omega_{\text{max}}} \approx 0.0235~\text{m}
+\end{equation}
+
+The dual mode circular waveguide filter has a length of $\approx 0.086$ m, so a
+fine enough mesh should contain at least around 40 lengthwise subdivisions
+along the waveguide.
+
 \section{Weak derivative}
 \label{sec:weak}
 
