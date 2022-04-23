@@ -52,7 +52,7 @@ class MinimalRationalInterpolation(object):
         self.sv = None
         
     def _gram_schmidt(self, E, k=None):
-        """M-orthonormalize the (k last) rows of a matrix E"""
+        """Orthonormalize the (k last) rows of a matrix E"""
         if k is None or k == E.shape[0]:
             k = E.shape[0]
             E[0] /= self.VS.norm(E[0])
@@ -74,10 +74,10 @@ class MinimalRationalInterpolation(object):
             self.E = np.r_[self.E, np.random.randn(n1, n2)]
         self._gram_schmidt(self.E, n1)
 
-    def _householder_triangularization(self, A_):
-        """(Sequentially) compute the upper triangular matrix of a QR-decomposition
-        of the snapshot matrix A of a time-harmonic Maxwell problem."""
-        A = A_.copy()
+    def _householder_triangularization(self, A):
+        """(Sequentially) compute the upper triangular matrix of a QR-decomposi-
+        tion of the snapshot matrix A of a time-harmonic Maxwell problem."""
+
         N_A = A.shape[0]
 
         # Declare matrix R or extend it with zeros if it already exists
@@ -88,35 +88,36 @@ class MinimalRationalInterpolation(object):
             N_R = self.R.shape[0]
             self.R = np.pad(self.R, (0, N_A-N_R), mode='constant')
 
-        # Get (or extend) an orthonormal matrix of the same shape as snapshot matrix
+        # Get/extend orthonormal matrix E to the shape of snapshot matrix
         self._set_orthonormal_matrix(A.shape)
 
-        # Declare matrix V for Householder vectors or extend it if it already exists
+        # Declare/extend matrix V for Householder vectors
         if self.V is None:
             self.V = np.empty((N_A, A.shape[1]))
         else:
             self.V = np.pad(self.V, ((0, N_A-N_R), (0, 0)), mode='constant')
 
         for j in range(N_R, N_A):
+            a = A[j].copy()
+
             # Apply the reflection to j-th snapshot
             for k in range(j):
-                A[j] -= 2 * self.V[k] * self.VS.inner_product(self.V[k], A[j])
-                self.R[k, j] = self.VS.inner_product(self.E[k], A[j])
-                A[j] -= self.E[k] * self.R[k, j]
+                a -= 2 * self.VS.inner_product(self.V[k], a) * self.V[k]
+                self.R[k, j] = self.VS.inner_product(self.E[k], a)
+                a -= self.E[k] * self.R[k, j]
 
-            self.R[j, j] = self.VS.norm(A[j])
+            self.R[j, j] = self.VS.norm(a)
 
             # Modify E to take account of sign
-            alpha = self.VS.inner_product(self.E[j], A[j])
+            alpha = self.VS.inner_product(self.E[j], a)
             if abs(alpha) > 1e-17:
                 self.E[j] *= - alpha / abs(alpha)
 
             # Vector defining next reflection
-            self.V[j] = self.R[j, j] * self.E[j] - A[j]
-            for i in range(j):
-                self.V[j] -= self.VS.inner_product(self.E[i], self.V[j]) * self.E[i]
+            self.V[j] = self.R[j, j] * self.E[j] - a
 
-            # If zero vector, reflection is j-th column in orthonormal matrix
+            # Orthonormalize V[j] with respect to orthonormal matrix E[0...j-1]
+            self.V[j] -= self.VS.inner_product(self.E[:j], self.V[j]) @ self.E[:j]
             sigma = self.VS.norm(self.V[j])
             if abs(sigma) > 1e-17:
                 self.V[j] /= sigma
@@ -139,16 +140,16 @@ class MinimalRationalInterpolation(object):
     def compute_surrogate(self, snapshots, omegas, greedy=True, tol=1e-2, n=1000):
         """Compute the rational surrogate"""
         if not greedy:
-            self._build_surrogate(snapshots, omegas, additive=False)
+            self._build_surrogate(snapshots, omegas)
             return
 
-        # Take smallest and largest omegas as initial support points
+        # Greedy: Take smallest and largest omegas as initial support points
         supports = [np.argmin(omegas), np.argmax(omegas)]
         is_eligible = np.ones(len(omegas), dtype=bool)
         is_eligible[supports] = False
-        self._build_surrogate(snapshots[supports], omegas[supports], additive=False)
+        self._build_surrogate(snapshots[supports], omegas[supports])
 
-        # Greedily add support points until relative surrogate error below tolerance
+        # Greedy: Add support points until relative surrogate error below tol
         while np.any(is_eligible):
             reduced_argmin = self.RI.get_denominator_argmin(omegas[is_eligible])
             argmin = np.arange(len(omegas))[is_eligible][reduced_argmin]
@@ -163,9 +164,9 @@ class MinimalRationalInterpolation(object):
 
     def get_surrogate(self):
         return self.RI
-    
+
     def get_interpolatory_eigenfrequencies(self, filtered=True, only_real=False):
-        """Compute the eigenfrequencies based on the roots of the rational interpolant"""
+        """Compute the eigenfrequencies as roots of rational interpolant"""
         eigfreqs = self.RI.roots(filtered)
         if only_real:
             return np.real(eigfreqs[np.isreal(eigfreqs)])
