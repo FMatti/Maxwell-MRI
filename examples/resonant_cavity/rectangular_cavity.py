@@ -37,15 +37,26 @@ class RectangularCavity(TimeHarmonicMaxwellProblem):
         A_sol = self.get_solution(tonumpy=False)
         for i, A in enumerate(A_sol):
             plt.figure()
-            plt.title(f'Solution to system at frequency \u03C9 = {self.omega[i]} rad/s')
+            plt.title('Solution to system at frequency \u03C9 = {:.3f} rad/s'.format(self.omega[i]))
             fig = fen.plot(A)
             plt.colorbar(fig, orientation='horizontal')
+            plt.show()
+
+    def plot_solution_trace(self, trace):
+        A_sol = self.get_solution(tonumpy=False)
+        for i, A in enumerate(A_sol):
+            plt.figure()
+            plt.title('Solution on trace at frequency \u03C9 = {:.3f} rad/s'.format(self.omega[i]))
+            all_coords = self.V.tabulate_dof_coordinates()
+            trace_coords = np.array([x for x in all_coords if trace.inside(x, 'on_boundary')])
+            A_trace = [A(x) for x in trace_coords]
+            plt.plot(trace_coords[:, 1], A_trace)
             plt.show()
 
     def plot_external_solution(self, A_vec, contains_boundary_values=False, omega=None):
         plt.figure()
         if omega is not None:
-            plt.title(f'Solution to system at frequency \u03C9 = {omega} rad/s')
+            plt.title('Solution to system at frequency \u03C9 = {:.3f} rad/s'.format(omega))
         A_func = fen.Function(self.V)
         if not contains_boundary_values:
             A_vec = self.insert_boundary_values(A_vec)

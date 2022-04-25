@@ -6,7 +6,7 @@ import scipy.linalg
 class RationalFunction(object):
     """
     Encodes rational functions of the shape
-    
+
                  P(z)   sum_j P_ij / (z - z_j)
         r(z)_i = ---- = ----------------------
                  q(z)   sum_j q_j / (z - z_j)
