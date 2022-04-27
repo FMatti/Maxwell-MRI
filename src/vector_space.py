@@ -5,7 +5,7 @@ import fenics as fen
 
 class VectorSpace(object):
     """
-    Abstract class encoding an inner product space.
+    Class encoding an inner product space.
 
     Members
     -------
@@ -23,8 +23,8 @@ class VectorSpace(object):
     get_trace() : None -> fen.SubDomain
         Returns the subdomain object locating the trace.
     """
-    def __init__(self):
-        self.matrix = None
+    def __init__(self, matrix):
+        self.matrix = matrix
         self.trace = None
 
     def inner_product(self, u, v):
@@ -44,7 +44,7 @@ class VectorSpaceL2(VectorSpace):
     """
     def __init__(self, THMP, trace=None):
         self.trace = trace
-       
+
         if trace is None:
             # L2 inner product over the entire space
             u = fen.TrialFunction(THMP.V)

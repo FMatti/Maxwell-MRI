@@ -15,9 +15,9 @@ def plot_solution_norms(ax, THMP, VS, **kwargs):
 def plot_surrogate_norms(ax, MRI, VS, a=None, b=None, N=1000, **kwargs):
     """Plot vectorspace norm of surrogate at N uniform points in [a, b]"""
     if a is None:
-        a = np.min(self.RI.get_nodes())
+        a = np.min(MRI.RI.get_nodes())
     if b is None:
-        b = np.max(self.RI.get_nodes())
+        b = np.max(MRI.RI.get_nodes())
     norms = np.empty(N)
     RI = MRI.get_surrogate()
     linspace = np.linspace(a, b, N)
