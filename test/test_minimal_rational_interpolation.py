@@ -12,6 +12,15 @@ from src.time_harmonic_maxwell_problem import TimeHarmonicMaxwellProblem
 
 class TestCase(unittest.TestCase):
     def setUp(self):
+        self.THMP, B_N = self.get_simple_THMP()
+        self.THMP.setup()
+        self.THMP.solve([1, 2, 3, 4, 5])
+        self.VS = VectorSpaceL2(self.THMP)
+        self.MRI = MinimalRationalInterpolation(self.VS)
+        self.VS_trace = VectorSpaceL2(self.THMP, trace=B_N())
+        self.MRI_trace = MinimalRationalInterpolation(self.VS_trace)
+
+    def get_simple_THMP(self):
         mesh = fen.UnitSquareMesh(10, 10, 'crossed')
         V = fen.FunctionSpace(mesh, 'P', 1)
 
@@ -30,13 +39,7 @@ class TestCase(unittest.TestCase):
         A_D = fen.Expression('0.0', degree=2)
         g_N = fen.Expression('sin(x[1]*pi)', degree=2)
 
-        self.THMP = TimeHarmonicMaxwellProblem(V, mu, eps, j, B_D(), B_N(), A_D, g_N)
-        self.THMP.setup()
-        self.THMP.solve([1, 2, 3, 4, 5])
-        self.VS = VectorSpaceL2(self.THMP)
-        self.MRI = MinimalRationalInterpolation(self.VS)
-        self.VS_trace = VectorSpaceL2(self.THMP, trace=B_N())
-        self.MRI_trace = MinimalRationalInterpolation(self.VS_trace)
+        return TimeHarmonicMaxwellProblem(V, mu, eps, j, B_D(), B_N(), A_D, g_N), B_N
 
     def test_householder(self):
         snapshots = self.THMP.get_solution(tonumpy=True)
