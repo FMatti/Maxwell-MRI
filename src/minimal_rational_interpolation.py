@@ -118,6 +118,8 @@ class MinimalRationalInterpolation(object):
 
             # Orthonormalize V[j] with respect to orthonormal matrix E[0...j-1]
             self.V[j] -= self.VS.inner_product(self.E[:j], self.V[j]) @ self.E[:j]
+            # Repeat orthonormalization. Mantra: "Twice is enough" [2]
+            self.V[j] -= self.VS.inner_product(self.E[:j], self.V[j]) @ self.E[:j]
             sigma = self.VS.norm(self.V[j])
             if abs(sigma) > 1e-17:
                 self.V[j] /= sigma
@@ -137,7 +139,8 @@ class MinimalRationalInterpolation(object):
         P = snapshots.T * q
         self.RI = RationalFunction(omegas, q, P)
 
-    def compute_surrogate(self, snapshots, omegas, greedy=True, tol=1e-2, n=1000):
+    def compute_surrogate(self, snapshots, omegas, greedy=True, tol=1e-2, n=1000,
+                          return_rel_err=False):
         """Compute the rational surrogate"""
         if not greedy:
             self._build_surrogate(snapshots, omegas)
@@ -149,6 +152,10 @@ class MinimalRationalInterpolation(object):
         is_eligible[supports] = False
         self._build_surrogate(snapshots[supports], omegas[supports])
 
+        # Keep track of relatvie error
+        t = 0
+        rel_err = np.empty(len(omegas))
+
         # Greedy: Add support points until relative surrogate error below tol
         while np.any(is_eligible):
             reduced_argmin = self.RI.get_denominator_argmin(omegas[is_eligible])
@@ -156,11 +163,15 @@ class MinimalRationalInterpolation(object):
             supports.append(argmin)
             is_eligible[argmin] = False
             a = snapshots[argmin]
-            if self.VS.norm(a - self.RI(omegas[argmin])) <= tol*self.VS.norm(a):
+            rel_err[t] = self.VS.norm(a - self.RI(omegas[argmin])) / self.VS.norm(a)
+            if rel_err[t] <= tol:
                 # Compute surrogate using the last snapshot before termination
                 self._build_surrogate(snapshots[supports], omegas[supports], additive=True)
+                if return_rel_err:
+                    return rel_err[:t+1]
                 break
             self._build_surrogate(snapshots[supports], omegas[supports], additive=True)
+            t += 1
 
     def get_surrogate(self):
         return self.RI
