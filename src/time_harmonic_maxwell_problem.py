@@ -2,10 +2,12 @@
 
 import numpy as np
 import scipy.sparse
+import pickle
 
 import fenics as fen
 
 from .rational_function import RationalFunction
+from .snapshot_matrix import SnapshotMatrix
 
 class TimeHarmonicMaxwellProblem(object):
     """
@@ -49,8 +51,6 @@ class TimeHarmonicMaxwellProblem(object):
         Neumann boundary condition.
     A_sol : dolfin.functions.function.Function
         Solution to the variational problem.
-    M_inner : dolfin.cpp.la.Matrix
-        Matrix used to compute L2-norm in V.
     bc : dolfin.fem.bcs.DirichletBC
         Dirichlet boundary condition object.
     omega : list[float] or float
@@ -109,7 +109,6 @@ class TimeHarmonicMaxwellProblem(object):
         self.A_D = A_D
         self.g_N = g_N
         self.A_sol = None
-        self.M_inner = None
         self.bc = None
         self.omega = None
 
@@ -227,11 +226,26 @@ class TimeHarmonicMaxwellProblem(object):
             coords = self.V.tabulate_dof_coordinates()
             is_on_trace = lambda x: trace.inside(x, 'on_boundary')
             on_trace = np.apply_along_axis(is_on_trace, 1, coords)
+            if isinstance(self.A_sol, np.ndarray):
+                return self.A_sol[:, on_trace]
             return np.array([a.vector().get_local()[on_trace] for a in self.A_sol])
         if tonumpy:
+            if isinstance(self.A_sol, np.ndarray):
+                return self.A_sol
             return np.array([a.vector().get_local() for a in self.A_sol])
         return self.A_sol
-    
+
+    def save_solution(self, dirname, trace=None):
+        SM = SnapshotMatrix(self.get_solution(tonumpy=True, trace=trace), self.omega)
+        with open(dirname, 'wb') as file:
+            pickle.dump(SM, file)
+
+    def load_solution(self, dirname):
+        with open(dirname, 'rb') as file:
+            SM = pickle.load(file)
+        self.A_sol = SM.get_snapshots()
+        self.omega = SM.get_frequencies()
+
     def get_frequency(self):
         """Return the frequencies corresponding to the solutions"""
         return np.array(self.omega)
