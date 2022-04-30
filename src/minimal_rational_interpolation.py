@@ -138,9 +138,9 @@ class MinimalRationalInterpolation(object):
         q = V_conj[-1, :].conj()
         P = snapshots.T * q
         self.RI = RationalFunction(omegas, q, P)
+        self.RI_ring = RationalFunction(omegas, q, np.diag(q))
 
-    def compute_surrogate(self, snapshots, omegas, greedy=True, tol=1e-2, n=1000,
-                          return_rel_err=False):
+    def compute_surrogate(self, snapshots, omegas, greedy=True, tol=1e-2, n=1000):
         """Compute the rational surrogate"""
         if not greedy:
             self._build_surrogate(snapshots, omegas)
@@ -152,29 +152,18 @@ class MinimalRationalInterpolation(object):
         is_eligible[supports] = False
         self._build_surrogate(snapshots[supports], omegas[supports])
 
-        # Keep track of relatvie error
-        t = 0
-        rel_err = np.empty(len(omegas))
-
         # Greedy: Add support points until relative surrogate error below tol
         while np.any(is_eligible):
             reduced_argmin = self.RI.get_denominator_argmin(omegas[is_eligible])
             argmin = np.arange(len(omegas))[is_eligible][reduced_argmin]
             supports.append(argmin)
             is_eligible[argmin] = False
-            a = snapshots[argmin]
-            rel_err[t] = self.VS.norm(a - self.RI(omegas[argmin])) / self.VS.norm(a)
-            if rel_err[t] <= tol:
-                # Compute surrogate using the last snapshot before termination
-                self._build_surrogate(snapshots[supports], omegas[supports], additive=True)
-                if return_rel_err:
-                    return rel_err[:t+1]
-                break
+            RI_hat = self.R @ self.RI_ring(omegas[argmin])
             self._build_surrogate(snapshots[supports], omegas[supports], additive=True)
-            t += 1
-        if return_rel_err:
-            return rel_err[:t]
-            
+            rel_err = np.linalg.norm(self.R[:, -1] - np.append(RI_hat, 0)) \
+                    / np.linalg.norm(self.R[:, -1])
+            if rel_err <= tol:
+                break
 
     def get_surrogate(self):
         return self.RI
