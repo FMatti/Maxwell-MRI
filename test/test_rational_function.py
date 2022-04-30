@@ -39,7 +39,12 @@ class TestCase(unittest.TestCase):
     def test_get_denominator_argmin(self):
         testing.assert_almost_equal(self.RF.get_denominator_argmin([2., 3., 4.]),
                                     2,
-                                    err_msg='incorrect root')
+                                    err_msg='incorrect denominator argmin')
+
+    def test_get_denominator_argmin_single(self):
+        testing.assert_almost_equal(self.RF.get_denominator_argmin(2.),
+                                    0,
+                                    err_msg='incorrect denominator argmin')
 
 def suite():
     suite = unittest.TestSuite()
@@ -49,6 +54,7 @@ def suite():
     suite.addTest(TestCase('test_evaluate_array_pole'))
     suite.addTest(TestCase('test_root'))
     suite.addTest(TestCase('test_get_denominator_argmin'))
+    suite.addTest(TestCase('test_get_denominator_argmin_single'))
     return suite
 
 if __name__ == '__main__':

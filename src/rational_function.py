@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 
-from termios import B1152000
 import numpy as np
 import scipy.linalg
 
@@ -23,8 +22,8 @@ class RationalFunction(object):
 
     Methods
     -------
-    evaluate(z) : float -> float
-        Evaluate rational function at a point z.
+    evaluate(z) : list[float] or np.ndarray -> np.ndarray
+        Evaluate rational function at a (list of) point(s) z.
     roots() : None -> float
         Return (filtered) roots of rational function. Filtered
         only returns roots between the smallest and largest node.
@@ -43,10 +42,10 @@ class RationalFunction(object):
     -----
     Define rational function r(z) = (1/z + 2/(z-1)) / (1/z + 1/(z-1))
     >>> RF = RationalFunction([0, 1], [1, 1], [1, 2])
-    >>> RF.evaluate(1.)
-            2.0
+    >>> RF.evaluate(1.0)
+            array(2.0)
     >>> RF.roots()
-            array([ 0.5])
+            array([ 0.5 + 0.j])
     """
     def __init__(self, nodes, q, P):
         self.nodes = np.array(nodes, dtype=float)
@@ -57,30 +56,22 @@ class RationalFunction(object):
         return self.evaluate(z)
 
     def evaluate(self, z):
-        diff = np.subtract.outer(self.nodes, z)
-        zero_diff = np.isclose(diff, 0)
-        if not np.any(zero_diff):
-            return (self.P @ diff**(-1)) / (self.q @ diff**(-1))
-        if len(diff.shape) == 1:
-            return self.P.T[zero_diff] / self.q[zero_diff]
-        is_pole = np.any(zero_diff, axis=0)
-        dim = 1 if len(self.P.shape) == 1 else self.P.shape[0]
-        values = np.empty((dim, diff.shape[1]))
-        A = self.P @ diff[:, ~is_pole]**(-1)
-        B = self.q @ diff[:, ~is_pole]**(-1)
-        values[:, ~is_pole] = A / B
-        for pole in np.flatnonzero(is_pole):
-            A = self.P.T[zero_diff[:, pole]].flatten()
-            B = self.q[zero_diff[:, pole]]
-            values[:, pole] = A / B
-        return np.squeeze(values)
+        C = np.subtract.outer(z, self.nodes, dtype=float)
+        is_zero = np.isclose(C, 0.0, atol=1e-17)
+        if not np.any(is_zero):
+            return (self.P @ C.T**(-1)) / (self.q @ C.T**(-1))
+        if len(C.shape) == 1:
+            return np.squeeze(self.P.T[is_zero].T / self.q[is_zero])
+        has_zero = np.any(is_zero, axis=1)
+        C[~has_zero] = C[~has_zero]**(-1)
+        C[has_zero] = is_zero[has_zero]
+        return (self.P @ C.T) / (self.q @ C.T)
 
     def roots(self, filtered=True):
-        N = len(self.nodes)
         A = np.diag(np.append(0, self.nodes))
         A[0, 1:] = self.q
         A[1:, 0] = 1
-        B = np.diag(np.append(0, np.ones(N)))
+        B = np.diag(np.append(0, np.ones_like(self.nodes)))
         eigvals = scipy.linalg.eigvals(A, b=B)
         if filtered:
             return eigvals[~np.isinf(eigvals)]
@@ -90,8 +81,8 @@ class RationalFunction(object):
         return self.nodes
 
     def get_denominator_argmin(self, samples):
-        subtractions = np.subtract.outer(self.nodes, samples)
-        has_zero = np.any(np.isclose(subtractions, 0), axis=0)
-        B = subtractions.T[~has_zero]**(-1) @ self.q
+        C = np.subtract.outer(samples, self.nodes, dtype=float)
+        has_zero = np.any(np.isclose(C, 0), axis=1)
+        B = self.q @ C[~has_zero]**(-1)
         argmin_B = np.argmin(np.abs(B))
         return np.flatnonzero(~has_zero)[argmin_B]
