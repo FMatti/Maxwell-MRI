@@ -21,8 +21,6 @@ class MinimalRationalInterpolation(object):
         Orthonormal matrix created in Householder triangularization.
     V : np.ndarray
         Householder matrix created in Householder triangularization.
-    sv : np.ndarray
-        Singular values of the triangular matrix R.
 
     Methods
     -------
@@ -49,8 +47,7 @@ class MinimalRationalInterpolation(object):
         self.R = None
         self.E = None
         self.V = None
-        self.sv = None
-        
+
     def _gram_schmidt(self, E, k=None):
         """Orthonormalize the (k last) rows of a matrix E"""
         if k is None or k == E.shape[0]:
@@ -133,8 +130,11 @@ class MinimalRationalInterpolation(object):
             self.E = None
             self.V = None
         self._householder_triangularization(snapshots)
-        _, self.sv, V_conj = np.linalg.svd(self.R)
-        # Check stability of build [TODO]
+        _, sv, V_conj = np.linalg.svd(self.R)
+        cond = (sv[1] - sv[-1]) / (sv[-2] - sv[-1])
+        if cond > 1e+13:
+            print('WARNING: Could not build surrogate in a stable way.')
+            print('Relative range of singular values is {:.2e}.'.format(cond))
         q = V_conj[-1, :].conj()
         P = snapshots.T * q
         self.RI = RationalFunction(omegas, q, P)
@@ -172,6 +172,9 @@ class MinimalRationalInterpolation(object):
                 break
             self._build_surrogate(snapshots[supports], omegas[supports], additive=True)
             t += 1
+        if return_rel_err:
+            return rel_err[:t]
+            
 
     def get_surrogate(self):
         return self.RI
