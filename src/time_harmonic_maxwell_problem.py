@@ -177,7 +177,7 @@ class TimeHarmonicMaxwellProblem(object):
 
         if len(eigvals_in_ab) == k:
             print(f'WARNING: Found exactly {k} eigenvalues within [{a}, {b}].')
-            print('Increase parameter "k" to make sure all eigenvalues are found.')
+            print('Increase parameter "k" to ensure all eigenvalues are found.')
         
         if return_eigvecs:
             eigvecs_in_ab = [e2 for e1, e2 in zip(eigvals, eigvecs.T) if a <= e1 and e1 <= b]
