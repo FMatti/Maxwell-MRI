@@ -21,11 +21,15 @@ def plot_surrogate_norms(ax, MRI, a=None, b=None, N=1000, **kwargs):
     ax.plot(linspace, [np.linalg.norm(MRI.R.dot(x)) for x in MRI.A_ring(linspace).T], **kwargs)
     ax.set_yscale('log')
 
-def plot_surrogate_error_norms(ax, THMP, MRI, VS, **kwargs):
+def plot_surrogate_error_norms(ax, THMP, MRI, VS, A=None, omegas=None, **kwargs):
     """Plot relative error norm of surrogate"""
-    omegas = THMP.get_frequency()
-    A = THMP.get_solution(tonumpy=True, trace=VS.get_trace())
-    RI = MRI.get_surrogate(A)
+    if omegas is None:
+        omegas = THMP.get_frequency()
+    if A is None:
+        A = THMP.get_solution(tonumpy=True, trace=VS.get_trace())
+        RI = MRI.get_surrogate(A)
+    else:
+        RI = MRI.get_surrogate(THMP.get_solution(tonumpy=True, trace=VS.get_trace()))
     err = [VS.norm(A[i] - RI(x)) / VS.norm(A[i]) for i, x in enumerate(omegas)]
     ax.plot(omegas, err, **kwargs)
     ax.set_yscale('log')

@@ -141,7 +141,7 @@ class MinimalRationalInterpolation(object):
         q = V_conj[-1, :].conj()
         self.A_ring = RationalFunction(omegas, q, np.diag(q))
 
-    def compute_surrogate(self, snapshots, omegas, greedy=True, tol=1e-2, n=1000):
+    def compute_surrogate(self, snapshots, omegas, greedy=True, tol=1e-2, n_iter=None):
         """Compute the rational surrogate"""
         if not greedy:
             self._build_surrogate(snapshots, omegas)
@@ -154,7 +154,12 @@ class MinimalRationalInterpolation(object):
         self._build_surrogate(snapshots[self.supports], omegas[self.supports])
 
         # Greedy: Add support points until relative surrogate error below tol
-        while np.any(is_eligible):
+        if n_iter is None:
+            n_iter = len(omegas)
+        else:
+            tol = 0.0
+        t = 2
+        while t < n_iter:
             reduced_argmin = self.A_ring.get_denominator_argmin(omegas[is_eligible])
             argmin = np.arange(len(omegas))[is_eligible][reduced_argmin]
             self.supports.append(argmin)
@@ -165,6 +170,7 @@ class MinimalRationalInterpolation(object):
                     / np.linalg.norm(self.R[:, -1])
             if rel_err <= tol:
                 break
+            t += 1
 
     def get_surrogate(self, snapshots):
         """Returns the rational interpolation surrogate"""
