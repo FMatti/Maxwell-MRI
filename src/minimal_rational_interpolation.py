@@ -12,8 +12,8 @@ class MinimalRationalInterpolation(object):
     -------
     VS : VectorSpace
         Vector space object.
-    RI : RationalFunction
-        The rational interpolant in barycentric coordinates.
+    A_ring : RationalFunction
+        Constituent of the rational interpolant in barycentric coordinates.
     R : None or np.ndarray
         Upper triangular matrix (N_R x N_R) obtained from the Householder
         triangularization of the first N_R columns in A_.
@@ -21,6 +21,8 @@ class MinimalRationalInterpolation(object):
         Orthonormal matrix created in Householder triangularization.
     V : np.ndarray
         Householder matrix created in Householder triangularization.
+    supports : list
+        Indices of support points used to build surrogate from snapshots.    
 
     Methods
     -------
@@ -43,10 +45,11 @@ class MinimalRationalInterpolation(object):
     """
     def __init__(self, VS):
         self.VS = VS
-        self.RI = None
+        self.A_ring = None
         self.R = None
         self.E = None
         self.V = None
+        self.supports = None
 
     def _gram_schmidt(self, E, k=None):
         """Orthonormalize the (k last) rows of a matrix E"""
@@ -136,9 +139,7 @@ class MinimalRationalInterpolation(object):
             print('WARNING: Could not build surrogate in a stable way.')
             print('Relative range of singular values is {:.2e}.'.format(cond))
         q = V_conj[-1, :].conj()
-        P = snapshots.T * q
-        self.RI = RationalFunction(omegas, q, P)
-        self.RI_ring = RationalFunction(omegas, q, np.diag(q))
+        self.A_ring = RationalFunction(omegas, q, np.diag(q))
 
     def compute_surrogate(self, snapshots, omegas, greedy=True, tol=1e-2, n=1000):
         """Compute the rational surrogate"""
@@ -147,30 +148,37 @@ class MinimalRationalInterpolation(object):
             return
 
         # Greedy: Take smallest and largest omegas as initial support points
-        supports = [np.argmin(omegas), np.argmax(omegas)]
+        self.supports = [np.argmin(omegas), np.argmax(omegas)]
         is_eligible = np.ones(len(omegas), dtype=bool)
-        is_eligible[supports] = False
-        self._build_surrogate(snapshots[supports], omegas[supports])
+        is_eligible[self.supports] = False
+        self._build_surrogate(snapshots[self.supports], omegas[self.supports])
 
         # Greedy: Add support points until relative surrogate error below tol
         while np.any(is_eligible):
-            reduced_argmin = self.RI.get_denominator_argmin(omegas[is_eligible])
+            reduced_argmin = self.A_ring.get_denominator_argmin(omegas[is_eligible])
             argmin = np.arange(len(omegas))[is_eligible][reduced_argmin]
-            supports.append(argmin)
+            self.supports.append(argmin)
             is_eligible[argmin] = False
-            RI_hat = self.R @ self.RI_ring(omegas[argmin])
-            self._build_surrogate(snapshots[supports], omegas[supports], additive=True)
-            rel_err = np.linalg.norm(self.R[:, -1] - np.append(RI_hat, 0)) \
+            A_hat = self.R @ self.A_ring(omegas[argmin])
+            self._build_surrogate(snapshots[self.supports], omegas[self.supports], additive=True)
+            rel_err = np.linalg.norm(self.R[:, -1] - np.append(A_hat, 0)) \
                     / np.linalg.norm(self.R[:, -1])
             if rel_err <= tol:
                 break
 
-    def get_surrogate(self):
-        return self.RI
+    def get_surrogate(self, snapshots):
+        """Returns the rational interpolation surrogate"""
+        surrogate = self.A_ring
+        surrogate.P = snapshots[self.supports].T * surrogate.q
+        return surrogate
+
+    def evaluate_surrogate(self, snapshots, z):
+        """Evaluates the rational interpolation surrogate at points z"""
+        return snapshots[self.supports].T @ self.A_ring(z)
 
     def get_interpolatory_eigenfrequencies(self, filtered=True, only_real=False):
         """Compute the eigenfrequencies as roots of rational interpolant"""
-        eigfreqs = self.RI.roots(filtered)
+        eigfreqs = self.A_ring.roots(filtered)
         if only_real:
             return np.real(eigfreqs[np.isreal(eigfreqs)])
         return eigfreqs

@@ -82,7 +82,7 @@ class RationalFunction(object):
 
     def get_denominator_argmin(self, samples):
         C = np.subtract.outer(samples, self.nodes, dtype=float)
-        has_zero = np.any(np.isclose(C, 0), axis=1)
+        has_zero = np.any(np.isclose(C, 0).T, axis=0).T
         B = self.q @ C[~has_zero].T**(-1)
         argmin_B = np.argmin(np.abs(B))
         return np.flatnonzero(~has_zero)[argmin_B]
