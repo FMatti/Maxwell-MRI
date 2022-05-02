@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 
 import fenics as fen
 
-#from context import src
+from context import src
 from src.time_harmonic_maxwell_problem import TimeHarmonicMaxwellProblem
 
 class CircularWaveguideFilter(TimeHarmonicMaxwellProblem):
