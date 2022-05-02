@@ -2,6 +2,7 @@
 
 import numpy as np
 import scipy.sparse
+import scipy.sparse.linalg
 import pickle
 
 import fenics as fen
