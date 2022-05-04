@@ -9,7 +9,7 @@ from context import src
 from src.time_harmonic_maxwell_problem import TimeHarmonicMaxwellProblem
 
 class ImperfectConductor(TimeHarmonicMaxwellProblem):
-    def __init__(self, Lx, Ly, Nx, Ny, g_N):
+    def __init__(self, Lx, Ly, Nx, Ny, g_N, imp):
         self.Lx = Lx
         self.Ly = Ly
         self.Nx = Nx
@@ -24,14 +24,18 @@ class ImperfectConductor(TimeHarmonicMaxwellProblem):
         class B_N(fen.SubDomain):
             def inside(self_, x, on_boundary):
                 return on_boundary and fen.near(x[0], 0.0) and x[1]>0.0 and x[1]<self.Ly
+            
+        class B_I(fen.SubDomain):
+            def inside(self_, x, on_boundary):
+                return on_boundary and fen.near(x[0], self.Lx) and x[1]>0.0 and x[1]<self.Ly
 
         class B_D(fen.SubDomain):
             def inside(self, x, on_boundary):
-                return on_boundary and not B_N().inside(x, 'on_boundary')
+                return on_boundary and not (B_N().inside(x, 'on_boundary') or B_I().inside(x, 'on_boundary'))
 
         A_D = fen.Expression('0.0', degree=2)
 
-        TimeHarmonicMaxwellProblem.__init__(self, V, mu, eps, j, B_D(), B_N(), A_D, g_N)
+        TimeHarmonicMaxwellProblem.__init__(self, V, mu, eps, j, B_D(), B_N(), B_I(), A_D, g_N, imp)
 
     def plot_solution(self, **kwargs):
         A_sol = self.get_solution(tonumpy=False)
@@ -74,3 +78,10 @@ class ImperfectConductor(TimeHarmonicMaxwellProblem):
         plt.ylabel('g_N')
         plt.xlim(0.0, self.Ly)
         plt.show()
+
+    def get_analytical_eigenfrequencies(self, a, b):
+        freqs = lambda n, m: np.pi*pow(((n+0.5)/self.Lx)**2 + (m/self.Ly)**2, 0.5)
+        n_max = np.ceil(b * self.Lx / np.pi - 0.5).astype('int')
+        m_max = np.ceil(b * self.Ly / np.pi).astype('int')
+        eigs = np.unique(np.frompyfunc(freqs, 2, 1).outer(range(n_max+1), range(1, m_max+1)))
+        return [e for e in eigs if a <= e and e <= b]

@@ -36,6 +36,8 @@ class TimeHarmonicMaxwellProblem(object):
         Source term.
     N : dolfin.cpp.la.Vector
         Neumann boundary integral term.
+    I : dolfin.cpp.la.Vector
+        Impedance boundary integral term.
     mu : dolfin.functions.expression.Expression
         Permeability.
     eps : dolfin.functions.expression.Expression
@@ -46,10 +48,14 @@ class TimeHarmonicMaxwellProblem(object):
         SubDomain object locating the Dirichlet boundary.
     B_N : dolfin.cpp.mesh.SubDomain
         SubDomain object locating the Neumann boundary.
-    A_0 : dolfin.functions.expression.Expression
+    B_I : dolfin.cpp.mesh.SubDomain
+        SubDomain object locating the impedance boundary.
+    A_D : dolfin.functions.expression.Expression
         Dirichlet boundary condition.
     g_N : dolfin.functions.expression.Expression
         Neumann boundary condition.
+    imp : dolfin.functions.expression.Expression
+        Impedance.
     A_sol : dolfin.functions.function.Function
         Solution to the variational problem.
     bc : dolfin.fem.bcs.DirichletBC
@@ -71,8 +77,10 @@ class TimeHarmonicMaxwellProblem(object):
     ----------
     [1] FEniCS Project 2021: https://fenicsproject.org/
     [2] Pradovera D. and Nobile F. Frequency-domain non-intrusive greedy
-        Model Order Reduction based on minimal rational approximation
-    
+        Model Order Reduction based on minimal rational approximation.
+    [3] Monk P. Finite Element Methods for Maxwell's Equations
+        Oxford University Press, 2003.
+
     Usage
     -----
     Square waveguide with perfectly conducting walls and an inlet.
@@ -90,25 +98,28 @@ class TimeHarmonicMaxwellProblem(object):
     >>> A_D = fen.Constant(0.0)
     >>> g_N = fen.Constant(1.0)
     >>>
-    >>> MP = MaxwellProblem(V, mu, eps, j, B_D(), B_N(), A_D, g_N)
+    >>> MP = TimeHarmonicMaxwellProblem(V, mu, eps, j, B_D(), B_N(), A_D, g_N)
     >>> MP.setup()
     >>> MP.solve(1)
     >>> A_sol = MP.get_solution()
     """
 
-    def __init__(self, V, mu, eps, j, B_D, B_N, A_D, g_N):
+    def __init__(self, V, mu, eps, j, B_D, B_N, B_I, A_D, g_N, imp):
         self.V = V
         self.K = None
         self.M = None
         self.L = None
         self.N = None
+        self.I = None
         self.mu = mu
         self.eps = eps
         self.j = j
         self.B_D = B_D
         self.B_N = B_N
+        self.B_I = B_I
         self.A_D = A_D
         self.g_N = g_N
+        self.imp = imp
         self.A_sol = None
         self.bc = None
         self.omega = None
@@ -121,16 +132,25 @@ class TimeHarmonicMaxwellProblem(object):
         boundary_type.set_all(0)
         self.B_D.mark(boundary_type, 1)
         self.B_N.mark(boundary_type, 2)
+        self.B_I.mark(boundary_type, 3)
 
         A = fen.TrialFunction(self.V)
         v = fen.TestFunction(self.V)
-        
+
+        ds = fen.Measure('ds', subdomain_data=boundary_type)
+        n = fen.FacetNormal(mesh)
+ 
         # Dirichlet boundary conditions
         self.bc = fen.DirichletBC(self.V, self.A_D, boundary_type, 1)
 
         # Neumann boundary conditions
-        ds = fen.Measure('ds', subdomain_data=boundary_type)
         self.N = fen.assemble(fen.dot(self.g_N, v) * ds(2))
+
+        # Impedance boundary condition
+        if self.V.tabulate_dof_coordinates().shape[1] == 2:
+            self.I = fen.assemble(self.imp * fen.dot(A, v) * ds(3))
+        else:
+            self.I = fen.assemble(self.imp * fen.dot(fen.cross(fen.cross(n, A), n), v) * ds(3))
 
         # Assembly of stiffness, mass, and forcing term
         self.K = fen.assemble(1/self.mu * fen.dot(fen.curl(A), fen.curl(v)) * fen.dx)
@@ -157,13 +177,36 @@ class TimeHarmonicMaxwellProblem(object):
             fen.solve(LHS, A.vector(), RHS)
             self.A_sol.append(A)
 
+    def complex_solve(self, omega, accumulate=False):
+        """Solve the variational problem defined with .setup()"""
+        if isinstance(omega, (float, int)):
+            omega = [omega]
+        if not accumulate:
+            self.A_sol = np.empty((len(omega), self.V.dim()*2), dtype=float)
+            self.omega = []
+        self.omega.extend(omega)
+        for i, omg in enumerate(omega):
+            LHS_re = self.tosparse(self.K) - omg**2 * self.tosparse(self.M)
+            LHS_im = - omg * self.tosparse(self.I)
+            RHS_re = self.L.get_local() + self.N.get_local()
+            RHS_im = np.zeros_like(RHS_re)
+            LHS = scipy.sparse.vstack([scipy.sparse.hstack([LHS_re, -LHS_im], format='csr'),
+                                       scipy.sparse.hstack([LHS_im, LHS_re], format='csr')], format='csr')
+            RHS = np.r_[RHS_re, RHS_im]
+            A = scipy.sparse.linalg.spsolve(LHS, RHS)
+            if not accumulate:
+                self.A_sol[i] = A
+            else:
+                # This is bullshit (port all to numpy later on please)
+                self.A_sol.append(A)
+
     def get_numerical_eigenfrequencies(self, a=-np.inf, b=np.inf, k=10, v0=None, return_eigvecs=False):
         """Solve an eigenvalue problem K*v = omega^2*M*v"""
         if a == -np.inf or b == np.inf:
             sigma = None
         else:
             sigma = (a + b) / 2
-        
+
         # Only use non-zero (not on boundary) components in M and K
         inner_indices = self.get_inner_indices()
         if v0 is not None:
@@ -171,7 +214,7 @@ class TimeHarmonicMaxwellProblem(object):
         K = self.get_K(tosparse=True)[inner_indices, :][:, inner_indices]
         M = self.get_M(tosparse=True)[inner_indices, :][:, inner_indices]
         eigvals, eigvecs = scipy.sparse.linalg.eigsh(A=K, k=k, M=M, sigma=sigma, v0=v0)
-        
+
         # Only return eigenfrequencies (square root of eigenvalues) in [a, b]
         eigvals = np.sqrt(eigvals)
         eigvals_in_ab = [e1 for e1 in eigvals if a <= e1 and e1 <= b]
@@ -179,12 +222,12 @@ class TimeHarmonicMaxwellProblem(object):
         if len(eigvals_in_ab) == k:
             print(f'WARNING: Found exactly {k} eigenvalues within [{a}, {b}].')
             print('Increase parameter "k" to ensure all eigenvalues are found.')
-        
+
         if return_eigvecs:
             eigvecs_in_ab = [e2 for e1, e2 in zip(eigvals, eigvecs.T) if a <= e1 and e1 <= b]
             return eigvals_in_ab, eigvecs_in_ab
         return eigvals_in_ab
-            
+
     @staticmethod
     def tosparse(A):
         """Convert dolfin matrix to a sparse SciPy matrix in CSR format"""
@@ -221,6 +264,12 @@ class TimeHarmonicMaxwellProblem(object):
             return self.N.get_local()
         return self.N
 
+    def get_I(self, tonumpy=True):
+        """Return the Neumann boundary integral term N"""
+        if tonumpy:
+            return self.I.get_local()
+        return self.I
+
     def get_solution(self, tonumpy=True, trace=None):
         """Return the solution obtained with .solve()"""
         if trace is not None:
@@ -232,7 +281,8 @@ class TimeHarmonicMaxwellProblem(object):
             return np.array([a.vector().get_local()[on_trace] for a in self.A_sol])
         if tonumpy:
             if isinstance(self.A_sol, np.ndarray):
-                return self.A_sol
+                # Bullshit (port all to numpy later)
+                return self.A_sol[:, :self.A_sol.shape[1] // 2]
             return np.array([a.vector().get_local() for a in self.A_sol])
         return self.A_sol
 
