@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 
 import numpy as np
+import copy
 
 from src.time_harmonic_maxwell_problem import TimeHarmonicMaxwellProblem
 
@@ -143,7 +144,7 @@ class MinimalRationalInterpolation(object):
         q = V_conj[-1, :].conj()
         self.u_ring = RationalFunction(omegas, q, np.diag(q))
 
-    def compute_surrogate(self, target, omegas=None, greedy=True, tol=1e-2, n_iter=None):
+    def compute_surrogate(self, target, omegas=None, greedy=True, tol=1e-2, n_iter=None, return_history=False):
         """Compute the rational surrogate""" 
         if not greedy:
             self.supports = target.get_frequency()
@@ -157,11 +158,14 @@ class MinimalRationalInterpolation(object):
         target.solve(omegas[self.supports])
         self._build_surrogate(target.get_solution(trace=self.VS.trace), omegas[self.supports])
 
-        # Greedy: Add support points until relative surrogate error below tol
         if n_iter is None:
             n_iter = len(omegas)
         else:
             tol = 0.0
+        if return_history:
+            surrogate_history = [self.get_surrogate(target.get_solution(trace=self.VS.trace))]
+
+        # Greedy: Add support points until relative surrogate error below tol
         t = 2
         while t < n_iter:
             reduced_argmin = self.u_ring.get_denominator_argmin(omegas[is_eligible])
@@ -171,16 +175,21 @@ class MinimalRationalInterpolation(object):
             u_hat = self.R @ self.u_ring(omegas[argmin])
             target.solve(omegas[argmin], accumulate=True)
             self._build_surrogate(target.get_solution(trace=self.VS.trace), omegas[self.supports], additive=True)
+            if return_history:
+                surrogate_history.append(self.get_surrogate(target.get_solution(trace=self.VS.trace)))
             rel_err = np.linalg.norm(self.R[:, -1] - np.append(u_hat, 0)) \
                     / np.linalg.norm(self.R[:, -1])
             if rel_err <= tol:
                 break
             t += 1
 
+        if return_history:
+            return surrogate_history
+
     def get_surrogate(self, snapshots):
         """Returns the rational interpolation surrogate"""
-        surrogate = self.u_ring
-        surrogate.P = snapshots[self.supports].T * surrogate.q
+        surrogate = copy.copy(self.u_ring)
+        surrogate.P = snapshots.T * surrogate.q#snapshots[self.supports].T * surrogate.q
         return surrogate
 
     def evaluate_surrogate(self, snapshots, z):
