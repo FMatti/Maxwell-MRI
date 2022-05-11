@@ -41,34 +41,50 @@ class TestCase(unittest.TestCase):
             def inside(self, x, on_boundary):
                 return on_boundary and not B_N().inside(x, 'on_boundary')
 
-        A_D = fen.Expression('0.0', degree=2)
+        u_D = fen.Expression('0.0', degree=2)
 
-        return TimeHarmonicMaxwellProblem(V, mu, eps, j, B_D(), B_N(), A_D, g_N), B_N
+        return TimeHarmonicMaxwellProblem(V, mu, eps, j, B_D(), u_D, B_N(), g_N), B_N
 
     def test_norm(self):
         x = np.ones(10)
         testing.assert_almost_equal(self.VS.norm(x),
                                     pow(10, 0.5),
-                                    err_msg='incorrect root')
+                                    err_msg='incorrect norm')
+
+    def test_complex_norm(self):
+        x = np.ones(10) + 1j*np.ones(10)
+        testing.assert_almost_equal(self.VS.norm(x),
+                                    pow(20, 0.5),
+                                    err_msg='incorrect complex norm')
 
     def test_inner_product(self):
         x = np.ones(10)
-        y = np.resize([1,-1], 10)
+        y = np.resize([1, -1], 10)
         testing.assert_almost_equal(self.VS.inner_product(x, y),
                                     0,
-                                    err_msg='incorrect root')
+                                    err_msg='incorrect inner product')
+
+    def test_matrix_inner_product(self):
+        x = np.ones((2, 10))
+        y = np.c_[np.resize([1, -1], 10), np.resize([-1, 1], 10)].T
+        testing.assert_almost_equal(self.VS.inner_product(x, y),
+                                    np.zeros((2, 2)),
+                                    err_msg='incorrect matrix inner product')
+
 
     def test_inner_product_THMP_trace(self):
         x = self.THMP_symmetric.get_solution(tonumpy=True, trace=self.VSL2_trace.get_trace())
         y = self.THMP_asymmetric.get_solution(tonumpy=True, trace=self.VSL2_trace.get_trace())
         testing.assert_almost_equal(self.VSL2_trace.inner_product(x, y),
                                     0,
-                                    err_msg='incorrect root')
+                                    err_msg='incorrect trace inner product')
 
 def suite():
     suite = unittest.TestSuite()
     suite.addTest(TestCase('test_norm'))
+    suite.addTest(TestCase('test_complex_norm'))
     suite.addTest(TestCase('test_inner_product'))
+    suite.addTest(TestCase('test_matrix_inner_product'))
     suite.addTest(TestCase('test_inner_product_THMP_trace'))
     return suite
 

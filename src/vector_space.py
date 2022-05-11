@@ -28,7 +28,7 @@ class VectorSpace(object):
         self.trace = None
 
     def inner_product(self, u, v):
-        return u.dot(self.matrix.dot(v.T))
+        return v.dot(self.matrix.dot(u.conj().T))
 
     def norm(self, u):
         return pow(self.inner_product(u, u), 0.5)
