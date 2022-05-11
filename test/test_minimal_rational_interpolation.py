@@ -36,10 +36,10 @@ class TestCase(unittest.TestCase):
             def inside(self, x, on_boundary):
                 return on_boundary and not B_N().inside(x, 'on_boundary')
 
-        A_D = fen.Expression('0.0', degree=2)
+        u_D = fen.Expression('0.0', degree=2)
         g_N = fen.Expression('sin(x[1]*pi)', degree=2)
 
-        return TimeHarmonicMaxwellProblem(V, mu, eps, j, B_D(), B_N(), A_D, g_N), B_N
+        return TimeHarmonicMaxwellProblem(V, mu, eps, j, B_D(), u_D, B_N(), g_N), B_N
 
     def test_householder(self):
         snapshots = self.THMP.get_solution(tonumpy=True)

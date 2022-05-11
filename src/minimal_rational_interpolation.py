@@ -2,6 +2,8 @@
 
 import numpy as np
 
+from src.time_harmonic_maxwell_problem import TimeHarmonicMaxwellProblem
+
 from .rational_function import RationalFunction
 
 class MinimalRationalInterpolation(object):
@@ -12,11 +14,11 @@ class MinimalRationalInterpolation(object):
     -------
     VS : VectorSpace
         Vector space object.
-    A_ring : RationalFunction
+    u_ring : RationalFunction
         Constituent of the rational interpolant in barycentric coordinates.
     R : None or np.ndarray
         Upper triangular matrix (N_R x N_R) obtained from the Householder
-        triangularization of the first N_R columns in A_.
+        triangularization of the first N_R columns in u.
     E : np.ndarray
         Orthonormal matrix created in Householder triangularization.
     V : np.ndarray
@@ -26,8 +28,8 @@ class MinimalRationalInterpolation(object):
 
     Methods
     -------
-    compute_surrogate(snapshots, omegas) : np.ndarray, np.ndarray -> None
-        Compute the rational interpolation surrogate for a snapshot matrix.
+    compute_surrogate(target, ...) : TimeHarmonicMaxwellProblem -> None
+        Compute the rational interpolation surrogate for a THMP.
     get_surrogate() : None -> RationalFunction
         Returns the computed rational interpolation surrogate.
     get_interpolatory_eigenfrequencies() : None -> np.ndarray
@@ -45,7 +47,7 @@ class MinimalRationalInterpolation(object):
     """
     def __init__(self, VS):
         self.VS = VS
-        self.A_ring = None
+        self.u_ring = None
         self.R = None
         self.E = None
         self.V = None
@@ -74,31 +76,31 @@ class MinimalRationalInterpolation(object):
             self.E = np.r_[self.E, np.random.randn(n1, n2)]
         self._gram_schmidt(self.E, n1)
 
-    def _householder_triangularization(self, A):
+    def _householder_triangularization(self, u):
         """(Sequentially) compute the upper triangular matrix of a QR-decomposi-
         tion of the snapshot matrix A of a time-harmonic Maxwell problem."""
 
-        N_A = A.shape[0]
+        N_u = u.shape[0]
 
         # Declare matrix R or extend it with zeros if it already exists
         if self.R is None:
             N_R = 0
-            self.R = np.zeros((N_A, N_A)) 
+            self.R = np.zeros((N_u, N_u)) 
         else:
             N_R = self.R.shape[0]
-            self.R = np.pad(self.R, (0, N_A-N_R), mode='constant')
+            self.R = np.pad(self.R, (0, N_u-N_R), mode='constant')
 
         # Get/extend orthonormal matrix E to the shape of snapshot matrix
-        self._set_orthonormal_matrix(A.shape)
+        self._set_orthonormal_matrix(u.shape)
 
         # Declare/extend matrix V for Householder vectors
         if self.V is None:
-            self.V = np.empty((N_A, A.shape[1]))
+            self.V = np.empty((N_u, u.shape[1]))
         else:
-            self.V = np.pad(self.V, ((0, N_A-N_R), (0, 0)), mode='constant')
+            self.V = np.pad(self.V, ((0, N_u-N_R), (0, 0)), mode='constant')
 
-        for j in range(N_R, N_A):
-            a = A[j].copy()
+        for j in range(N_R, N_u):
+            a = u[j].copy()
 
             # Apply the reflection to j-th snapshot
             for k in range(j):
@@ -139,19 +141,21 @@ class MinimalRationalInterpolation(object):
             print('WARNING: Could not build surrogate in a stable way.')
             print('Relative range of singular values is {:.2e}.'.format(cond))
         q = V_conj[-1, :].conj()
-        self.A_ring = RationalFunction(omegas, q, np.diag(q))
+        self.u_ring = RationalFunction(omegas, q, np.diag(q))
 
-    def compute_surrogate(self, snapshots, omegas, greedy=True, tol=1e-2, n_iter=None):
-        """Compute the rational surrogate"""
+    def compute_surrogate(self, target, omegas=None, greedy=True, tol=1e-2, n_iter=None):
+        """Compute the rational surrogate""" 
         if not greedy:
-            self._build_surrogate(snapshots, omegas)
+            self.supports = target.get_frequency()
+            self._build_surrogate(target.get_solution(), self.supports)
             return
 
         # Greedy: Take smallest and largest omegas as initial support points
         self.supports = [np.argmin(omegas), np.argmax(omegas)]
         is_eligible = np.ones(len(omegas), dtype=bool)
         is_eligible[self.supports] = False
-        self._build_surrogate(snapshots[self.supports], omegas[self.supports])
+        target.solve(omegas[self.supports])
+        self._build_surrogate(target.get_solution(trace=self.VS.trace), omegas[self.supports])
 
         # Greedy: Add support points until relative surrogate error below tol
         if n_iter is None:
@@ -160,13 +164,14 @@ class MinimalRationalInterpolation(object):
             tol = 0.0
         t = 2
         while t < n_iter:
-            reduced_argmin = self.A_ring.get_denominator_argmin(omegas[is_eligible])
+            reduced_argmin = self.u_ring.get_denominator_argmin(omegas[is_eligible])
             argmin = np.arange(len(omegas))[is_eligible][reduced_argmin]
             self.supports.append(argmin)
             is_eligible[argmin] = False
-            A_hat = self.R @ self.A_ring(omegas[argmin])
-            self._build_surrogate(snapshots[self.supports], omegas[self.supports], additive=True)
-            rel_err = np.linalg.norm(self.R[:, -1] - np.append(A_hat, 0)) \
+            u_hat = self.R @ self.u_ring(omegas[argmin])
+            target.solve(omegas[argmin], accumulate=True)
+            self._build_surrogate(target.get_solution(trace=self.VS.trace), omegas[self.supports], additive=True)
+            rel_err = np.linalg.norm(self.R[:, -1] - np.append(u_hat, 0)) \
                     / np.linalg.norm(self.R[:, -1])
             if rel_err <= tol:
                 break
@@ -174,17 +179,17 @@ class MinimalRationalInterpolation(object):
 
     def get_surrogate(self, snapshots):
         """Returns the rational interpolation surrogate"""
-        surrogate = self.A_ring
+        surrogate = self.u_ring
         surrogate.P = snapshots[self.supports].T * surrogate.q
         return surrogate
 
     def evaluate_surrogate(self, snapshots, z):
         """Evaluates the rational interpolation surrogate at points z"""
-        return snapshots[self.supports].T @ self.A_ring(z)
+        return snapshots[self.supports].T @ self.u_ring(z)
 
     def get_interpolatory_eigenfrequencies(self, filtered=True, only_real=False):
         """Compute the eigenfrequencies as roots of rational interpolant"""
-        eigfreqs = self.A_ring.roots(filtered)
+        eigfreqs = self.u_ring.roots(filtered)
         if only_real:
             return np.real(eigfreqs[np.isreal(eigfreqs)])
         return eigfreqs

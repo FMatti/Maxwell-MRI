@@ -311,16 +311,18 @@ class TimeHarmonicMaxwellProblem(object):
             return np.array([a.vector().get_local() for a in self.solution])
         return self.solution
 
-    def save_solution(self, dirname, trace=None):
+    def save_solution(self, dirname=None, trace=None):
         SM = SnapshotMatrix(self.get_solution(tonumpy=True, trace=trace), self.omega)
+        if dirname is None:
+            return SM
         with open(dirname, 'wb') as file:
             pickle.dump(SM, file)
 
     def load_solution(self, dirname):
         with open(dirname, 'rb') as file:
             SM = pickle.load(file)
-        self.solution = SM.get_snapshots()
-        self.omega = SM.get_frequencies()
+        self.solution = SM.get_solution()
+        self.omega = SM.get_frequency()
 
     def get_frequency(self):
         """Return the frequencies corresponding to the solutions"""
