@@ -42,14 +42,14 @@ class TestCase(unittest.TestCase):
         return TimeHarmonicMaxwellProblem(V, mu, eps, j, B_D(), u_D, B_N(), g_N), B_N
 
     def test_householder(self):
-        snapshots = self.THMP.get_solution(tonumpy=True)
+        snapshots = self.THMP.get_solution()
         self.MRI._householder_triangularization(snapshots)
         testing.assert_almost_equal(self.MRI.R.T @ self.MRI.R,
                                     self.VS.inner_product(snapshots, snapshots),
                                     err_msg='incorrect root')
 
     def test_householder_trace(self):
-        snapshots = self.THMP.get_solution(tonumpy=True, trace=self.VS_trace.get_trace())
+        snapshots = self.THMP.get_solution(trace=self.VS_trace.get_trace())
         self.MRI_trace._householder_triangularization(snapshots)
         testing.assert_almost_equal(self.MRI_trace.R.T @ self.MRI_trace.R,
                                     self.VS_trace.inner_product(snapshots, snapshots),

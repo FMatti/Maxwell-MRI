@@ -187,25 +187,21 @@ class TimeHarmonicMaxwellProblem(object):
         self.L = fen.assemble(fen.dot(self.j, v) * fen.dx)
         self.bc.apply(self.L)
 
-    def solve(self, omega, accumulate=False, imaginary=False):
+    def solve(self, omega, accumulate=False):
         """Solve the variational problem defined with .setup()"""
-        if imaginary:
-            dtype = complex
-        else:
-            dtype = float
         if isinstance(omega, (float, int)):
             omega = [omega]
         if not accumulate:
             k = 0
-            self.solution = np.empty((len(omega), self.V.dim()), dtype=dtype)
+            self.solution = np.empty((len(omega), self.V.dim()), dtype=complex)
             self.omega = omega
         else:
             k = len(self.omega)
-            self.solution = np.r_[self.solution, np.empty((len(omega), self.V.dim()), dtype=dtype)]
+            self.solution = np.r_[self.solution, np.empty((len(omega), self.V.dim()), dtype=complex)]
             self.omega = np.r_[self.omega, omega]
         for omg in omega:
             LHS_re = self.get_K(tosparse=True) - omg**2 * self.get_M(tosparse=True)
-            LHS_im = - 1j * omg * self.tosparse(self.I) if imaginary else 0
+            LHS_im = - 1j * omg * self.tosparse(self.I)
             RHS = self.get_L(tonumpy=True) + self.get_N(tonumpy=True)
             self.solution[k] = scipy.sparse.linalg.spsolve(LHS_re + LHS_im, RHS)
             k += 1

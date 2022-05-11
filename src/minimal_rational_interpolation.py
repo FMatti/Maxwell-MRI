@@ -70,7 +70,7 @@ class MinimalRationalInterpolation(object):
         """Produce (extension of) orthonormal matrix with given shape"""
         n1, n2 = shape
         if self.E is None or self.E.shape[1] != n2:
-            self.E = np.random.randn(n1, n2)
+            self.E = np.array(np.random.randn(n1, n2), dtype=complex)
         else:
             # Extend orthonormal matrix E to orthonormal matrix with given shape
             n1 -= self.E.shape[0]
@@ -86,7 +86,7 @@ class MinimalRationalInterpolation(object):
         # Declare matrix R or extend it with zeros if it already exists
         if self.R is None:
             N_R = 0
-            self.R = np.zeros((N_u, N_u)) 
+            self.R = np.zeros((N_u, N_u), dtype=complex)
         else:
             N_R = self.R.shape[0]
             self.R = np.pad(self.R, (0, N_u-N_R), mode='constant')
@@ -96,7 +96,7 @@ class MinimalRationalInterpolation(object):
 
         # Declare/extend matrix V for Householder vectors
         if self.V is None:
-            self.V = np.empty((N_u, u.shape[1]))
+            self.V = np.empty((N_u, u.shape[1]), dtype=complex)
         else:
             self.V = np.pad(self.V, ((0, N_u-N_R), (0, 0)), mode='constant')
 
