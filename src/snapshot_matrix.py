@@ -13,18 +13,18 @@ class SnapshotMatrix(object):
 
     Methods
     -------
-    get_snapshots() : None -> np.ndarray
+    get_solution() : None -> np.ndarray
         Return the snapshot matrix.
-    get_frequencies() : None -> np.ndarray
+    get_frequency() : None -> np.ndarray
         Return requencies to which the snapshots corresponds.
 
     """
-    def __init__(self, snapshots, omegas):
-        self.snapshots = snapshots
-        self.omegas = omegas
+    def __init__(self, solution, omega):
+        self.solution = solution
+        self.omega = omega
 
-    def get_snapshots(self):
-        return self.snapshots
+    def get_solution(self, tonumpy, trace):
+        return self.solution
 
-    def get_frequencies(self):
-        return self.omegas
+    def get_frequency(self):
+        return self.omega
