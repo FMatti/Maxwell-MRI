@@ -33,39 +33,39 @@ class ImperfectConductor(TimeHarmonicMaxwellProblem):
             def inside(self, x, on_boundary):
                 return on_boundary and not (B_N().inside(x, 'on_boundary') or B_I().inside(x, 'on_boundary'))
 
-        A_D = fen.Expression('0.0', degree=2)
+        u_D = fen.Expression('0.0', degree=2)
 
-        TimeHarmonicMaxwellProblem.__init__(self, V, mu, eps, j, B_D(), B_N(), B_I(), A_D, g_N, imp)
+        TimeHarmonicMaxwellProblem.__init__(self, V, mu, eps, j, B_D(), u_D, B_N(), g_N, B_I(), imp)
 
     def plot_solution(self, **kwargs):
-        A_sol = self.get_solution(tonumpy=False)
-        for i, A in enumerate(A_sol):
+        solution = self.get_solution(tonumpy=False)
+        for i, u in enumerate(solution):
             plt.figure()
             plt.title('Solution to system at frequency \u03C9 = {:.3f} rad/s'.format(self.omega[i]))
-            fig = fen.plot(A, **kwargs)
+            fig = fen.plot(u, **kwargs)
             plt.colorbar(fig, orientation='horizontal')
             plt.show()
 
     def plot_solution_trace(self, trace, **kwargs):
-        A_sol = self.get_solution(tonumpy=False)
-        for i, A in enumerate(A_sol):
+        solution = self.get_solution(tonumpy=False)
+        for i, u in enumerate(solution):
             plt.figure()
             plt.title('Solution on trace at frequency \u03C9 = {:.3f} rad/s'.format(self.omega[i]))
             all_coords = self.V.tabulate_dof_coordinates()
             trace_coords = np.array([x for x in all_coords if trace.inside(x, 'on_boundary')])
-            A_trace = [A(x) for x in trace_coords]
-            plt.plot(trace_coords[:, 1], A_trace, **kwargs)
+            u_trace = [u(x) for x in trace_coords]
+            plt.plot(trace_coords[:, 1], u_trace, **kwargs)
             plt.show()
 
-    def plot_external_solution(self, A_vec, contains_boundary_values=False, omega=None, **kwargs):
+    def plot_external_solution(self, u_vec, contains_boundary_values=False, omega=None, **kwargs):
         plt.figure()
         if omega is not None:
             plt.title('Solution to system at frequency \u03C9 = {:.3f} rad/s'.format(omega))
-        A_func = fen.Function(self.V)
+        u_func = fen.Function(self.V)
         if not contains_boundary_values:
-            A_vec = self.insert_boundary_values(A_vec)
-        A_func.vector()[:] = A_vec
-        fig = fen.plot(A_func, **kwargs)
+            u_vec = self.insert_boundary_values(u_vec)
+        u_func.vector()[:] = u_vec
+        fig = fen.plot(u_func, **kwargs)
         plt.colorbar(fig, orientation='horizontal')
         plt.show()
 
@@ -78,10 +78,3 @@ class ImperfectConductor(TimeHarmonicMaxwellProblem):
         plt.ylabel('g_N')
         plt.xlim(0.0, self.Ly)
         plt.show()
-
-    def get_analytical_eigenfrequencies(self, a, b):
-        freqs = lambda n, m: np.pi*pow(((n+0.5)/self.Lx)**2 + (m/self.Ly)**2, 0.5)
-        n_max = np.ceil(b * self.Lx / np.pi - 0.5).astype('int')
-        m_max = np.ceil(b * self.Ly / np.pi).astype('int')
-        eigs = np.unique(np.frompyfunc(freqs, 2, 1).outer(range(n_max+1), range(1, m_max+1)))
-        return [e for e in eigs if a <= e and e <= b]

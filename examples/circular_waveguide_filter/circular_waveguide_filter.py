@@ -23,20 +23,14 @@ class CircularWaveguideFilter(TimeHarmonicMaxwellProblem):
             def inside(self, x, on_boundary):
                 return on_boundary and not B_N().inside(x, 'on_boundary')
 
-        A_D = fen.Expression(('0.0', '0.0', '0.0'), degree=2)
+        u_D = fen.Expression(('0.0', '0.0', '0.0'), degree=2)
 
-        TimeHarmonicMaxwellProblem.__init__(self, V, mu, eps, j, B_D(), B_N(), A_D, g_N)
+        TimeHarmonicMaxwellProblem.__init__(self, V, mu, eps, j, B_D(), u_D, B_N(), g_N)
 
     def plot_solution(self):
-        A_sol = self.get_solution(tonumpy=False)
-        for i, A in enumerate(A_sol):
+        u_sol = self.get_solution(tonumpy=False)
+        for i, u in enumerate(u_sol):
             plt.figure()
             plt.title(f'Solution to system at frequency \u03C9 = {self.omega[i]} rad/s')
-            fig = fen.plot(A)
+            fig = fen.plot(u)
             plt.show()
-
-    def plot_external_solution(self, A_vec, contains_boundary_values=False, omega=None):
-        raise NotImplementedError()
-
-    def plot_g_N(self):
-        raise NotImplementedError()

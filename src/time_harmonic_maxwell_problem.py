@@ -7,7 +7,6 @@ import pickle
 
 import fenics as fen
 
-from .rational_function import RationalFunction
 from .snapshot_matrix import SnapshotMatrix
 
 class TimeHarmonicMaxwellProblem(object):
@@ -15,16 +14,23 @@ class TimeHarmonicMaxwellProblem(object):
     Finite element solver for solutions to the time harmonic
     Maxwell's equations formulated in the vector potential A
     
-        \/ x ((1 / mu) \/ x A) - eps * omega^2 * A = j
+        \/ x ((1 / mu) \/ x u) - eps * omega^2 * u = j
     with boundary conditions
-        A = A_D                     (Dirichlet boundaries, B_D)
-        ((1 / mu) \/ x A) x n = g_N   (Neumann boundaries, B_N)
+
+        u = u_D
+            (Dirichlet boundaries, B_D)
+
+        ((1 / mu) \/ x u) x n = g_N
+            (Neumann boundaries, B_N)
+
+        n x ((1 / mu) \/ x u) - i * omega * imp * (n x u) x n = 0
+            (Impedance boundaries, B_I [3])
  
     Members
     -------
     V : dolfin.functions.functionspace.FunctionSpace
         Real FE space.
-    A : list[dolfin.functions.function.TrialFunction]
+    u : list[dolfin.functions.function.TrialFunction]
         Trial function.
     v : dolfin.functions.function.TestFunction
         Test function.
@@ -46,22 +52,22 @@ class TimeHarmonicMaxwellProblem(object):
         Current density
     B_D : dolfin.cpp.mesh.SubDomain
         SubDomain object locating the Dirichlet boundary.
-    B_N : dolfin.cpp.mesh.SubDomain
-        SubDomain object locating the Neumann boundary.
-    B_I : dolfin.cpp.mesh.SubDomain
-        SubDomain object locating the impedance boundary.
-    A_D : dolfin.functions.expression.Expression
+    u_D : dolfin.functions.expression.Expression
         Dirichlet boundary condition.
-    g_N : dolfin.functions.expression.Expression
+    B_N : dolfin.cpp.mesh.SubDomain, optional
+        SubDomain object locating the Neumann boundary.
+    g_N : dolfin.functions.expression.Expression, optional
         Neumann boundary condition.
-    imp : dolfin.functions.expression.Expression
+    B_I : dolfin.cpp.mesh.SubDomain, optional
+        SubDomain object locating the impedance boundary.
+    imp : dolfin.functions.expression.Expression, optional
         Impedance.
-    A_sol : dolfin.functions.function.Function
+    solution : dolfin.functions.function.Function
         Solution to the variational problem.
-    bc : dolfin.fem.bcs.DirichletBC
-        Dirichlet boundary condition object.
     omega : list[float] or float
         Frequency for which the variational problem is solved.
+    bc : dolfin.fem.bcs.DirichletBC
+        Dirichlet boundary condition object.
 
     Methods
     -------
@@ -95,16 +101,16 @@ class TimeHarmonicMaxwellProblem(object):
     >>>    def inside(self, x, on_boundary):
     >>>         return fen.near(x[0], 0.0)
     >>> 
-    >>> A_D = fen.Constant(0.0)
+    >>> u_D = fen.Constant(0.0)
     >>> g_N = fen.Constant(1.0)
     >>>
-    >>> MP = TimeHarmonicMaxwellProblem(V, mu, eps, j, B_D(), B_N(), A_D, g_N)
+    >>> MP = TimeHarmonicMaxwellProblem(V, mu, eps, j, B_D(), u_D, B_N(), g_N)
     >>> MP.setup()
     >>> MP.solve(1)
-    >>> A_sol = MP.get_solution()
+    >>> solution = MP.get_solution()
     """
 
-    def __init__(self, V, mu, eps, j, B_D, B_N, B_I, A_D, g_N, imp):
+    def __init__(self, V, mu, eps, j, B_D, u_D, B_N=None, g_N=None, B_I=None, imp=None):
         self.V = V
         self.K = None
         self.M = None
@@ -115,14 +121,33 @@ class TimeHarmonicMaxwellProblem(object):
         self.eps = eps
         self.j = j
         self.B_D = B_D
+        self.u_D = u_D
         self.B_N = B_N
-        self.B_I = B_I
-        self.A_D = A_D
         self.g_N = g_N
+        self.B_I = B_I
         self.imp = imp
-        self.A_sol = None
-        self.bc = None
+        self.solution = None
         self.omega = None
+        self.bc = None
+
+        class EmptyBoundary(fen.SubDomain):
+                def inside(self, x, on_boundary):
+                    return False
+
+        if B_N is None:
+            self.B_N = EmptyBoundary()
+
+        if g_N is None:
+            if self.V.mesh().topology().dim() == 2:
+                self.g_N = fen.Expression('0.0', degree=2)
+            else:
+                self.g_N = fen.Expression(('0.0', '0.0', '0.0'), degree=2)
+
+        if B_I is None:
+            self.B_I = EmptyBoundary()
+
+        if imp is None:
+            self.imp = fen.Expression('0.0', degree=2)
 
     def setup(self):
         """Assemble the stiffness and mass matrices with boundary conditions"""
@@ -134,29 +159,29 @@ class TimeHarmonicMaxwellProblem(object):
         self.B_N.mark(boundary_type, 2)
         self.B_I.mark(boundary_type, 3)
 
-        A = fen.TrialFunction(self.V)
+        u = fen.TrialFunction(self.V)
         v = fen.TestFunction(self.V)
 
         ds = fen.Measure('ds', subdomain_data=boundary_type)
         n = fen.FacetNormal(mesh)
  
         # Dirichlet boundary conditions
-        self.bc = fen.DirichletBC(self.V, self.A_D, boundary_type, 1)
+        self.bc = fen.DirichletBC(self.V, self.u_D, boundary_type, 1)
 
         # Neumann boundary conditions
         self.N = fen.assemble(fen.dot(self.g_N, v) * ds(2))
 
         # Impedance boundary condition
-        if self.V.tabulate_dof_coordinates().shape[1] == 2:
-            self.I = fen.assemble(self.imp * fen.dot(A, v) * ds(3))
+        if mesh.topology().dim() == 2:
+            self.I = fen.assemble(self.imp * fen.dot(u, v) * ds(3))
         else:
-            self.I = fen.assemble(self.imp * fen.dot(fen.cross(fen.cross(n, A), n), v) * ds(3))
+            self.I = fen.assemble(self.imp * fen.dot(fen.cross(fen.cross(n, u), n), v) * ds(3))
 
         # Assembly of stiffness, mass, and forcing term
-        self.K = fen.assemble(1/self.mu * fen.dot(fen.curl(A), fen.curl(v)) * fen.dx)
+        self.K = fen.assemble(1/self.mu * fen.dot(fen.curl(u), fen.curl(v)) * fen.dx)
         self.bc.apply(self.K)
 
-        self.M = fen.assemble(self.eps * fen.dot(A, v) * fen.dx)
+        self.M = fen.assemble(self.eps * fen.dot(u, v) * fen.dx)
         self.bc.zero(self.M)
 
         self.L = fen.assemble(fen.dot(self.j, v) * fen.dx)
@@ -165,7 +190,7 @@ class TimeHarmonicMaxwellProblem(object):
     def solve(self, omega, accumulate=False):
         """Solve the variational problem defined with .setup()"""
         if not accumulate:
-            self.A_sol = []
+            self.solution = []
             self.omega = []
         if isinstance(omega, (float, int)):
             omega = [omega]
@@ -173,16 +198,16 @@ class TimeHarmonicMaxwellProblem(object):
         for omg in omega:
             LHS = self.K - omg**2 * self.M
             RHS = self.L + self.N
-            A = fen.Function(self.V)
-            fen.solve(LHS, A.vector(), RHS)
-            self.A_sol.append(A)
+            u = fen.Function(self.V)
+            fen.solve(LHS, u.vector(), RHS)
+            self.solution.append(u)
 
     def complex_solve(self, omega, accumulate=False):
         """Solve the variational problem defined with .setup()"""
         if isinstance(omega, (float, int)):
             omega = [omega]
         if not accumulate:
-            self.A_sol = np.empty((len(omega), self.V.dim()*2), dtype=float)
+            self.solution = np.empty((len(omega), self.V.dim()*2), dtype=float)
             self.omega = []
         self.omega.extend(omega)
         for i, omg in enumerate(omega):
@@ -193,12 +218,12 @@ class TimeHarmonicMaxwellProblem(object):
             LHS = scipy.sparse.vstack([scipy.sparse.hstack([LHS_re, -LHS_im], format='csr'),
                                        scipy.sparse.hstack([LHS_im, LHS_re], format='csr')], format='csr')
             RHS = np.r_[RHS_re, RHS_im]
-            A = scipy.sparse.linalg.spsolve(LHS, RHS)
+            u = scipy.sparse.linalg.spsolve(LHS, RHS)
             if not accumulate:
-                self.A_sol[i] = A
+                self.solution[i] = u
             else:
                 # This is bullshit (port all to numpy later on please)
-                self.A_sol.append(A)
+                self.solution.append(u)
 
     def get_numerical_eigenfrequencies(self, a=-np.inf, b=np.inf, k=10, v0=None, return_eigvecs=False):
         """Solve an eigenvalue problem K*v = omega^2*M*v"""
@@ -276,15 +301,15 @@ class TimeHarmonicMaxwellProblem(object):
             coords = self.V.tabulate_dof_coordinates()
             is_on_trace = lambda x: trace.inside(x, 'on_boundary')
             on_trace = np.apply_along_axis(is_on_trace, 1, coords)
-            if isinstance(self.A_sol, np.ndarray):
-                return self.A_sol[:, on_trace]
-            return np.array([a.vector().get_local()[on_trace] for a in self.A_sol])
+            if isinstance(self.solution, np.ndarray):
+                return self.solution[:, on_trace]
+            return np.array([a.vector().get_local()[on_trace] for a in self.solution])
         if tonumpy:
-            if isinstance(self.A_sol, np.ndarray):
+            if isinstance(self.solution, np.ndarray):
                 # Bullshit (port all to numpy later)
-                return self.A_sol[:, :self.A_sol.shape[1] // 2]
-            return np.array([a.vector().get_local() for a in self.A_sol])
-        return self.A_sol
+                return self.solution[:, self.solution.shape[1] // 2:  ]
+            return np.array([a.vector().get_local() for a in self.solution])
+        return self.solution
 
     def save_solution(self, dirname, trace=None):
         SM = SnapshotMatrix(self.get_solution(tonumpy=True, trace=trace), self.omega)
@@ -294,7 +319,7 @@ class TimeHarmonicMaxwellProblem(object):
     def load_solution(self, dirname):
         with open(dirname, 'rb') as file:
             SM = pickle.load(file)
-        self.A_sol = SM.get_snapshots()
+        self.solution = SM.get_snapshots()
         self.omega = SM.get_frequencies()
 
     def get_frequency(self):
@@ -312,11 +337,11 @@ class TimeHarmonicMaxwellProblem(object):
         all_indices = self.V.dofmap().dofs()
         return np.delete(all_indices, boundary_indices)
     
-    def insert_boundary_values(self, A_vec):
+    def insert_boundary_values(self, u_vec):
         """Insert boundary values into a vector with omitted boundary points"""
         boundary_indices, boundary_values = self.get_boundary_indices_and_values()
         inner_indices = self.get_inner_indices()
-        A_vec_inserted = np.empty(self.V.dim())
-        A_vec_inserted[inner_indices] = A_vec
-        A_vec_inserted[boundary_indices] = boundary_values
-        return A_vec_inserted
+        u_vec_inserted = np.empty(self.V.dim())
+        u_vec_inserted[inner_indices] = u_vec
+        u_vec_inserted[boundary_indices] = boundary_values
+        return u_vec_inserted
