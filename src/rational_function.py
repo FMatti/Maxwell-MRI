@@ -68,10 +68,10 @@ class RationalFunction(object):
         return (self.P @ C.T) / (self.q @ C.T)
 
     def roots(self, filtered=True):
-        A = np.diag(np.append(0, self.nodes))
+        A = np.diag(np.append(0, self.nodes)).astype(complex)
         A[0, 1:] = self.q
         A[1:, 0] = 1
-        B = np.diag(np.append(0, np.ones_like(self.nodes)))
+        B = np.diag(np.append(0, np.ones_like(self.nodes))).astype(complex)
         eigvals = scipy.linalg.eigvals(A, b=B)
         if filtered:
             return eigvals[~np.isinf(eigvals)]
@@ -81,7 +81,7 @@ class RationalFunction(object):
         return self.nodes
 
     def get_denominator_argmin(self, samples):
-        C = np.subtract.outer(samples, self.nodes, dtype=float)
+        C = np.subtract.outer(samples, self.nodes, dtype=complex)
         has_zero = np.any(np.isclose(C, 0).T, axis=0).T
         B = self.q @ C[~has_zero].T**(-1)
         argmin_B = np.argmin(np.abs(B))

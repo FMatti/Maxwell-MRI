@@ -40,4 +40,8 @@ def plot_lines(ax, values, **kwargs):
     ax.vlines(values, ymin=0, ymax=1, **kwargs)
     ax.set_yticks([])
     ax.set_ylim(0, 1)
-   
+
+def complex_scatter(ax, values, **kwargs):
+    real = np.real(values)
+    imag = np.imag(values)
+    ax.scatter(real, imag, marker='x', color='k', **kwargs)
