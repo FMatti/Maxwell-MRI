@@ -148,7 +148,7 @@ class MinimalRationalInterpolation(object):
         """Compute the rational surrogate""" 
         if not greedy:
             self.supports = target.get_frequency()
-            self._build_surrogate(target.get_solution(), self.supports)
+            self._build_surrogate(target.get_solution(trace=self.VS.trace), self.supports)
             return
 
         # Greedy: Take smallest and largest omegas as initial support points
@@ -189,7 +189,10 @@ class MinimalRationalInterpolation(object):
     def get_surrogate(self, snapshots):
         """Returns the rational interpolation surrogate"""
         surrogate = copy.copy(self.u_ring)
-        surrogate.P = snapshots.T * surrogate.q#snapshots[self.supports].T * surrogate.q
+        if snapshots.shape[0] == len(self.supports):
+            surrogate.P = snapshots.T * surrogate.q
+        else:
+            surrogate.P = snapshots[self.supports].T * surrogate.q
         return surrogate
 
     def evaluate_surrogate(self, snapshots, z):

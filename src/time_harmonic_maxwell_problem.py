@@ -187,43 +187,28 @@ class TimeHarmonicMaxwellProblem(object):
         self.L = fen.assemble(fen.dot(self.j, v) * fen.dx)
         self.bc.apply(self.L)
 
-    def solve(self, omega, accumulate=False):
+    def solve(self, omega, accumulate=False, imaginary=False):
         """Solve the variational problem defined with .setup()"""
-        if not accumulate:
-            self.solution = []
-            self.omega = []
+        if imaginary:
+            dtype = complex
+        else:
+            dtype = float
         if isinstance(omega, (float, int)):
             omega = [omega]
-        self.omega.extend(omega)
+        if not accumulate:
+            k = 0
+            self.solution = np.empty((len(omega), self.V.dim()), dtype=dtype)
+            self.omega = omega
+        else:
+            k = len(self.omega)
+            self.solution = np.r_[self.solution, np.empty((len(omega), self.V.dim()), dtype=dtype)]
+            self.omega = np.r_[self.omega, omega]
         for omg in omega:
-            LHS = self.K - omg**2 * self.M
-            RHS = self.L + self.N
-            u = fen.Function(self.V)
-            fen.solve(LHS, u.vector(), RHS)
-            self.solution.append(u)
-
-    def complex_solve(self, omega, accumulate=False):
-        """Solve the variational problem defined with .setup()"""
-        if isinstance(omega, (float, int)):
-            omega = [omega]
-        if not accumulate:
-            self.solution = np.empty((len(omega), self.V.dim()*2), dtype=float)
-            self.omega = []
-        self.omega.extend(omega)
-        for i, omg in enumerate(omega):
-            LHS_re = self.tosparse(self.K) - omg**2 * self.tosparse(self.M)
-            LHS_im = - omg * self.tosparse(self.I)
-            RHS_re = self.L.get_local() + self.N.get_local()
-            RHS_im = np.zeros_like(RHS_re)
-            LHS = scipy.sparse.vstack([scipy.sparse.hstack([LHS_re, -LHS_im], format='csr'),
-                                       scipy.sparse.hstack([LHS_im, LHS_re], format='csr')], format='csr')
-            RHS = np.r_[RHS_re, RHS_im]
-            u = scipy.sparse.linalg.spsolve(LHS, RHS)
-            if not accumulate:
-                self.solution[i] = u
-            else:
-                # This is bullshit (port all to numpy later on please)
-                self.solution.append(u)
+            LHS_re = self.get_K(tosparse=True) - omg**2 * self.get_M(tosparse=True)
+            LHS_im = - 1j * omg * self.tosparse(self.I) if imaginary else 0
+            RHS = self.get_L(tonumpy=True) + self.get_N(tonumpy=True)
+            self.solution[k] = scipy.sparse.linalg.spsolve(LHS_re + LHS_im, RHS)
+            k += 1
 
     def get_numerical_eigenfrequencies(self, a=-np.inf, b=np.inf, k=10, v0=None, return_eigvecs=False):
         """Solve an eigenvalue problem K*v = omega^2*M*v"""
@@ -295,24 +280,17 @@ class TimeHarmonicMaxwellProblem(object):
             return self.I.get_local()
         return self.I
 
-    def get_solution(self, tonumpy=True, trace=None):
+    def get_solution(self, trace=None):
         """Return the solution obtained with .solve()"""
         if trace is not None:
             coords = self.V.tabulate_dof_coordinates()
             is_on_trace = lambda x: trace.inside(x, 'on_boundary')
             on_trace = np.apply_along_axis(is_on_trace, 1, coords)
-            if isinstance(self.solution, np.ndarray):
-                return self.solution[:, on_trace]
-            return np.array([a.vector().get_local()[on_trace] for a in self.solution])
-        if tonumpy:
-            if isinstance(self.solution, np.ndarray):
-                # Bullshit (port all to numpy later)
-                return self.solution[:, self.solution.shape[1] // 2:  ]
-            return np.array([a.vector().get_local() for a in self.solution])
+            return self.solution[:, on_trace]
         return self.solution
 
     def save_solution(self, dirname=None, trace=None):
-        SM = SnapshotMatrix(self.get_solution(tonumpy=True, trace=trace), self.omega)
+        SM = SnapshotMatrix(self.get_solution(trace=trace), self.omega)
         if dirname is None:
             return SM
         with open(dirname, 'wb') as file:
