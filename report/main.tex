@@ -13,8 +13,11 @@
 
 \maketitle
 
-\section{Abstract}
+\section*{Abstract}
 \label{sec:abstract}
+
+\pagebreak
+\tableofcontents
 
 \pagebreak
 \section{Introduction}
@@ -39,6 +42,8 @@ current density. Maxwell's equations are stated in \cite{monk} as
     \nabla \times (\mu^{-1} \mathbf{B}) &= \partial_t (\epsilon \mathbf{E}) + \mathbf{j} \label{equ:maxwell4}
 \end{align}
 with $\varepsilon$ being the permittivity and $\mu$ the permeability.
+
+% Non-conducting material, else => j = sigma*E + J_a (Monk 21)
 
 Equation (\ref{equ:maxwell2}) allows for an expression of the magnetic field 
 $\mathbf{B} = \nabla \times \mathbf{u}$ in terms of a vector valued function
@@ -66,18 +71,21 @@ where I renamed the variable $\mathbf{u}'$ to $\mathbf{u}$ for simplicity.
 Plugging the identities (\ref{equ:electricfield}) and (\ref{equ:magneticfield})
 into (\ref{equ:maxwell4}) yields 
 \begin{equation}
-    \nabla \times (\mu^{-1} \nabla \times \mathbf{u}) =  \varepsilon \partial_t^2 \mathbf{u} + \mathbf{j} \label{equ:maxwell-potential}
+    \nabla \times (\mu^{-1} \nabla \times \mathbf{u}) =  \epsilon \partial_t^2 \mathbf{u} + \mathbf{j} \label{equ:maxwell-potential}
 \end{equation}
 
 For the rest of this report, I restrict myself to vector potentials $\mathbf{u}$
 that exhibit a harmonic dependence on time $t$, i.e. may be factorized into
-a term solely depending on the position $\mathbf{x}$ and a complex exponential:
-$\mathbf{u}(\mathbf{x}, t) = \mathbf{u}(\mathbf{x}) \exp(i \omega t)$. Substituting
-this expression into (\ref{equ:maxwell-potential}) results in the
+a term solely depending on the position $\mathbf{x}$ and a complex exponential
 \begin{equation}
-    \boxed{\text{Time-harmonic potential equation:} \hspace{8pt}
-     \nabla \times (\mu^{-1} \nabla \times \mathbf{u}) - \varepsilon \omega^2 \mathbf{u} = \mathbf{j}} \label{equ:maxwell-timeharmonic}
+    \mathbf{u}(\mathbf{x}, t) = \mathbf{u}(\mathbf{x}) \exp(i \omega t) \label{equ:time-harmonic}
 \end{equation}
+Substituting this expression into (\ref{equ:maxwell-potential}) results in the
+\begin{fancybox}{Time-harmonic potential equation}
+    \begin{equation}
+     \nabla \times (\mu^{-1} \nabla \times \mathbf{u}) - \epsilon \omega^2 \mathbf{u} = \mathbf{j} \label{equ:maxwell-timeharmonic}
+    \end{equation}
+\end{fancybox}
 
 \subsection{Weak formulation for the time-harmonic potential equation}
 \label{subsec:maxwell-weak}
@@ -95,16 +103,28 @@ and then integrated over all of $\Omega$ to obtain
 % !REMINDME: Put derivation in appendix
 This may further be simplified (\ref{equ:maxwell-weak-initial}) to (see Section 
 \ref{sec:abstract} for details)
-\begin{equation}
-    \boxed{
-    \int_{\Omega} ({\mu^{-1} \nabla \times \mathbf{u}}) \cdot (\nabla \times \mathbf{v})
-    - \epsilon \omega^2 \int_{\Omega} \mathbf{u} \cdot \mathbf{v} 
-    = \int_{\Omega} \mathbf{j} \cdot \mathbf{v}
-    + \int_{\partial \Omega} (({\mu^{-1} \nabla \times \mathbf{u}}) \times \mathbf{n}) \cdot \mathbf{v}
-    } \label{equ:maxwell-weak}
-\end{equation}
+\begin{fancybox}{Weak formulation of the time-harmonic potential equation}
+    \begin{equation}
+        \int_{\Omega} ({\mu^{-1} \nabla \times \mathbf{u}}) \cdot (\nabla \times \mathbf{v})
+        - \omega^2 \int_{\Omega} \epsilon \mathbf{u} \cdot \mathbf{v} 
+        = \int_{\Omega} \mathbf{j} \cdot \mathbf{v}
+        + \int_{\partial \Omega} \underbrace{(({\mu^{-1} \nabla \times \mathbf{u}}) \times \mathbf{n})}_{= \mathbf{g}} \cdot \mathbf{v}
+        \label{equ:maxwell-weak}
+    \end{equation}
+\end{fancybox}
 where $\mathbf{n}$ denotes the surface normal to the boundary $\partial \Omega$.
 
+Boundary conditions on the electric field $\mathbf{E}$ may be enforced in a Dirichlet-type
+fashion through the relation (\ref{equ:electricfield}) and the assumption
+(\ref{equ:time-harmonic})
+\begin{equation}
+    \left.\mathbf{u}\right|_{\partial \Omega} = -\frac{1}{i\omega} \left.\mathbf{E}\right|_{\partial \Omega} \label{equ:dirichlet-boundary}
+\end{equation}
+Those on the magnetic field $\mathbf{B}$ through a Neumann-type condition following
+from (\ref{equ:magneticfield}) and again (\ref{equ:time-harmonic})
+\begin{equation}
+    \left.\mathbf{g}\right|_{\partial \Omega} = (\mu^{-1} \left.\mathbf{B}\right|_{\partial \Omega}) \times \mathbf{n} \label{equ:neumann-boundary}
+\end{equation}
 
 \subsection{Two-dimensional resonant cavity}
 \label{subsec:cavity}
@@ -129,15 +149,36 @@ $\mathbf{v} = v_z \mathbf{e}_z$. Consequently,
     (\mu^{-1} \nabla \times \mathbf{u}) \cdot (\nabla \times \mathbf{v})
     = (\mu^{-1} \nabla u_z) \cdot (\nabla v_z)
 \end{equation}
-Define $g_z = (({\mu^{-1} \nabla \times \mathbf{u}}) \times \mathbf{n})_z$
-along the boundary $\Gamma_N$, to convert (\ref{equ:maxwell-weak}) into
+Use $g_z = (\mathbf{g})_z$ along the boundary $\Gamma_N$,
+to convert (\ref{equ:maxwell-weak}) into
 the weak formulation for a two-dimensional resonant cavity
 \begin{equation}
     \int_{\Omega} (\mu^{-1} \nabla u_z) \cdot (\nabla v_z)
     - \omega^2 \int_{\Omega} \epsilon u_z v_z
     = \int_{\partial \Omega} g_z v_z \label{equ:maxwell-weak-resonant-cavity}
 \end{equation}
+
 % Boundary conditions Dirichlet and Neumann (from Monk)
+Let $\mathbf{E}$ and $\mathbf{B}$ refer to the electric and magnetic fields inside
+the cavity. For now, I distinguish two types of boundaries.
+
+For the perfectly conducting boundary, treated in \cite{monk}, it holds that
+\begin{equation}
+    \mathbf{n} \times \mathbf{E} = 0,~~\text{on}~\Gamma_D
+\end{equation}
+For the boundaries in a two-dimensional resonant cavity (see Figure 
+\ref{fig:2d-waveguide}), this only holds true if $E_z = 0$, which translates
+to the Dirichlet boundary condition $\left.\mathbf{u}\right|_{\Gamma_D} = 0$
+in light of (\ref{equ:dirichlet-boundary}).
+
+For the inlet, it is easiest to enforce the boundary condition through the
+magnetic field $\mathbf{B}$ (considering $\mathbf{n} = -\mathbf{e}_x$ as
+depicted in Figure \ref{fig:2d-waveguide}):
+\begin{equation}
+    g_z = (({\mu^{-1} \mathbf{B}}) \times (-\mathbf{e}_x))_z = \mu^{-1} B_x
+\end{equation}
+
+%%%%% TO BE CONTINUED
 
 \subsection{Waveguide}
 \label{subsec:waveguide}
@@ -151,6 +192,16 @@ the weak formulation for a two-dimensional resonant cavity
 
 %%% Maybe need a chapter on finite element approximation + description of usage
 % of fenics or such
+
+\pagebreak
+\section{Finite element approximation with FEniCS}
+\label{sec:fem}
+
+% Theory (Galerkin and such)
+
+% Demonstration
+
+%
 
 \pagebreak
 \section{Minimal rational interpolation for the time-harmonic Maxwell's equations}
@@ -225,11 +276,13 @@ The goal is to rewrite the curl-integral on the left-hand side of
 \begin{equation}
     \int_{\Omega} (\nabla \times (\mu^{-1} \nabla \times \mathbf{u})) \cdot \mathbf{v} \label{equ:maxwell-weak-initial-LHS}
 \end{equation}
-In order to simplify the curls and apply the Gauss theorem, I first show prove
-the vector calculus identity
-\begin{equation}
-    (\nabla \times \mathbf{a}) \cdot \mathbf{b} = \nabla \cdot (\mathbf{a} \times \mathbf{b}) + \mathbf{a} \cdot (\nabla \times \mathbf{b}) \label{equ:vector-calculus} \\
-\end{equation}
+In order to simplify the curls and apply the Gauss theorem, I first show
+the following vector calculus identity:
+\begin{fancybox}{Curl product rule}
+    \begin{equation}
+        (\nabla \times \mathbf{a}) \cdot \mathbf{b} = \nabla \cdot (\mathbf{a} \times \mathbf{b}) + \mathbf{a} \cdot (\nabla \times \mathbf{b}) \label{equ:vector-calculus} \\
+    \end{equation}
+\end{fancybox}
 % !REMINDME: Appropriate spaces
 where $\mathbf{a}$, $\mathbf{b}$ are vector-value functions. The completely
 antisymmetric tensor $\varepsilon_{ijk}$, frequently referred to as the
@@ -261,10 +314,12 @@ together with Gauss' theorem gives
     + \int_{\Omega} ({\mu^{-1} \nabla \times \mathbf{u}}) \cdot (\nabla \times \mathbf{v}) \notag \\
 \end{align}
 
-For later convenience, the boundary integral can further be simplified using
-\begin{equation}
-    (\mathbf{a} \times \mathbf{b}) \cdot \mathbf{c} = - (\mathbf{a} \times \mathbf{c}) \cdot \mathbf{b} \label{equ:vector-algebra}
-\end{equation}
+For later convenience, the boundary integral can further be simplified using the
+\begin{fancybox}{Commutative behavior of the scalar triple product}
+    \begin{equation}
+        (\mathbf{a} \times \mathbf{b}) \cdot \mathbf{c} = - (\mathbf{a} \times \mathbf{c}) \cdot \mathbf{b} \label{equ:vector-algebra}
+    \end{equation}
+\end{fancybox}
 This identity follows immediately from a small manipulation with the Levi-Civita
 tensor:
 \begin{align}

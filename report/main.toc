@@ -1,0 +1,17 @@
+\babel@toc {english}{}\relax 
+\contentsline {section}{\numberline {1}Introduction}{3}{section.1}%
+\contentsline {section}{\numberline {2}Finite element discretization of the time-harmonic Maxwell's equations}{4}{section.2}%
+\contentsline {subsection}{\numberline {2.1}Vector potential formulation of the time-harmonic Maxwell's equations}{4}{subsection.2.1}%
+\contentsline {subsection}{\numberline {2.2}Weak formulation for the time-harmonic potential equation}{5}{subsection.2.2}%
+\contentsline {subsection}{\numberline {2.3}Two-dimensional resonant cavity}{5}{subsection.2.3}%
+\contentsline {subsection}{\numberline {2.4}Waveguide}{6}{subsection.2.4}%
+\contentsline {subsection}{\numberline {2.5}Imperfect conductor}{6}{subsection.2.5}%
+\contentsline {section}{\numberline {3}Finite element approximation with FEniCS}{7}{section.3}%
+\contentsline {section}{\numberline {4}Minimal rational interpolation for the time-harmonic Maxwell's equations}{8}{section.4}%
+\contentsline {section}{\numberline {5}Examples}{9}{section.5}%
+\contentsline {subsection}{\numberline {5.1}Two-dimensional rectangular cavity}{9}{subsection.5.1}%
+\contentsline {subsection}{\numberline {5.2}Dual mode circular waveguide filter}{9}{subsection.5.2}%
+\contentsline {subsection}{\numberline {5.3}Imperfectly conducting boundaries}{9}{subsection.5.3}%
+\contentsline {section}{\numberline {6}Conclusion and outlook}{10}{section.6}%
+\contentsline {section}{\numberline {7}Appendix}{11}{section.7}%
+\contentsline {subsection}{\numberline {7.1}Detailed derivation for the weak formulation of the time-harmonic potential equation}{11}{subsection.7.1}%

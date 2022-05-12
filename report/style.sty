@@ -82,7 +82,21 @@
 %%% MATHEMATICS
 \usepackage{amsmath}
 \usepackage{amssymb}
+\usepackage[many]{tcolorbox}
 
+\newtcolorbox{fancybox}[2][]
+{
+  colframe = black,
+  colback  = white,
+  coltitle = white,
+  title    = {#2},
+  sharp corners,
+  before skip=10pt,
+  after skip=10pt,
+  left=3pt,
+  right=3pt,
+  #1,
+}
 
 %%% TITLEPAGE LAYOUT
 \newcommand*{\project}[1]{\gdef\@project{#1}}
