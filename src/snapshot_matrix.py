@@ -23,7 +23,7 @@ class SnapshotMatrix(object):
         self.solution = solution
         self.omega = omega
 
-    def get_solution(self, tonumpy, trace):
+    def get_solution(self, trace=None):
         return self.solution
 
     def get_frequency(self):

@@ -169,7 +169,10 @@ class TimeHarmonicMaxwellProblem(object):
         self.bc = fen.DirichletBC(self.V, self.u_D, boundary_type, 1)
 
         # Neumann boundary conditions
-        self.N = fen.assemble(fen.dot(self.g_N, v) * ds(2))
+        if isinstance(self.g_N, list):
+            self.N = [fen.assemble(fen.dot(g_N, v) * ds(2)) for g_N in self.g_N]
+        else:
+            self.N = fen.assemble(fen.dot(self.g_N, v) * ds(2))
 
         # Impedance boundary condition
         if mesh.topology().dim() == 2:
@@ -191,20 +194,24 @@ class TimeHarmonicMaxwellProblem(object):
         """Solve the variational problem defined with .setup()"""
         if isinstance(omega, (float, int)):
             omega = [omega]
+        if isinstance(self.N, list):
+            n = len(self.N)
+        else:
+            n = 1
         if not accumulate:
             k = 0
-            self.solution = np.empty((len(omega), self.V.dim()), dtype=complex)
-            self.omega = omega
+            self.solution = np.empty((len(omega)*n, self.V.dim()), dtype=complex)
+            self.omega = np.repeat(omega, n)
         else:
             k = len(self.omega)
-            self.solution = np.r_[self.solution, np.empty((len(omega), self.V.dim()), dtype=complex)]
-            self.omega = np.r_[self.omega, omega]
+            self.solution = np.r_[self.solution, np.empty((len(omega)*n, self.V.dim()), dtype=complex)]
+            self.omega = np.r_[self.omega, np.repeat(omega, n)]
         for omg in omega:
             LHS_re = self.get_K(tosparse=True) - omg**2 * self.get_M(tosparse=True)
             LHS_im = - 1j * omg * self.tosparse(self.I)
-            RHS = self.get_L(tonumpy=True) + self.get_N(tonumpy=True)
-            self.solution[k] = scipy.sparse.linalg.spsolve(LHS_re + LHS_im, RHS)
-            k += 1
+            RHS = self.get_N(tonumpy=True) + self.get_L(tonumpy=True)
+            self.solution[k:k+n] = scipy.sparse.linalg.spsolve(LHS_re + LHS_im, RHS.T).T
+            k += n
 
     def get_numerical_eigenfrequencies(self, a=-np.inf, b=np.inf, k=10, v0=None, return_eigvecs=False):
         """Solve an eigenvalue problem K*v = omega^2*M*v"""
@@ -267,6 +274,8 @@ class TimeHarmonicMaxwellProblem(object):
     def get_N(self, tonumpy=True):
         """Return the Neumann boundary integral term N"""
         if tonumpy:
+            if isinstance(self.N, list):
+                return np.array([N.get_local() for N in self.N])
             return self.N.get_local()
         return self.N
 

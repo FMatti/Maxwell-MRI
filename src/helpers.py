@@ -6,7 +6,7 @@ def plot_solution_norms(ax, THMP, VS, **kwargs):
     """Plot the norm of the solution for a set of frequencies"""
     omegas = THMP.get_frequency()
     norms = np.empty(len(omegas))
-    u = THMP.get_solution(tonumpy=True, trace=VS.get_trace())
+    u = THMP.get_solution(trace=VS.get_trace())
     norms = [VS.norm(a) for a in u]
     ax.plot(omegas, norms, **kwargs)
     ax.set_yscale('log')
@@ -26,11 +26,11 @@ def plot_surrogate_error_norms(ax, THMP, MRI, VS, u=None, omegas=None, RI=None, 
     if omegas is None:
         omegas = THMP.get_frequency()
     if u is None:
-        u = THMP.get_solution(tonumpy=True, trace=VS.get_trace())
+        u = THMP.get_solution(trace=VS.get_trace())
         if RI is None:
             RI = MRI.get_surrogate(u)
     elif RI is None:
-        RI = MRI.get_surrogate(THMP.get_solution(tonumpy=True, trace=VS.get_trace()))
+        RI = MRI.get_surrogate(THMP.get_solution(trace=VS.get_trace()))
     err = [VS.norm(u[i] - RI(x)) / VS.norm(u[i]) for i, x in enumerate(omegas)]
     ax.plot(omegas, err, **kwargs)
     ax.set_yscale('log')
