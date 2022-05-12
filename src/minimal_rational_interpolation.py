@@ -144,7 +144,7 @@ class MinimalRationalInterpolation(object):
         q = V_conj[-1, :].conj()
         self.u_ring = RationalFunction(omegas, q, np.diag(q))
 
-    def compute_surrogate(self, target, omegas=None, greedy=True, tol=1e-2, n_iter=None, return_history=False):
+    def compute_surrogate(self, target, omegas=None, greedy=True, tol=1e-2, n_iter=None, return_history=False, solver='scipy'):
         """Compute the rational surrogate""" 
         if not greedy:
             self.supports = target.get_frequency()
@@ -155,7 +155,7 @@ class MinimalRationalInterpolation(object):
         self.supports = [np.argmin(omegas), np.argmax(omegas)]
         is_eligible = np.ones(len(omegas), dtype=bool)
         is_eligible[self.supports] = False
-        target.solve(omegas[self.supports])
+        target.solve(omegas[self.supports], solver=solver)
         self._build_surrogate(target.get_solution(trace=self.VS.trace), omegas[self.supports])
 
         if n_iter is None:
@@ -173,7 +173,7 @@ class MinimalRationalInterpolation(object):
             self.supports.append(argmin)
             is_eligible[argmin] = False
             u_hat = self.R @ self.u_ring(omegas[argmin])
-            target.solve(omegas[argmin], accumulate=True)
+            target.solve(omegas[argmin], accumulate=True, solver=solver)
             self._build_surrogate(target.get_solution(trace=self.VS.trace), omegas[self.supports], additive=True)
             if return_history:
                 surrogate_history.append(self.get_surrogate(target.get_solution(trace=self.VS.trace)))

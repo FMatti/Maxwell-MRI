@@ -190,7 +190,7 @@ class TimeHarmonicMaxwellProblem(object):
         self.L = fen.assemble(fen.dot(self.j, v) * fen.dx)
         self.bc.apply(self.L)
 
-    def solve(self, omega, accumulate=False):
+    def solve(self, omega, accumulate=False, solver='scipy'):
         """Solve the variational problem defined with .setup()"""
         if isinstance(omega, (float, int)):
             omega = [omega]
@@ -207,11 +207,26 @@ class TimeHarmonicMaxwellProblem(object):
             self.solution = np.r_[self.solution, np.empty((len(omega)*n, self.V.dim()), dtype=complex)]
             self.omega = np.r_[self.omega, np.repeat(omega, n)]
         for omg in omega:
-            LHS_re = self.get_K(tosparse=True) - omg**2 * self.get_M(tosparse=True)
-            LHS_im = - 1j * omg * self.tosparse(self.I)
-            RHS = self.get_N(tonumpy=True) + self.get_L(tonumpy=True)
-            self.solution[k:k+n] = scipy.sparse.linalg.spsolve(LHS_re + LHS_im, RHS.T).T
-            k += n
+            if solver == 'scipy':
+                LHS_re = self.get_K(tosparse=True) - omg**2 * self.get_M(tosparse=True)
+                LHS_im = - 1j * omg * self.get_I(tosparse=True)
+                RHS = self.get_N(tonumpy=True) + self.get_L(tonumpy=True)
+                self.solution[k:k+n] = scipy.sparse.linalg.spsolve(LHS_re + LHS_im, RHS.T).T
+                k += n
+            elif solver == 'fenics':
+                LHS = self.get_K(tosparse=False) - omg**2 * self.get_M(tosparse=False)
+                if n > 1:
+                    for i, N in enumerate(self.get_N(tonumpy=False)):
+                        RHS = N + self.get_L(tonumpy=False)
+                        u = fen.Function(self.V)
+                        fen.solve(LHS, u.vector(), RHS)
+                        self.solution[k+i] = u.vector().get_local()
+                else:
+                    RHS = self.get_N(tonumpy=False) + self.get_L(tonumpy=False)
+                    u = fen.Function(self.V)
+                    fen.solve(LHS, u.vector(), RHS)
+                    self.solution[k] = u.vector().get_local()
+                k += n
 
     def get_numerical_eigenfrequencies(self, a=-np.inf, b=np.inf, k=10, v0=None, return_eigvecs=False):
         """Solve an eigenvalue problem K*v = omega^2*M*v"""
@@ -265,6 +280,12 @@ class TimeHarmonicMaxwellProblem(object):
             return self.tosparse(self.M)
         return self.M
 
+    def get_I(self, tosparse=True):
+        """Return the impedance boundary term I"""
+        if tosparse:
+            return self.tosparse(self.I)
+        return self.I
+
     def get_L(self, tonumpy=True):
         """Return the source integral term L"""
         if tonumpy:
@@ -278,12 +299,6 @@ class TimeHarmonicMaxwellProblem(object):
                 return np.array([N.get_local() for N in self.N])
             return self.N.get_local()
         return self.N
-
-    def get_I(self, tonumpy=True):
-        """Return the Neumann boundary integral term N"""
-        if tonumpy:
-            return self.I.get_local()
-        return self.I
 
     def get_solution(self, trace=None):
         """Return the solution obtained with .solve()"""
