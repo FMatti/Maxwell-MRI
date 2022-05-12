@@ -28,7 +28,7 @@ class CircularWaveguideFilter(TimeHarmonicMaxwellProblem):
         TimeHarmonicMaxwellProblem.__init__(self, V, mu, eps, j, B_D(), u_D, B_N(), g_N)
 
     def plot_solution(self):
-        u_sol = self.get_solution(tonumpy=False)
+        u_sol = self.get_solution()
         for i, u in enumerate(u_sol):
             plt.figure()
             plt.title(f'Solution to system at frequency \u03C9 = {self.omega[i]} rad/s')

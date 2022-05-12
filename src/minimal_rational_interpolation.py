@@ -197,7 +197,10 @@ class MinimalRationalInterpolation(object):
 
     def evaluate_surrogate(self, snapshots, z):
         """Evaluates the rational interpolation surrogate at points z"""
-        return snapshots[self.supports].T @ self.u_ring(z)
+        if snapshots.shape[0] == len(self.supports):
+            return snapshots.T @ self.u_ring(z)
+        else:
+            return snapshots[self.supports].T @ self.u_ring(z)
 
     def get_interpolatory_eigenfrequencies(self, filtered=True, only_real=False):
         """Compute the eigenfrequencies as roots of rational interpolant"""
