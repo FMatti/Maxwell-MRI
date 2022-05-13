@@ -44,4 +44,5 @@ def plot_lines(ax, values, **kwargs):
 def complex_scatter(ax, values, **kwargs):
     real = np.real(values)
     imag = np.imag(values)
+    ax.grid()
     ax.scatter(real, imag, marker='x', color='k', **kwargs)
