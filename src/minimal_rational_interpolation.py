@@ -168,6 +168,7 @@ class MinimalRationalInterpolation(object):
         # Greedy: Add support points until relative surrogate error below tol
         t = 2
         while t < n_iter:
+
             reduced_argmin = self.u_ring.get_denominator_argmin(omegas[is_eligible])
             argmin = np.arange(len(omegas))[is_eligible][reduced_argmin]
             self.supports.append(argmin)
