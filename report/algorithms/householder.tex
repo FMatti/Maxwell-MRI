@@ -1,0 +1,30 @@
+\begin{algorithmic}
+\Require $U[1 \dots s, 1 \dots N]$ \Comment{Next snapshot matrix}
+\Require $R[1 \dots S, 1 \dots S]$  \Comment{Previous triangular matrix}
+\Require $E[1 \dots S, 1 \dots N]$ \Comment{Previous orthonormal matrix}
+\Require $V[1 \dots S, 1 \dots N]$ \Comment{Previous Householder matrix}
+\State Extend size of $R$ to $(S + s) \times (S + s)$
+\State Extend $E$ with $S$ orthonormal columns to $(S + s) \times N$
+\State Extend size of $V$ to $(S + s) \times N$
+\For{$j = S+1:S+s$}
+    \State $u = U[j]$
+    \For{$k = 1:j-1$}
+        \State $u \leftarrow u - 2 \langle V[k, :], u \rangle_M V[k, :]$
+        \State $R[k, j] \leftarrow \langle E[k, :], u \rangle_M$
+        \State $u \leftarrow u - R[k, j] E[k, :]$
+    \EndFor
+    \State $R[j, j] \leftarrow ||u||_M$
+    \State $\alpha \leftarrow \langle E[j, :], u \rangle_M$
+    \If{$|\alpha| \neq 0$}
+        \State $E[j, :] \leftarrow E[j, :] (-\alpha / |\alpha|)$
+    \EndIf 
+    \State $V[j, :] \leftarrow R[j, j] E[j, :] - u$
+    \State $V[j, :] \leftarrow V[j, :] - \langle E[S+1:j], V[j, :] \rangle_M E[S+1:j, :]$
+    \State $\sigma \leftarrow ||V[j, :]||_M$
+    \If{$\sigma \neq 0$}
+        \State $V[j, :] \leftarrow V[j, :] / \sigma$
+    \Else
+        \State$V[j, :] \leftarrow E[j, :]$
+    \EndIf
+\EndFor
+\end{algorithmic}

@@ -34,7 +34,7 @@
 
 Let $\mathbf{E}$ denote an electric field, $\mathbf{B}$ a magnetic field
 strength, $\rho$ an electric charge density, and $\mathbf{j}$ an electric
-current density. Maxwell's equations are stated in \cite{monk} as
+current density. Maxwell's equations are stated in \citep{monk} as
 \begin{align}
     \nabla \cdot (\epsilon \mathbf{E}) &= \rho \label{equ:maxwell1} \\
     \nabla \cdot \mathbf{B} &= 0 \label{equ:maxwell2} \\
@@ -55,7 +55,7 @@ using a scalar function $\phi$, referred to as the scalar potential.
 The physical quantities $\mathbf{E}$ and $\mathbf{B}$ remain unchanged 
 if we transform $\mathbf{u} \to \mathbf{u}' = \mathbf{u} + \nabla \psi$ or
 $\phi \to \phi' = \phi - \partial_t \psi$ for arbitrary functions $\psi$.
-A convenient choice of $\psi$ is suggested in \cite{gauge-transformation} to be
+A convenient choice of $\psi$ is suggested in \citep{gauge-transformation} to be
 \begin{equation}
     \psi = \int_0^t \phi dt' \label{equ:gauge}
 \end{equation}
@@ -162,7 +162,7 @@ the weak formulation for a two-dimensional resonant cavity
 Let $\mathbf{E}$ and $\mathbf{B}$ refer to the electric and magnetic fields inside
 the cavity. For now, I distinguish two types of boundaries.
 
-For the perfectly conducting boundary, treated in \cite{monk}, it holds that
+For the perfectly conducting boundary, treated in \citep{monk}, it holds that
 \begin{equation}
     \mathbf{n} \times \mathbf{E} = 0,~~\text{on}~\Gamma_D
 \end{equation}
@@ -199,28 +199,84 @@ depicted in Figure \ref{fig:2d-waveguide}):
 
 % Theory (Galerkin and such)
 
+$a_{\omega}(u, v) = L(v)$.
+
 % Demonstration
 
-%
+% Nédelec elements
 
 \pagebreak
-\section{Minimal rational interpolation for the time-harmonic Maxwell's equations}
+\section{Greedy minimal rational interpolation for the time-harmonic Maxwell's equations}
 \label{sec:mri}
 
 % General idea 
 
-% Algorithm
 
-% Complex root finding 
+% Algorithm (last column SVD is definition of MRI, cite Davide)
+\citep{greedyMRI}
+
+\begin{algorithm}
+    \caption{Minimal rational interpolation} \label{alg:MRI}
+    \input{algorithms/MRI.tex}
+\end{algorithm}
+
+\citep{shortMRI}
+
+\begin{algorithm}
+    \caption{Greedy minimal rational interpolation} \label{alg:gMRI}
+    \input{algorithms/gMRI.tex}
+\end{algorithm}
+
+% Interpolation property (in barycentric expansion, l'Hôpital whatever)
+
+% Rational root finding 
+
+\citep{klein}
+
+Defining 
+\begin{equation}
+    v_i = (\omega - \omega_i)^{-1}
+\end{equation}
+and requiring
+\begin{equation}
+    0 = Q(\omega) = \sum_{i=1}^S q_i v_i(\omega)
+\end{equation}
+can be equivalently expressed as a generalized eigenvalue problem
+\begin{equation}
+    \mathbf{\underline{A}} \mathbf{u} = \omega \mathbf{\underline{B}} \mathbf{u}
+\end{equation}
+with
+\begin{equation}
+    \mathbf{\underline{A}} = \begin{pmatrix}
+        0 & q_1 & q_2 & \dots & q_S \\
+        1 & \omega_1 & & & \\
+        1 & & \omega_2 & & \\ 
+        \vdots & & & \ddots & \\ 
+        1 & & & & \omega_S
+    \end{pmatrix} ~~\text{and}~~ 
+    \mathbf{\underline{B}} = \begin{pmatrix}
+        0 & & & & \\
+         & 1 & & & \\
+         & & 1 & & \\ 
+        \vdots & & & \ddots & \\ 
+         & & & & 1
+    \end{pmatrix}\label{equ:root-finding}
+\end{equation}
 
 % Optimization tweaks
 
 % -> Householder sequential algorithm instead of full Gramian
 
+\citep{householder}
+
+\begin{algorithm}
+    \caption{Additive Householder triangularization} \label{alg:householder}
+    \input{algorithms/householder.tex}
+\end{algorithm}
+
 % -> Check stability of build with SVDs
 
-% ->
-
+% -> Model order reduction techniques (u_ring, error computation, ...)
 
 \pagebreak
 \section{Examples}
@@ -346,7 +402,7 @@ may be rewritten as
 \end{equation}
 
 % 
-
+\newpage
 \bibliography{biblio.bib}
 
 \end{document}
