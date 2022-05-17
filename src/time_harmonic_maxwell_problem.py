@@ -241,10 +241,18 @@ class TimeHarmonicMaxwellProblem(object):
             v0 = v0[inner_indices]
         K = self.get_K(tosparse=True)[inner_indices, :][:, inner_indices]
         M = self.get_M(tosparse=True)[inner_indices, :][:, inner_indices]
+        I = self.get_I(tosparse=True)[inner_indices, :][:, inner_indices]
+        if I.count_nonzero() > 0:
+            n = len(inner_indices)
+            identity = scipy.sparse.diags(np.ones(n), shape=(n, n), format='csr')
+            empty = scipy.sparse.csr_matrix((n, n))
+            K = scipy.sparse.vstack([scipy.sparse.hstack([empty, identity], format='csr'), scipy.sparse.hstack([K, 1j*I], format='csr')], format='csr')
+            M = scipy.sparse.vstack([scipy.sparse.hstack([identity, empty], format='csr'), scipy.sparse.hstack([empty, M], format='csr')], format='csr') 
         eigvals, eigvecs = scipy.sparse.linalg.eigsh(A=K, k=k, M=M, sigma=sigma, v0=v0)
-
+        #print(eigvals)
         # Only return eigenfrequencies (square root of eigenvalues) in [a, b]
-        eigvals = np.sqrt(eigvals)
+        if I.count_nonzero() == 0:
+            eigvals = np.sqrt(eigvals)
         eigvals_in_ab = [e1 for e1 in eigvals if a <= e1 and e1 <= b]
 
         if len(eigvals_in_ab) == k:
@@ -252,7 +260,10 @@ class TimeHarmonicMaxwellProblem(object):
             print('Increase parameter "k" to ensure all eigenvalues are found.')
 
         if return_eigvecs:
-            eigvecs_in_ab = [e2 for e1, e2 in zip(eigvals, eigvecs.T) if a <= e1 and e1 <= b]
+            if I.count_nonzero() == 0:
+                eigvecs_in_ab = [e2 for e1, e2 in zip(eigvals, eigvecs.T) if a <= e1 and e1 <= b]
+            else:
+                eigvecs_in_ab = [e2[:n] for e1, e2 in zip(eigvals, eigvecs.T) if a <= e1 and e1 <= b]
             return eigvals_in_ab, eigvecs_in_ab
         return eigvals_in_ab
 
