@@ -246,10 +246,12 @@ class TimeHarmonicMaxwellProblem(object):
             n = len(inner_indices)
             identity = scipy.sparse.diags(np.ones(n), shape=(n, n), format='csr')
             empty = scipy.sparse.csr_matrix((n, n))
-            K = scipy.sparse.vstack([scipy.sparse.hstack([empty, identity], format='csr'), scipy.sparse.hstack([K, 1j*I], format='csr')], format='csr')
+            K = scipy.sparse.vstack([scipy.sparse.hstack([empty, identity], format='csr'), scipy.sparse.hstack([K, -1j*I], format='csr')], format='csr')
             M = scipy.sparse.vstack([scipy.sparse.hstack([identity, empty], format='csr'), scipy.sparse.hstack([empty, M], format='csr')], format='csr') 
-        eigvals, eigvecs = scipy.sparse.linalg.eigsh(A=K, k=k, M=M, sigma=sigma, v0=v0)
-        #print(eigvals)
+            eigvals, eigvecs = scipy.sparse.linalg.eigs(A=K, k=k, M=M, sigma=sigma, v0=v0)
+        else:
+            eigvals, eigvecs = scipy.sparse.linalg.eigsh(A=K, k=k, M=M, sigma=sigma, v0=v0)
+
         # Only return eigenfrequencies (square root of eigenvalues) in [a, b]
         if I.count_nonzero() == 0:
             eigvals = np.sqrt(eigvals)
