@@ -292,8 +292,8 @@ Eigenvalue decomposition $\mathbf{\underline{A}} = \mathbf{\underline{V}} ~ \bol
 leads us to a form proposed in \cite{helmholtz-motivation}
 \begin{equation}
     \mathbf{u} = \mathbf{\underline{V}} (\boldsymbol{\underline{\Lambda}} - \omega^2 \boldsymbol{\underline{1}})^{-1} \mathbf{\underline{V}}^H \mathbf{j} 
-    = \sum_i \frac{\mathbf{v}_i \mathbf{v}_i^H \mathbf{j}}{\lambda_i - \omega^2}
-    = \sum_i \frac{\mathbf{r}_i}{\lambda_i - \omega^2}
+    = \sum_i \frac{\mathbf{v}_i \mathbf{v}_i^H \mathbf{j}}{\lambda_i - \omega^2} \label{equ:motivation}
+    %= \sum_i \frac{\mathbf{r}_i}{\lambda_i - \omega^2} \label{equ:motivation}
 \end{equation}
 which follows from the fact that $\boldsymbol{\underline{\Lambda}}$ is diagonal,
 hence also $(\boldsymbol{\underline{\Lambda}} - \omega^2 \boldsymbol{\underline{1}})^{-1}$.
@@ -325,6 +325,20 @@ rational polynomials
 \end{algorithm}
 
 % Interpolation property (in barycentric expansion, l'Hôpital whatever)
+The rational surrogate $\mathbf{\tilde{u}}$ can be rewritten as 
+\begin{align}
+    \mathbf{\tilde{u}}(\omega)
+    &= \sum_{j=1}^S \frac{q_j \mathbf{u}(\omega_j)}{\omega - \omega_j}
+    / \sum_{j=1}^S \frac{q_j}{\omega - \omega_j} \notag \\
+    &= \sum_{j=1}^S \prod_{\substack{i=0 \\ i \neq j}}^S (\omega - \omega_i) q_j \mathbf{u}(\omega_j)
+    / \sum_{j=1}^S \prod_{\substack{i=0 \\ i \neq j}}^S (\omega - \omega_i) q_j
+\end{align}
+Therefore, if the rational surrogate $\mathbf{\tilde{u}}$ is evaluated at one of the
+interpolation nodes $\omega_i$, $\mathbf{u}(\omega_i)$ is recovered.
+
+If the rational surrogate $\mathbf{\tilde{u}}$ is evaluated in a zero
+$\bar{\omega}$ of the denominator $Q(\bar{\omega}) = 0$, we observe a pole,
+unless $P(\bar{\omega})$ happens to vanish too.
 
 % Rational root finding 
 
@@ -350,7 +364,7 @@ with
         1 & & \omega_2 & & \\ 
         \vdots & & & \ddots & \\ 
         1 & & & & \omega_S
-    \end{pmatrix} ~~\text{and}~~ 
+    \end{pmatrix} ~~\text{and}~~
     \mathbf{\underline{B}} = \begin{pmatrix}
         0 & & & & \\
          & 1 & & & \\
@@ -372,8 +386,31 @@ with
 \end{algorithm}
 
 % -> Check stability of build with SVDs
+Can check stability with singular values $\sigma_1, \dots, \sigma_S$ in 
+$\Sigma$ which we obtain in Algorithm \ref{alg:MRI}. Need smallest singular values
+to different from each other. This conditioning can be estimated with the relative
+spectral range % CITATION NEEDED
+\begin{equation}
+    \frac{\sigma_{S-1} - \sigma_S}{\sigma_1 - \sigma_S}
+\end{equation}
 
 % -> Model order reduction techniques (u_ring, error computation, ...)
+Denote $\mathbf{\underline{U}} = [\mathbf{u}(\omega_1), \dots, \mathbf{u}(\omega_S)]$
+snapshot matrix.
+Let 
+\begin{equation}
+    \mathbf{\mathring{u}} = \sum_{j=1}^S \frac{q_j \mathbf{e}_j}{\omega - \omega_j}
+    / \sum_{j=1}^S \frac{q_j}{\omega - \omega_j}
+\end{equation}
+
+% STUCK HERE (TO BE CONTINUED)
+
+with the canonical basis vectors $\{ \mathbf{e}_j \}_j$.
+If we perform a QR decomposition on this matrix, we obtain 
+\begin{equation}
+    \mathbf{\underline{U}} = \mathbf{\underline{W}} ~ \mathbf{\underline{R}}
+\end{equation}
+
 
 \pagebreak
 \section{Examples}
@@ -392,16 +429,51 @@ with
 % Exploratory plots
 
 % Rational interpolation demonstration
+For $||\mathbf{u}||_{L_2(\Omega)}^2 = \int_{\Omega} ||\mathbf{u}||^2$
 
 % Analytical and numerical root finding
-Analytical roots
+Analytical eigenfrequencies
 \begin{equation}
-    ax = b
+    \omega_{n, m} = \pi \sqrt{\left(\frac{2n + 1}{2L_x}\right)^2 + \left(\frac{m}{L_y}\right)^2},
+    ~n \in \{0, 1, \dots\}, ~m \in \{1, 2, \dots \} \label{equ:analytical-eigenmodes}
 \end{equation}
+Numerical eigenfrequencies, solve generalized (symmetric) eigenvalue problem
+\begin{equation}
+    \mathbf{\underline{K}} \mathbf{u} = \omega^2 \mathbf{\underline{M}} \mathbf{u}
+    \label{equ:numerical-eigenmodes}
+\end{equation}
+% maybe also talk about removing boundary indices
 
 % Problems with non-resonant solutions suppressed by the boundary integral
+Take $\{ \mathbf{u}_j, \omega_j^2 \}_j$ be the resonant modes, i.e. solutions to 
+the eigenvalue problem (\ref{equ:numerical-eigenmodes}), such that
+\begin{equation}
+    \mathbf{\underline{K}} \mathbf{u}_j = \omega_j^2 \mathbf{\underline{M}} \mathbf{u}_j
+    \label{equ:eigen-solution}
+\end{equation}
+Adding a source term $\mathbf{f}$ 
+\begin{equation}
+    \mathbf{\underline{K}} \mathbf{u} - \omega^2 \mathbf{\underline{M}} \mathbf{u} = \mathbf{f}
+\end{equation}
+If $\mathbf{u}$ is expressed in terms of the basis $\{ \mathbf{u}_j \}_j$, i.e.
+$\mathbf{u} = \sum_j \alpha_j \mathbf{u}_j$
+\begin{equation}
+    \sum_j \alpha_j (\mathbf{\underline{K}} \mathbf{u}_j - \omega^2 \mathbf{\underline{M}} \mathbf{u}_j) = \mathbf{f}
+\end{equation}
+Using (\ref{equ:eigen-solution})
+\begin{equation}
+    \sum_j \alpha_j (\omega_j^2 - \omega^2) \mathbf{\underline{M}} \mathbf{u}_j = \mathbf{f}
+\end{equation}
+from which we can take the scalar product with $\mathbf{u}_j^H$ to obtain
+% WHY SHOULD THIS BE A BASIS (DOES IT SPAN?), AND WHY M-ORTHONORMAL
+\begin{equation}
+    \alpha_j = \frac{\mathbf{u}_j^H \mathbf{f}}{\omega_j^2 - \omega^2}
+\end{equation}
+If $\mathbf{u}_j^H \mathbf{f} = 0$, then the resonant mode at $\omega_j$ is 
+suppressed (fine with MRI, but eigsh will detect a resonant mode).
 
 % Problems with linearly combinable solutions -> Use cubby to perturb waveguide
+For $||\mathbf{u}||_{L_2(\Gamma)}^2 = \int_{\Gamma} ||\mathbf{u}||^2$
 
 \subsection{Dual mode circular waveguide filter}
 \label{subsec:examples-dmcwf}
@@ -419,18 +491,46 @@ Analytical roots
 
 % Scattering coefficient
 
+
 % Measurement procedure
+
 
 \subsection{Imperfectly conducting boundaries}
 \label{subsec:examples-impedance}
 
+% Numerical eigenfrequencies
+Numerical eigenfrequencies, solve
+\begin{equation}
+    (\mathbf{\underline{K}} - i \omega \mathbf{\underline{I}} - \omega^2 \mathbf{\underline{M}}) \mathbf{u} = 0
+\end{equation}
+Define $\mathbf{v} = \omega \mathbf{u}$, so that we may write this as the
+generalized eigenvalue problem
+\begin{equation}
+    \begin{bmatrix}
+        \boldsymbol{\underline{1}} & \\
+        \mathbf{\underline{K}} & -i \mathbf{\underline{I}}
+    \end{bmatrix}
+    \begin{bmatrix}
+        \mathbf{v} \\
+        \mathbf{u}
+    \end{bmatrix}
+    =
+    \omega
+    \begin{bmatrix}
+        \boldsymbol{\underline{M}} & \\
+         & \boldsymbol{\underline{1}}
+    \end{bmatrix}
+    \begin{bmatrix}
+        \mathbf{v} \\
+        \mathbf{u}
+    \end{bmatrix}
+\end{equation}
+which is, however, no longer Hermitian.
 % Pole plot
 
 \pagebreak
 \section{Conclusion and outlook}
 \label{sec:conclusion}
-
-% Danksagung
 
 \pagebreak
 \section{Appendix}
