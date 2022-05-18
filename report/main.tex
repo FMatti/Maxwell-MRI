@@ -30,6 +30,8 @@
 \subsection{Vector potential formulation of the time-harmonic Maxwell's equations}
 \label{subsec:maxwell-potential}
 
+% !REMINDME: Add boundary conditions to th equations!!!!
+
 % Everything smooth enough to do all manipulations...
 
 Let $\mathbf{E}$ denote an electric field, $\mathbf{B}$ a magnetic field
@@ -135,10 +137,9 @@ electrically conducting wall $\Gamma_D = \partial \Omega \setminus \Gamma_N$.
 
 \begin{figure}[h]
     \centering
-    \input{figures/2dwaveguide.tex}
-    \caption{Example of a two-dimensional resonant cavity: The rectangular
-    cavity.}
-    \label{fig:2d-waveguide}
+    \input{figures/2d_cavity.tex}
+    \caption{2d resonant cavity.}
+    \label{fig:2d-cavity}
 \end{figure}
 
 % !REMINDME: Why only need test against v_z?!
@@ -167,18 +168,16 @@ For the perfectly conducting boundary, treated in \citep{monk}, it holds that
     \mathbf{n} \times \mathbf{E} = 0,~~\text{on}~\Gamma_D
 \end{equation}
 For the boundaries in a two-dimensional resonant cavity (see Figure 
-\ref{fig:2d-waveguide}), this only holds true if $E_z = 0$, which translates
+\ref{fig:2d-cavity}), this only holds true if $E_z = 0$, which translates
 to the Dirichlet boundary condition $\left.\mathbf{u}\right|_{\Gamma_D} = 0$
 in light of (\ref{equ:dirichlet-boundary}).
 
 For the inlet, it is easiest to enforce the boundary condition through the
 magnetic field $\mathbf{B}$ (considering $\mathbf{n} = -\mathbf{e}_x$ as
-depicted in Figure \ref{fig:2d-waveguide}):
+depicted in Figure \ref{fig:2d-cavity}):
 \begin{equation}
     g_z = (({\mu^{-1} \mathbf{B}}) \times (-\mathbf{e}_x))_z = \mu^{-1} B_x
 \end{equation}
-
-
 
 \subsection{Waveguide}
 \label{subsec:waveguide}
@@ -189,9 +188,21 @@ depicted in Figure \ref{fig:2d-waveguide}):
 \label{subsec:impedance}
 
 % Additionally impedance boundary condition from Monk
+At an imperfect boundary \cite{monk}, (\ref{equ:electricfield}), with (\ref{equ:time-harmonic})
+\begin{equation}
+    \mathbf{g} = (\mu^{-1} \nabla \times \mathbf{u}) \times \mathbf{n}
+    = i \omega \lambda (\mathbf{n} \times \mathbf{u}) \times \mathbf{n}
+\end{equation}
+which, supposing that $\mathbf{u} = u_z \mathbf{e}_z$ and only treating a
+two-dimensional domain, simplifies (using the fact that $\mathbf{n} \perp \mathbf{u}$
+and $||\mathbf{n}|| = 1$, so $(\mathbf{n} \times \mathbf{u}) \times \mathbf{n} = \mathbf{u}$
+% !REMINDME: Maybe proof it in appendix
+\begin{equation}
+    g_z = i \omega \lambda u_z
+\end{equation}
+Therefore, reuse (\ref{equ:maxwell-weak-resonant-cavity}) as it is, but split 
+boundary integral term for Neumann and impedance boundary.
 
-%%% Maybe need a chapter on finite element approximation + description of usage
-% of fenics or such
 
 \pagebreak
 \section{Finite element approximation with FEniCS}
@@ -202,15 +213,101 @@ depicted in Figure \ref{fig:2d-waveguide}):
 $a_{\omega}(u, v) = L(v)$.
 
 % Demonstration
+In the style of \cite{fenics}. 
+Problem (\ref{equ:maxwell-weak}) with $\Omega$ being a cubic cavity with an inlet
+on one side and all other sides with $\mu = \epsilon = 0$, $\mathbf{j} = 0$
+for simplicity.
+
+Required packages
+\lstinputlisting[firstnumber=0, firstline=0, lastline=3]{code/fenics_example.py}
+
+Mesh
+\lstinputlisting[firstnumber=5, firstline=6, lastline=7]{code/fenics_example.py}
+
+Function space (Nédélec elements of the first kind \cite{monk})
+\lstinputlisting[firstnumber=9, firstline=10, lastline=10]{code/fenics_example.py}
+
+Inlet (at x = 0)
+\lstinputlisting[firstnumber=12, firstline=13, lastline=15]{code/fenics_example.py}
+
+PEC boundary
+\lstinputlisting[firstnumber=17, firstline=18, lastline=20]{code/fenics_example.py}
+
+Boundary ids
+\lstinputlisting[firstnumber=22, firstline=23, lastline=26]{code/fenics_example.py}
+
+Dirichlet boundary (0 for PEC, because Nédélec)
+\lstinputlisting[firstnumber=28, firstline=29, lastline=30]{code/fenics_example.py}
+
+Neumann boundary (1 for ...)
+\lstinputlisting[firstnumber=32, firstline=33, lastline=34]{code/fenics_example.py}
+
+Trial and test functions
+\lstinputlisting[firstnumber=36, firstline=37, lastline=38]{code/fenics_example.py}
+
+Neumann boundary integral term
+\lstinputlisting[firstnumber=40, firstline=41, lastline=41]{code/fenics_example.py}
+
+Stiffness matrix
+\lstinputlisting[firstnumber=43, firstline=44, lastline=45]{code/fenics_example.py}
+
+Mass matrix
+\lstinputlisting[firstnumber=47, firstline=48, lastline=49]{code/fenics_example.py}
+
+L2 norms
+\lstinputlisting[firstnumber=51, firstline=52, lastline=54]{code/fenics_example.py}
+
+Solution at frequencies
+\lstinputlisting[firstnumber=56, firstline=57, lastline=62]{code/fenics_example.py}
+
+Plotting the L2-norms
+\lstinputlisting[firstnumber=64, firstline=65, lastline=66]{code/fenics_example.py}
 
 % Nédelec elements
 
 \pagebreak
-\section{Greedy minimal rational interpolation for the time-harmonic Maxwell's equations}
+\section{Minimal rational interpolation for the time-harmonic Maxwell's equations}
 \label{sec:mri}
 
 % General idea 
+Let $u : \mathbb{R} \to \mathbb{C}$.
+Given $u_j = u(\omega_j)$ for $j \in \{1, \dots, S\}$. Want to find a surrogate
+\begin{equation}
+    \tilde{u}(\omega) \approx u(\omega)
+\end{equation}
 
+\subsection{Motivation}
+\label{subsec:motivation}
+
+Equations of the type (\ref{equ:maxwell-timeharmonic}), in the most simple case (dropping
+all constants)
+\begin{equation}
+    \nabla \times (\nabla \times \mathbf{u}) - \omega^2 \mathbf{u} = \mathbf{j}
+\end{equation}
+Writing the double-curl operator in terms of a matrix $\mathbf{\underline{A}}$
+\begin{equation}
+    \mathbf{u} = (\mathbf{\underline{A}} - \omega^2)^{-1} \mathbf{j}
+\end{equation}
+Eigenvalue decomposition $\mathbf{\underline{A}} = \mathbf{\underline{V}} ~ \boldsymbol{\underline{\Lambda}} ~ \mathbf{\underline{V}}^H$
+leads us to a form proposed in \cite{helmholtz-motivation}
+\begin{equation}
+    \mathbf{u} = \mathbf{\underline{V}} (\boldsymbol{\underline{\Lambda}} - \omega^2 \boldsymbol{\underline{1}})^{-1} \mathbf{\underline{V}}^H \mathbf{j} 
+    = \sum_i \frac{\mathbf{v}_i \mathbf{v}_i^H \mathbf{j}}{\lambda_i - \omega^2}
+    = \sum_i \frac{\mathbf{r}_i}{\lambda_i - \omega^2}
+\end{equation}
+which follows from the fact that $\boldsymbol{\underline{\Lambda}}$ is diagonal,
+hence also $(\boldsymbol{\underline{\Lambda}} - \omega^2 \boldsymbol{\underline{1}})^{-1}$.
+Here, we denoted the diagonal elements of $\boldsymbol{\underline{\Lambda}}$ with 
+$\lambda_i$ (the eigenvalues of $\mathbf{\underline{A}}$) and the columns of
+$\mathbf{\underline{V}}$ with $\mathbf{v}_i$ (the eigenvectors of $\mathbf{\underline{A}}$).
+
+% !REMINDME: This is not really phrased academically yet...
+Hence, it would make sense to search for an approximation of the solution $\mathbf{u}$
+that is able to \enquote{model} the singularities at $\omega^2 = \lambda_i$, e.g.
+rational polynomials
+\begin{equation}
+    \tilde{u}(\omega) = \frac{P(\omega)}{Q(\omega)}
+\end{equation}
 
 % Algorithm (last column SVD is definition of MRI, cite Davide)
 \citep{greedyMRI}
@@ -285,11 +382,22 @@ with
 \subsection{Two-dimensional rectangular cavity}
 \label{subsec:examples-rectangularcavity}
 
+\begin{figure}[h]
+    \centering
+    \input{figures/rectangular_cavity.tex}
+    \caption{TODO.}
+    \label{fig:rectangular_cavity}
+\end{figure}
+
 % Exploratory plots
 
 % Rational interpolation demonstration
 
-% Analytical root finding
+% Analytical and numerical root finding
+Analytical roots
+\begin{equation}
+    ax = b
+\end{equation}
 
 % Problems with non-resonant solutions suppressed by the boundary integral
 
