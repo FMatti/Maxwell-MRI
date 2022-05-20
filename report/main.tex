@@ -128,8 +128,21 @@ from (\ref{equ:magneticfield}) and again (\ref{equ:time-harmonic})
     \left.\mathbf{g}\right|_{\partial \Omega} = (\mu^{-1} \left.\mathbf{B}\right|_{\partial \Omega}) \times \mathbf{n} \label{equ:neumann-boundary}
 \end{equation}
 
-\subsection{Two-dimensional resonant cavity}
-\label{subsec:cavity}
+\subsection{Examples}
+\label{subsec:examples}
+
+We apply this weak formulation to three different but very intimately related 
+problems:
+
+\begin{figure}[h]
+    \centering
+    \input{figures/simple_examples.tex}
+    \caption{Schematically the most trivial case for each example.}
+    \label{fig:examples}
+\end{figure}
+
+\subsubsection{Two-dimensional resonant cavity}
+\label{subsubsec:cavity}
 
 A resonant cavity is a region $\Omega$ enclosed by a boundary $\partial \Omega$.
 The boundary is subdivided into one (or more) inlets $\Gamma_N$ and a perfect
@@ -179,13 +192,8 @@ depicted in Figure \ref{fig:2d-cavity}):
     g_z = (({\mu^{-1} \mathbf{B}}) \times (-\mathbf{e}_x))_z = \mu^{-1} B_x
 \end{equation}
 
-\subsection{Waveguide}
-\label{subsec:waveguide}
-
-% Just j=0 and 3d, need to discuss boundary conditions
-
-\subsection{Imperfect conductor}
-\label{subsec:impedance}
+\subsubsection{Imperfect conductor}
+\label{subsubsec:impedance}
 
 % Additionally impedance boundary condition from Monk
 At an imperfect boundary \cite{monk}, (\ref{equ:electricfield}), with (\ref{equ:time-harmonic})
@@ -195,7 +203,7 @@ At an imperfect boundary \cite{monk}, (\ref{equ:electricfield}), with (\ref{equ:
 \end{equation}
 which, supposing that $\mathbf{u} = u_z \mathbf{e}_z$ and only treating a
 two-dimensional domain, simplifies (using the fact that $\mathbf{n} \perp \mathbf{u}$
-and $||\mathbf{n}|| = 1$, so $(\mathbf{n} \times \mathbf{u}) \times \mathbf{n} = \mathbf{u}$
+and $||\mathbf{n}|| = 1$, so $(\mathbf{n} \times \mathbf{u}) \times \mathbf{n} = \mathbf{u}$)
 % !REMINDME: Maybe proof it in appendix
 \begin{equation}
     g_z = i \omega \lambda u_z
@@ -203,14 +211,49 @@ and $||\mathbf{n}|| = 1$, so $(\mathbf{n} \times \mathbf{u}) \times \mathbf{n} =
 Therefore, reuse (\ref{equ:maxwell-weak-resonant-cavity}) as it is, but split 
 boundary integral term for Neumann and impedance boundary.
 
+\subsubsection{Waveguide}
+\label{subsubsec:waveguide}
+
+We go back to (\ref{equ:maxwell-weak}). Again, $\mathbf{j} \equiv 0$, but now 
+we stay in 3d. Supposing that the inlet is located at a constant $x$-value,
+such that the surface normal to this inlet is $-\mathbf{e}_x$. For an incoming
+magnetic field $\left.\mathbf{B}\right|_{\Gamma_N} = B_0 \mathbf{e}_y$ at the
+inlet, we see from (\ref{equ:neumann-boundary}) that $\left.\mathbf{g}\right|_{\Gamma_i}
+= - \mu^{-1} B_0 \mathbf{e}_z$. At the outlet, we set $\left.\mathbf{g}\right|_{\Gamma_o} = \boldsymbol{0}$
+
+% Just j=0 and 3d, need to discuss boundary conditions
+
 
 \pagebreak
 \section{Finite element approximation with FEniCS}
 \label{sec:fem}
 
-% Theory (Galerkin and such)
+\subsection{Theory (come up with better title)}
+\label{subsec:fem-theory}
 
-$a_{\omega}(u, v) = L(v)$.
+% Theory
+
+Along the lines of \cite{fenics}.
+
+% WHAT SPACE DO WE WANT V TO BE?!?!
+See immediately that the weak formulation (\ref{equ:maxwell-weak}) assumes the shape
+\begin{equation}
+    \text{Find}~\mathbf{u} \in V,~\text{such that}~a_{\omega}(\mathbf{u}, \mathbf{v}) = L(\mathbf{v}), ~\forall \mathbf{v} \in V_0
+\end{equation}
+with the bilinear form 
+\begin{equation}
+    a_{\omega}(\mathbf{u}, \mathbf{v}) = \int_{\Omega} (\mu^{-1} \nabla \times \mathbf{u}) \cdot (\nabla \times \mathbf{v})
+    - \omega^2 \int_{\Omega} \epsilon \mathbf{u} \cdot \mathbf{v}
+\end{equation}
+and the linear form 
+\begin{equation}
+    L(\mathbf{u}) = \int_{\Omega} \mathbf{j} \cdot \mathbf{v} + \int_{\partial \Omega} \mathbf{g} \cdot \mathbf{v}
+\end{equation}
+
+% TO BE CONTINUED WITH GALERKIN STUFF
+
+\subsection{Demonstration (come up with better title)}
+\label{subsec:fem-demo}
 
 % Demonstration
 In the style of \cite{fenics}. 
@@ -389,7 +432,7 @@ with
 Can check stability with singular values $\sigma_1, \dots, \sigma_S$ in 
 $\Sigma$ which we obtain in Algorithm \ref{alg:MRI}. Need smallest singular values
 to different from each other. This conditioning can be estimated with the relative
-spectral range % CITATION NEEDED
+spectral range \cite{davidePHD}
 \begin{equation}
     \frac{\sigma_{S-1} - \sigma_S}{\sigma_1 - \sigma_S}
 \end{equation}
@@ -475,26 +518,6 @@ suppressed (fine with MRI, but eigsh will detect a resonant mode).
 % Problems with linearly combinable solutions -> Use cubby to perturb waveguide
 For $||\mathbf{u}||_{L_2(\Gamma)}^2 = \int_{\Gamma} ||\mathbf{u}||^2$
 
-\subsection{Dual mode circular waveguide filter}
-\label{subsec:examples-dmcwf}
-
-% Describe geometry and physical meaning
-
-\begin{figure}[h]
-    \centering
-    \input{figures/DMCWF.tex}
-    \caption{Dual-mode circular waveguide filter.}
-    \label{fig:DMCWF}
-\end{figure}
-
-% Modeling process cite rubia
-
-% Scattering coefficient
-
-
-% Measurement procedure
-
-
 \subsection{Imperfectly conducting boundaries}
 \label{subsec:examples-impedance}
 
@@ -507,26 +530,50 @@ Define $\mathbf{v} = \omega \mathbf{u}$, so that we may write this as the
 generalized eigenvalue problem
 \begin{equation}
     \begin{bmatrix}
-        \boldsymbol{\underline{1}} & \\
+         & \boldsymbol{\underline{1}} \\
         \mathbf{\underline{K}} & -i \mathbf{\underline{I}}
     \end{bmatrix}
     \begin{bmatrix}
-        \mathbf{v} \\
-        \mathbf{u}
+        \mathbf{u} \\
+        \mathbf{v}
     \end{bmatrix}
     =
     \omega
     \begin{bmatrix}
-        \boldsymbol{\underline{M}} & \\
-         & \boldsymbol{\underline{1}}
+        \boldsymbol{\underline{1}} & \\
+         & \boldsymbol{\underline{M}}
     \end{bmatrix}
     \begin{bmatrix}
-        \mathbf{v} \\
-        \mathbf{u}
+        \mathbf{u} \\
+        \mathbf{v}
     \end{bmatrix}
 \end{equation}
-which is, however, no longer Hermitian.
+which is, however, no longer Hermitian (LHS chosen as \enquote{diagonal} as possible).
 % Pole plot
+
+\subsection{Dual mode circular waveguide filter}
+\label{subsec:examples-dmcwf}
+
+% Describe geometry and physical meaning
+
+\begin{figure}[h]
+    \centering
+    \input{figures/DMCWF.tex}
+    \caption{Dual-mode circular waveguide filter. \cite{DMCWF-Dimensions}
+    $W_C=43.87$ mm, $D_C=28.0$ mm, $L_B=43.87$ mm, $W_B=19.05$ mm, $H_B=9.525$ mm,
+    $L_B=20.0$ mm, $W_S=10.05$ mm, $H_S=3.0$ mm, $W_A=2.0$ mm, $H_A=3.375$ mm,
+    $L_A=2.825$ mm, thickness of all irises $2.0$ mm, screws half way up
+    the cavity horizontal tuning screws with depth $3.82$ mm
+    and coupling screws at angles $\pm 45^{\circ}$ with depth $3.57$ mm.}
+    \label{fig:DMCWF}
+\end{figure}
+
+% Modeling process cite rubia
+
+% Scattering coefficient
+
+% Measurement procedure
+
 
 \pagebreak
 \section{Conclusion and outlook}

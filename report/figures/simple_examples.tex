@@ -1,0 +1,16 @@
+\begin{tikzpicture}
+    \node at (2, 2.3) {Resonant cavity};
+    \fill[black!5!white] (0, 0) rectangle (4, 2);
+    \draw[ultra thick] (0, 0) to (4, 0) to (4, 2) to (0, 2);
+
+    \node at (7, 2.3) {Imperfect conductor};
+    \fill[black!5!white] (5, 0) rectangle (9, 2);
+    \draw[ultra thick] (5, 0) to (9, 0);
+    \draw[ultra thick, dashed] (9, 2) to (9, 0);
+    \draw[ultra thick] (5, 2) to (9, 2);
+
+    \node at (12, 2.3) {Waveguide};
+    \fill[black!5!white] (10, 0) rectangle (14, 2);
+    \draw[ultra thick] (10, 0) to (14, 0);
+    \draw[ultra thick] (10, 2) to (14, 2);
+\end{tikzpicture}
