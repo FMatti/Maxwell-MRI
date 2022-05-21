@@ -144,3 +144,6 @@ dmypy.json
 *.FCStd1
 *.geo.opt
 *.msh
+
+# Snapshots
+*.obj
