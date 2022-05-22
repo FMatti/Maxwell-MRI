@@ -10,6 +10,7 @@ def plot_solution_norms(ax, THMP, VS, **kwargs):
     norms = [VS.norm(a) for a in u]
     ax.plot(omegas, norms, **kwargs)
     ax.set_yscale('log')
+    return norms
 
 def plot_surrogate_norms(ax, MRI, a=None, b=None, N=1000, **kwargs):
     """Plot vectorspace norm of surrogate at N uniform points in [a, b]"""
@@ -18,8 +19,10 @@ def plot_surrogate_norms(ax, MRI, a=None, b=None, N=1000, **kwargs):
     if b is None:
         b = np.max(MRI.u_ring.get_nodes())
     linspace = np.linspace(a, b, N)
-    ax.plot(linspace, [np.linalg.norm(MRI.R.dot(x)) for x in MRI.u_ring(linspace).T], **kwargs)
+    norms = [np.linalg.norm(MRI.R.dot(x)) for x in MRI.u_ring(linspace).T]
+    ax.plot(linspace, norms, **kwargs)
     ax.set_yscale('log')
+    return norms
 
 def plot_surrogate_error_norms(ax, THMP, MRI, VS, u=None, omegas=None, RI=None, **kwargs):
     """Plot relative error norm of surrogate"""
@@ -34,6 +37,7 @@ def plot_surrogate_error_norms(ax, THMP, MRI, VS, u=None, omegas=None, RI=None, 
     err = [VS.norm(u[i] - RI(x)) / VS.norm(u[i]) for i, x in enumerate(omegas)]
     ax.plot(omegas, err, **kwargs)
     ax.set_yscale('log')
+    return err
     
 def plot_lines(ax, values, **kwargs):
     """Plot vertical lines at given values"""

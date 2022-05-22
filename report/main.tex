@@ -9,6 +9,8 @@
 \supervisor{Prof. Fabio Nobile \\ Dr. Davide Pradovera}
 \date{\today}
 
+
+
 \begin{document}
 
 \maketitle
@@ -29,7 +31,7 @@
 
 \subsection{Vector potential formulation of the time-harmonic Maxwell's equations}
 \label{subsec:maxwell-potential}
-
+\the\textwidth
 % !REMINDME: Add boundary conditions to th equations!!!!
 
 % Everything smooth enough to do all manipulations...
@@ -471,8 +473,37 @@ If we perform a QR decomposition on this matrix, we obtain
 
 % Exploratory plots
 
+\begin{figure}[ht]
+    \centering
+    \begin{subfigure}{\textwidth}
+        \includegraphics{plots/rectangular_cavity_mode1.pdf}
+        \caption{First resonant frequency $\omega = 3.159$.}
+    \end{subfigure}
+    \begin{subfigure}{\textwidth}
+        \includegraphics{plots/rectangular_cavity_mode5.pdf}
+        \caption{Fifth resonant frequency $\omega = 4.675$.}
+    \end{subfigure}
+    \caption{Caption.}
+    \label{fig:rectangular-cavity-modes}
+\end{figure}
+
 % Rational interpolation demonstration
 For $||\mathbf{u}||_{L_2(\Omega)}^2 = \int_{\Omega} ||\mathbf{u}||^2$
+
+\begin{figure}[ht]
+    \centering
+    \input{plots/rectangular_cavity_norms.pgf}
+    \caption{Caption.}
+    \label{fig:rectangular-cavity-norms}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \input{plots/rectangular_cavity_errorprogression.pgf}
+    \caption{Caption.}
+    \label{fig:rectangular-cavity-errorprogression}
+\end{figure}
+
 
 % Analytical and numerical root finding
 Analytical eigenfrequencies
@@ -486,6 +517,11 @@ Numerical eigenfrequencies, solve generalized (symmetric) eigenvalue problem
     \label{equ:numerical-eigenmodes}
 \end{equation}
 % maybe also talk about removing boundary indices
+\begin{table}[ht]
+    \caption{Comparison eigsh and gMRI.}
+    \label{tab:rectangular_cavity_comparison}
+    \input{tables/rectangular_cavity_comparison.tex}
+\end{table}
 
 % Problems with non-resonant solutions suppressed by the boundary integral
 Take $\{ \mathbf{u}_j, \omega_j^2 \}_j$ be the resonant modes, i.e. solutions to 
@@ -500,7 +536,7 @@ Adding a source term $\mathbf{f}$
 \end{equation}
 If $\mathbf{u}$ is expressed in terms of the basis $\{ \mathbf{u}_j \}_j$, i.e.
 $\mathbf{u} = \sum_j \alpha_j \mathbf{u}_j$
-\begin{equation}
+\begin{equation} 
     \sum_j \alpha_j (\mathbf{\underline{K}} \mathbf{u}_j - \omega^2 \mathbf{\underline{M}} \mathbf{u}_j) = \mathbf{f}
 \end{equation}
 Using (\ref{equ:eigen-solution})
@@ -515,12 +551,20 @@ from which we can take the scalar product with $\mathbf{u}_j^H$ to obtain
 If $\mathbf{u}_j^H \mathbf{f} = 0$, then the resonant mode at $\omega_j$ is 
 suppressed (fine with MRI, but eigsh will detect a resonant mode).
 
+\begin{figure}[ht]
+    \centering
+    \input{plots/rectangular_cavity_suppression.pgf}
+    \caption{Caption.}
+    \label{fig:rectangular-cavity-suppression}
+\end{figure}
+
+
 % Problems with linearly combinable solutions -> Use cubby to perturb waveguide
 For $||\mathbf{u}||_{L_2(\Gamma)}^2 = \int_{\Gamma} ||\mathbf{u}||^2$
 
 \subsection{Imperfectly conducting boundaries}
 \label{subsec:examples-impedance}
-
+% argmin |Q| only valid in undamped regime
 % Numerical eigenfrequencies
 Numerical eigenfrequencies, solve
 \begin{equation}
