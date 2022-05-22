@@ -49,4 +49,4 @@ def complex_scatter(ax, values, **kwargs):
     real = np.real(values)
     imag = np.imag(values)
     ax.grid()
-    ax.scatter(real, imag, marker='x', **kwargs)
+    ax.scatter(real, imag, **kwargs)

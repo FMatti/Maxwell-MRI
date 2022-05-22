@@ -565,6 +565,13 @@ For $||\mathbf{u}||_{L_2(\Gamma)}^2 = \int_{\Gamma} ||\mathbf{u}||^2$
 \subsection{Imperfectly conducting boundaries}
 \label{subsec:examples-impedance}
 % argmin |Q| only valid in undamped regime
+\begin{figure}[ht]
+    \centering
+    \input{plots/imperfect_conductor_norms.pgf}
+    \caption{Caption.}
+    \label{fig:imperfect-conductor-norms}
+\end{figure}
+
 % Numerical eigenfrequencies
 Numerical eigenfrequencies, solve
 \begin{equation}
@@ -594,6 +601,20 @@ generalized eigenvalue problem
 \end{equation}
 which is, however, no longer Hermitian (LHS chosen as \enquote{diagonal} as possible).
 % Pole plot
+
+\begin{figure}[ht]
+    \centering
+    \input{plots/imperfect_conductor_eigfreqs.pgf}
+    \caption{Spurious resonant frequency far away from others and definitely 
+    not of interest for this problem, but indeed for rational surrogate.}
+    \label{fig:imperfect-conductor-eigfreqs}
+\end{figure}
+
+\begin{table}[ht]
+    \caption{Comparison eigsh and gMRI.}
+    \label{tab:imperfect-conductor-comparison}
+    \input{tables/imperfect_conductor_comparison.tex}
+\end{table}
 
 \subsection{Dual mode circular waveguide filter}
 \label{subsec:examples-dmcwf}
