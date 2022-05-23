@@ -9,23 +9,25 @@
 \supervisor{Prof. Fabio Nobile \\ Dr. Davide Pradovera}
 \date{\today}
 
-
-
 \begin{document}
 
 \maketitle
 
-\section*{Abstract}
-\label{sec:abstract}
+\begin{abstract}
+    Abstractest abstract ever.
+\end{abstract}
 
-\pagebreak
+\newpage
+\printglossary[type=\acronymtype, nonumberlist]
+
+\newpage
 \tableofcontents
 
-\pagebreak
+\newpage
 \section{Introduction}
 \label{sec:introduction}
 
-\pagebreak
+\newpage
 \section{Finite element discretization of the time-harmonic Maxwell's equations}
 \label{sec:maxwell}
 
@@ -226,7 +228,7 @@ inlet, we see from (\ref{equ:neumann-boundary}) that $\left.\mathbf{g}\right|_{\
 % Just j=0 and 3d, need to discuss boundary conditions
 
 
-\pagebreak
+\newpage
 \section{Finite element approximation with FEniCS}
 \label{sec:fem}
 
@@ -310,15 +312,15 @@ Plotting the L2-norms
 
 % Nédelec elements
 
-\pagebreak
+\newpage
 \section{Minimal rational interpolation for the time-harmonic Maxwell's equations}
 \label{sec:mri}
 
 % General idea 
-Let $u : \mathbb{R} \to \mathbb{C}$.
-Given $u_j = u(\omega_j)$ for $j \in \{1, \dots, S\}$. Want to find a surrogate
+Let $\mathbf{u} : \mathbb{C} \to \mathbb{C}^3$.
+Given $\mathbf{u}_j = \mathbf{u}(\omega_j)$ for $j \in \{1, \dots, S\}$. Want to find a surrogate
 \begin{equation}
-    \tilde{u}(\omega) \approx u(\omega)
+    \mathbf{\tilde{u}}(\omega) \approx \mathbf{u}(\omega)
 \end{equation}
 
 \subsection{Motivation}
@@ -354,7 +356,10 @@ rational polynomials
     \tilde{u}(\omega) = \frac{P(\omega)}{Q(\omega)}
 \end{equation}
 
-% Algorithm (last column SVD is definition of MRI, cite Davide)
+\subsection{Minimal rational interpolation}
+\label{subsec:MRI}
+
+% Algorithm (last column SVD is definition of MRI)
 \citep{greedyMRI}
 
 \begin{algorithm}
@@ -362,12 +367,20 @@ rational polynomials
     \input{algorithms/MRI.tex}
 \end{algorithm}
 
+\subsection{Greedy minimal rational interpolation}
+\label{subsec:gMRI}
+
+\acrfull{gMRI}
+
 \citep{shortMRI}
 
 \begin{algorithm}
     \caption{Greedy minimal rational interpolation} \label{alg:gMRI}
     \input{algorithms/gMRI.tex}
 \end{algorithm}
+
+\subsection{Properties of rational interpolants in barycentric coordinates}
+\label{subsec:properties}
 
 % Interpolation property (in barycentric expansion, l'Hôpital whatever)
 The rational surrogate $\mathbf{\tilde{u}}$ can be rewritten as 
@@ -385,9 +398,11 @@ If the rational surrogate $\mathbf{\tilde{u}}$ is evaluated in a zero
 $\bar{\omega}$ of the denominator $Q(\bar{\omega}) = 0$, we observe a pole,
 unless $P(\bar{\omega})$ happens to vanish too.
 
+\subsection{Finding roots of rational functions}
+\label{subsec:roots}
 % Rational root finding 
 
-\citep{klein}
+Then used for determining resonant modes (i.e. where Q(omega) = 0)\citep{klein}
 
 Defining 
 \begin{equation}
@@ -419,45 +434,125 @@ with
     \end{pmatrix}\label{equ:root-finding}
 \end{equation}
 
+\subsection{Optimization tricks for greedy minimal rational interpolation}
+\label{subsec:optimization}
 % Optimization tweaks
 
+\subsubsection{Additive Householder decomposition}
+\label{subsubsec:householder}
 % -> Householder sequential algorithm instead of full Gramian
 
-\citep{householder}
+Algorithm \ref{alg:MRI} requires the computation of the \acrfull{SVD}
+of the Gramian matrix $\mathbf{\underline{G}}$. An alternative is to compute
+the QR decomposition of the snapshot matrix $\mathbf{\underline{U}} = [\mathbf{u}(\omega_1), \dots, \mathbf{u}(\omega_S)]$.
+Since
+\begin{equation}
+    \mathbf{\underline{G}} = \mathbf{\underline{U}}^H \mathbf{\underline{M}}~\mathbf{\underline{U}} \label{equ:gramian-matrix}
+\end{equation}
+with the matrix $\mathbf{\underline{M}}$ representing the finite element 
+$L_2$ inner product $\Omega$. A QR decomposition with respect to the inner product
+$\langle \mathbf{u}, \mathbf{v} \rangle = \mathbf{u}^H \mathbf{M} \mathbf{v}$
+yields $\mathbf{\underline{U}} = \mathbf{\underline{Q}}~\mathbf{\underline{R}}$
+with $\mathbf{\underline{Q}}^H \mathbf{\underline{M}}~\mathbf{\underline{Q}} = \boldsymbol{\underline{1}}$.
+When plugging this into (\ref{equ:gramian-matrix}) one sees
+\begin{equation}
+    \mathbf{\underline{G}} = (\mathbf{\underline{Q}}~\mathbf{\underline{R}})^H \mathbf{\underline{M}} 
+    (\mathbf{\underline{Q}}~\mathbf{\underline{R}}) = \mathbf{\underline{R}}^H~\mathbf{\underline{R}}
+    \label{equ:gramian-QR}
+\end{equation}
+
+Let the \acrshort{SVD} of $\mathbf{\underline{R}}$ be 
+\begin{equation}
+    \mathbf{\underline{R}} = \mathbf{\underline{W}}~\mathbf{\underline{S}}~\mathbf{\underline{V}}^H \label{equ:qr-decomposition}
+\end{equation}
+Inserting this into (\ref{equ:gramian-QR}) results in
+\begin{equation}
+    \mathbf{\underline{G}} = (\mathbf{\underline{W}}~\mathbf{\underline{S}}~\mathbf{\underline{V}}^H)^H \mathbf{\underline{W}}~\mathbf{\underline{S}}~\mathbf{\underline{V}}^H
+    = \mathbf{\underline{V}}~\mathbf{\underline{S}}^2\mathbf{\underline{V}}^H
+    \label{equ:gramian-SVD}
+\end{equation}
+which yields the \acrshort{SVD} of the Gramian matrix $\mathbf{\underline{G}}$.
+
+There is one big benefit to taking the route via the \acrshort{SVD}
+for \acrshort{gMRI}: When extending the snapshot matrix by an additional
+snapshot $\mathbf{u}(\omega_{S+1})$, the resulting triangular matrix $\mathbf{\underline{R}}^{(S+1)}$
+from a QR decomposition on this extended snapshot matrix only differs from the 
+(possibly) already computed $\mathbf{\underline{R}}^{(S)}$ only in the last column.
+Thus, it is possible to fully reuse results obtained in previous iterations in
+\acrshort{gMRI} and therefore significantly increase computational efficiency.
+
+I developed such an additive QR decomposition in Algorithm \ref{alg:householder},
+which results from an adaption of the Householder triangularization algorithm
+found in \citep{householder}.
 
 \begin{algorithm}
     \caption{Additive Householder triangularization} \label{alg:householder}
     \input{algorithms/householder.tex}
 \end{algorithm}
 
+% -> Twice is enough?
+
+\subsubsection{Stability of singular value decomposition}
+\label{subsubsec:svd}
 % -> Check stability of build with SVDs
 Can check stability with singular values $\sigma_1, \dots, \sigma_S$ in 
-$\Sigma$ which we obtain in Algorithm \ref{alg:MRI}. Need smallest singular values
+$\mathbf{\underline{S}}$. Need smallest singular values
 to different from each other. This conditioning can be estimated with the relative
 spectral range \cite{davidePHD}
 \begin{equation}
     \frac{\sigma_{S-1} - \sigma_S}{\sigma_1 - \sigma_S}
 \end{equation}
 
+\subsubsection{(Think of a title)}
+\label{subsubsec:u-ring}
 % -> Model order reduction techniques (u_ring, error computation, ...)
 Denote $\mathbf{\underline{U}} = [\mathbf{u}(\omega_1), \dots, \mathbf{u}(\omega_S)]$
 snapshot matrix.
 Let 
 \begin{equation}
-    \mathbf{\mathring{u}} = \sum_{j=1}^S \frac{q_j \mathbf{e}_j}{\omega - \omega_j}
-    / \sum_{j=1}^S \frac{q_j}{\omega - \omega_j}
+    \accentset{\circ}{\mathbf{u}}(\omega) = \sum_{j=1}^S \frac{q_j \mathbf{e}_j}{\omega - \omega_j}
+    / \sum_{j=1}^S \frac{q_j}{\omega - \omega_j} \label{equ:u-ring}
 \end{equation}
-
-% STUCK HERE (TO BE CONTINUED)
-
-with the canonical basis vectors $\{ \mathbf{e}_j \}_j$.
-If we perform a QR decomposition on this matrix, we obtain 
+with the canonical basis vectors $\{ \mathbf{e}_j \}_j$, and denote
+$\accentset{\circ}{\mathbf{\underline{U}}} = [\accentset{\circ}{\mathbf{u}}(\omega_1), \dots, \accentset{\circ}{\mathbf{u}}(\omega_S)]$
+Inspecting the rational surrogate (defined in Algorithm \ref{alg:MRI}) closely,
+it is apparent that 
 \begin{equation}
-    \mathbf{\underline{U}} = \mathbf{\underline{W}} ~ \mathbf{\underline{R}}
+    \mathbf{\tilde{u}}(\omega) = \mathbf{\underline{U}} \accentset{\circ}{\mathbf{u}}(\omega)
 \end{equation}
+Therefore, a rational surrogate is fully characterized by just $S$ numbers $\{q_1, \dots, q_S\}$
+and the locations of the interpolation nodes $\{\omega_1, \dots, \omega_S\}$.
 
+Additionally, let
+\begin{equation}
+    \mathbf{\hat{u}}(\omega) = \mathbf{\underline{R}} \accentset{\circ}{\mathbf{u}}(\omega) \label{equ:u-hat}
+\end{equation}
+with $\mathbf{\underline{R}}$ being the triangular matrix stemming from the QR decomposition 
+$\mathbf{\underline{U}} = \mathbf{\underline{Q}} ~ \mathbf{\underline{R}}$.
+The original rational surrogate can again be recovered via
+\begin{equation}
+    \mathbf{\tilde{u}}(\omega) = \mathbf{\underline{Q}} \mathbf{\hat{u}}(\omega)
+\end{equation}
+$\mathbf{\hat{u}}(\omega)$ greatly simplifies the computation of the relative 
+error in \acrshort{gMRI} (Algorithm \ref{alg:gMRI})
 
-\pagebreak
+% NEED TO REWORK THIS A LOOOT!!!
+\begin{equation}
+    ||\mathbf{u}_{t+1}(\omega_{t+1}) - \mathbf{\tilde{u}}_{t+1}(\omega_{t+1})||_M
+    = ||\mathbf{\underline{Q}} \mathbf{r}_{t+1} - \mathbf{\underline{Q}}\mathbf{\hat{u}}_{t+1}(\omega_{t+1})||_M
+    = ||\mathbf{r}_{t+1} - \mathbf{\hat{u}}_{t+1}(\omega_{t+1})||_M
+\end{equation}
+and also
+\begin{equation}
+    ||\mathbf{u}||_M^2 \approx ||\mathbf{\tilde{u}}||_M^2
+    = ||\mathbf{\underline{U}} \accentset{\circ}{\mathbf{u}}(\omega)||_M^2
+    = \accentset{\circ}{\mathbf{u}}(\omega)^H \underbrace{\mathbf{\underline{U}}^H \mathbf{\underline{M}} \mathbf{\underline{U}}}_{= \mathbf{\underline{G}} = \mathbf{\underline{R}}^H \mathbf{\underline{R}}} \accentset{\circ}{\mathbf{u}}(\omega)
+    = \mathbf{\hat{u}}(\omega)^H \mathbf{\hat{u}}(\omega)
+    = ||\mathbf{\hat{u}}(\omega)||^2
+\end{equation}
+Thus, the norm computation can be reduced to the much simpler euclidean norm.
+
+\newpage
 \section{Examples}
 \label{sec:examples}
 
@@ -634,17 +729,37 @@ which is, however, no longer Hermitian (LHS chosen as \enquote{diagonal} as poss
 \end{figure}
 
 % Modeling process cite rubia
+Modeled according to \cite{DMCWF-Dimensions} in the computer-aided design 
+modeler software application FreeCAD\footnote{\url{https://www.freecadweb.org/}}.
+Mesh generated using Gmsh\footnote{\url{https://gmsh.info/}}. 5 smoothing
+steps, element size factor of 0.2 and Delaunay 3D meshing algorithm.
+The mesh was refined around critical components such as the screws and irises
+using transfinite curves.
+Conversion using meshio\footnote{\url{https://github.com/nschloe/meshio}} to .xml
+format which can be understood by FEniCS.
 
 % Scattering coefficient
+\cite{shortMRI}
+\begin{equation}
+    \mathbf{\underline{S}}(\omega) = \mathbf{\underline{1}}
+    - 2\left( \mathbf{\underline{1}} + i \frac{\omega}{2\pi}
+    \sqrt{\frac{1 - (\omega_c / \omega_0)^2}{1 - (\omega_c / \omega)^2}} 
+    \mathbf{\underline{F}}^H \mathbf{\underline{U}}(\omega) \right)^{-1}
+\end{equation}
 
-% Measurement procedure
+with $\mathbf{\underline{F}} = [\mathbf{f}_1, \mathbf{f}_2]$ and
+$\mathbf{\underline{U}} = [\mathbf{u}_1, \mathbf{u}_2]$ with $f_1$ the term
+resulting when forcing from one side producing the solution $\mathbf{u}_1$,
+and the $f_2$ when forcing from the other side to produce $\mathbf{u}_2$.
 
-
-\pagebreak
+\newpage
 \section{Conclusion and outlook}
 \label{sec:conclusion}
 
-\pagebreak
+\newpage
+\bibliography{biblio.bib}
+
+\newpage
 \section{Appendix}
 \label{sec:appendix}
 
@@ -721,8 +836,5 @@ may be rewritten as
     + \int_{\Omega} ({\mu^{-1} \nabla \times \mathbf{u}}) \cdot (\nabla \times \mathbf{v})
 \end{equation}
 
-% 
-\newpage
-\bibliography{biblio.bib}
 
 \end{document}

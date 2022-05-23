@@ -1,6 +1,6 @@
 \begin{algorithmic}
     \Require $\omega_1, \dots, \omega_S$
-    \Require $U = [u(\omega_1) | \dots | u(\omega_S)]$ \Comment{Snapshot matrix}
+    \Require $U = [u(\omega_1), \dots, u(\omega_S)]$ \Comment{Snapshot matrix}
     \State Compute $G$ with $g_{ij} = \langle u(\omega_i), u(\omega_j)\rangle_M,~ i, j \in \{1, \dots, S \}$ \Comment{Gramian matrix}
     \State Compute the singular value decomposition $G = V \Sigma V^H$
     \State Define $q = V[:, S]$

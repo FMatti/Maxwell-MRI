@@ -38,6 +38,19 @@
                                    {1ex \@plus .2ex \@minus .2ex}
                                    {\scshape\normalsize\bfseries}}
 
+%\makeatletter
+%\renewenvironment{abstract}{%
+%    \if@twocolumn
+%      \section*{\abstractname}%
+%    \else %% <- here I've removed \small
+%      \begin{center}%
+%        {\scshape\Large\bfseries\abstractname}%  %% <- here I've added \Large
+%      \end{center}%
+%      \quotation
+%    \fi}
+%    {\if@twocolumn\else\endquotation\fi}
+%\makeatother
+
 
 %%% COLOR DEFINITIONS
 \usepackage{xcolor}
@@ -47,7 +60,7 @@
 
 
 %%% REFERENCING
-\usepackage{natbib}
+\usepackage[square, numbers]{natbib}
 \bibliographystyle{plainnat}
 
 % Links
@@ -90,6 +103,8 @@
 \usepackage{amssymb}
 \usepackage[many]{tcolorbox}
 
+\usepackage{accents}
+
 \newtcolorbox{fancybox}[2][]
 {
   colframe = black,
@@ -131,11 +146,13 @@
 
 %%% GLOSSARY
 \usepackage[acronym, nogroupskip, nopostdot]{glossaries}
-%\makeglossaries
+\makeglossaries
 
 % Create acronyms
-\newacronym{ex}{Ex}{Example}
-
+\newacronym{MRI}{MRI}{Minimal rational interpolation}
+\newacronym{gMRI}{gMRI}{Greedy minimal rational interpolation}
+\newacronym{DMCWF}{DMCWF}{Dual-mode circular waveguide filter}
+\newacronym{SVD}{SVD}{Singular value decomposition}
 
 %%% Code listings
 
