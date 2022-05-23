@@ -27,6 +27,31 @@
 \section{Introduction}
 \label{sec:introduction}
 
+There are many problems in which physicists and engineers study the dependence
+of a model one of its parameters. 
+Of interest is usually a characteristic quantity that covaries with this parameter.
+Unless the system allows for an analytical solution, one may usually only
+find numerical solutions to the system for discrete values of the parameter.
+\acrfull{MRI} offers a way to locally reconstruct the continuous
+dependence of a model on one of its parameters. The approach has proven 
+effective and efficient (both memory- and computation wise) in applications
+on Helmholtz-type problems \cite{greedyMRI, shortMRI}.
+
+Central to this report are time-harmonic electromagnetic problems, whose 
+parameter is the (angular) frequency $\omega$. These problems are governed by
+the time-harmonic Maxwell's equations and choosing the quantity of interest
+to be a vector potential, the aforementioned equations reduce to a single curl-curl equation.
+A justification for why rational interpolation is appropriate for this class 
+of problems will be presented in Section \ref{subsec:motivation}.
+
+The following two sections in this report are concerned with finding numerical 
+solutions to the time-harmonic Maxwell's equations using the finite element method.
+These solutions are then used in the core of this report, which gives a description
+of the \acrfull{gMRI} algorithm. Properties of and optimization tricks for this
+method are shown. In the end, three applications of the method are studied and
+discussed in detail: the resonant cavity, the imperfect conductor, and last
+the \acrfull{DMCWF}.
+
 \newpage
 \section{Finite element discretization of the time-harmonic Maxwell's equations}
 \label{sec:maxwell}
@@ -751,6 +776,20 @@ with $\mathbf{\underline{F}} = [\mathbf{f}_1, \mathbf{f}_2]$ and
 $\mathbf{\underline{U}} = [\mathbf{u}_1, \mathbf{u}_2]$ with $f_1$ the term
 resulting when forcing from one side producing the solution $\mathbf{u}_1$,
 and the $f_2$ when forcing from the other side to produce $\mathbf{u}_2$.
+
+\begin{figure}[ht]
+    \centering
+    \input{plots/circular_waveguide_scattering.pgf}
+    \caption{Caption.}
+    \label{fig:circular-waveguide-scattering}
+\end{figure}
+
+\begin{figure}[ht]
+    \centering
+    \input{plots/circular_waveguide_error.pgf}
+    \caption{Caption.}
+    \label{fig:circular-waveguide-error}
+\end{figure}
 
 \newpage
 \section{Conclusion and outlook}
