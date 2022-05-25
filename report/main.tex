@@ -14,7 +14,14 @@
 \maketitle
 
 \begin{abstract}
-    Abstractest abstract ever.
+    \acrfull{MRI} provides an efficient and reliable way to approximate the 
+    dependence of a characteristic quantity of a model on one of its parameters.
+    The focus of this report is put on the \acrfull{gMRI} algorithm and particularly
+    on way to enhance its performance. This algorithm is then applied to three 
+    example problems concerning the time-harmonic Maxwell's equations in the 
+    frequency domain. A brief evaluation of the advantages and disadvantages of
+    \acrshort{gMRI} as compared to conventional approaches for finding quantities,
+    such as resonant modes, of interest for problems of this type is conducted.
 \end{abstract}
 
 \newpage
@@ -27,41 +34,49 @@
 \section{Introduction}
 \label{sec:introduction}
 
-There are many problems in which physicists and engineers study the dependence
-of a model one of its parameters. 
-Of interest is usually a characteristic quantity that covaries with this parameter.
+A wide class of problems in physics and engineering concerns itself with the
+study of the dependence of a model on one of its parameters. 
+Of interest is usually a characteristic quantity that covaries with said parameter.
 Unless the system allows for an analytical solution, one may usually only
 find numerical solutions to the system for discrete values of the parameter.
-\acrfull{MRI} offers a way to locally reconstruct the continuous
-dependence of a model on one of its parameters. The approach has proven 
+\acrfull{MRI} offers a way to locally approximate the continuous
+dependence of a model on one of its parameters. The approach has proven
 effective and efficient (both memory- and computation wise) in applications
 on Helmholtz-type problems \cite{greedyMRI, shortMRI}.
 
 Central to this report are time-harmonic electromagnetic problems, whose 
-parameter is the (angular) frequency $\omega$. These problems are governed by
-the time-harmonic Maxwell's equations and choosing the quantity of interest
-to be a vector potential, the aforementioned equations reduce to a single curl-curl equation.
-A justification for why rational interpolation is appropriate for this class 
-of problems will be presented in Section \ref{subsec:motivation}.
+parameter is the (angular) frequency. These problems are governed by
+the time-harmonic Maxwell's equations. Choosing the quantity of interest
+to be a vector potential, these equations reduce to a single curl-curl equation.
+A justification for why a rational interpolation approach is appropriate for
+this class of problems will be presented in Section \ref{subsec:motivation}.
 
-The following two sections in this report are concerned with finding numerical 
-solutions to the time-harmonic Maxwell's equations using the finite element method.
+The first few pages in this report are a short guide for finding numerical 
+solutions to the time-harmonic Maxwell's equations using the \acrfull{FEM}.
 These solutions are then used in the core of this report, which gives a description
-of the \acrfull{gMRI} algorithm. Properties of and optimization tricks for this
-method are shown. In the end, three applications of the method are studied and
-discussed in detail: the resonant cavity, the imperfect conductor, and last
-the \acrfull{DMCWF}.
+of the \acrfull{gMRI} algorithm. Properties of and optimization tricks for the
+\acrshort{gMRI} are shown. In the end, three applications of the method are studied and
+discussed: the resonant modes of a two-dimensional resonant cavity,
+the two-dimensional cavity with an imperfectly conducting boundary, and lastly
+the scattering coefficients of a \acrfull{DMCWF}.
 
 \newpage
 \section{Finite element discretization of the time-harmonic Maxwell's equations}
 \label{sec:maxwell}
 
+\acrfull{MRI} requires the knowledge of the solution of the problem for multiple 
+values of the model parameter that is of interested. A way of obtaining these
+solutions is the \acrfull{FEM}. For that purpose, I now derive a strong formulation
+for the time-harmonic Maxwell problem and subsequently convert it to its
+corresponding weak formulation.
+
 \subsection{Vector potential formulation of the time-harmonic Maxwell's equations}
 \label{subsec:maxwell-potential}
-\the\textwidth
 % !REMINDME: Add boundary conditions to th equations!!!!
 
 % Everything smooth enough to do all manipulations...
+I assume that all quantities in this section are smooth enough to perform the
+necessary vector calculus manipulations.
 
 Let $\mathbf{E}$ denote an electric field, $\mathbf{B}$ a magnetic field
 strength, $\rho$ an electric charge density, and $\mathbf{j}$ an electric
@@ -72,11 +87,12 @@ current density. Maxwell's equations are stated in \citep{monk} as
     \nabla \times \mathbf{E} &= -\partial_t \mathbf{B} \label{equ:maxwell3} \\
     \nabla \times (\mu^{-1} \mathbf{B}) &= \partial_t (\epsilon \mathbf{E}) + \mathbf{j} \label{equ:maxwell4}
 \end{align}
-with $\varepsilon$ being the permittivity and $\mu$ the permeability.
+with $\varepsilon$ being the permittivity and $\mu$ the permeability (whose names 
+let alone their values I always tend to forget).
 
 % Non-conducting material, else => j = sigma*E + J_a (Monk 21)
 
-Equation (\ref{equ:maxwell2}) allows for an expression of the magnetic field 
+Equation (\ref{equ:maxwell2}) motivates the expression of the magnetic field 
 $\mathbf{B} = \nabla \times \mathbf{u}$ in terms of a vector valued function
 $\mathbf{u}$, the vector potential (in literature commonly denoted with
 $\mathbf{A}$). Similarly, (\ref{equ:maxwell3}) suggests
@@ -97,21 +113,23 @@ magnetic field become
     \mathbf{E} &= -\partial_t \mathbf{u} \label{equ:electricfield} \\
     \mathbf{B} &= \nabla \times \mathbf{u} \label{equ:magneticfield}
 \end{align}
-where I renamed the variable $\mathbf{u}'$ to $\mathbf{u}$ for simplicity.
+where I have subtly renamed the variable $\mathbf{u}'$ to $\mathbf{u}$ for simplicity.
 
 Plugging the identities (\ref{equ:electricfield}) and (\ref{equ:magneticfield})
 into (\ref{equ:maxwell4}) yields 
 \begin{equation}
-    \nabla \times (\mu^{-1} \nabla \times \mathbf{u}) =  \epsilon \partial_t^2 \mathbf{u} + \mathbf{j} \label{equ:maxwell-potential}
+    \nabla \times (\mu^{-1} \nabla \times \mathbf{u}) = - \epsilon \partial_t^2 \mathbf{u} + \mathbf{j} \label{equ:maxwell-potential}
 \end{equation}
 
 For the rest of this report, I restrict myself to vector potentials $\mathbf{u}$
 that exhibit a harmonic dependence on time $t$, i.e. may be factorized into
 a term solely depending on the position $\mathbf{x}$ and a complex exponential
+depending on time
 \begin{equation}
     \mathbf{u}(\mathbf{x}, t) = \mathbf{u}(\mathbf{x}) \exp(i \omega t) \label{equ:time-harmonic}
 \end{equation}
-Substituting this expression into (\ref{equ:maxwell-potential}) results in the
+Substituting this expression into (\ref{equ:maxwell-potential}) and rearranging 
+a little results in the
 \begin{fancybox}{Time-harmonic potential equation}
     \begin{equation}
      \nabla \times (\mu^{-1} \nabla \times \mathbf{u}) - \epsilon \omega^2 \mathbf{u} = \mathbf{j} \label{equ:maxwell-timeharmonic}
@@ -124,16 +142,17 @@ Substituting this expression into (\ref{equ:maxwell-potential}) results in the
 Equation (\ref{equ:maxwell-timeharmonic}) may be multiplied by a vector-valued
 function $\mathbf{v} \in H_{\textrm{curl}}(\Omega)$, where
 \begin{equation}
-    H_{\textrm{curl}}(\Omega) = \{\mathbf{u} : \Omega \to \mathbb{C},~\text{such that}~\mathbf{u}\in L^2(\mathbb{C})^3, \nabla \times \mathbf{u} \in L^2(\mathbb{C})^3\} \label{equ:h-curl}
+    H_{\textrm{curl}}(\Omega) = \{\mathbf{u} : \Omega \to \mathbb{C},~\text{such that}~\mathbf{u}\in L_2(\mathbb{C})^3, \nabla \times \mathbf{u} \in L_2(\mathbb{C})^3\} \label{equ:h-curl}
 \end{equation}
-and then integrated over all of $\Omega$ to obtain 
+and then integrated over the whole computational domain $\Omega$ to obtain 
 \begin{equation}
     \int_{\Omega} (\nabla \times ({\mu^{-1} \nabla \times \mathbf{u}})) \cdot \mathbf{v}
     - \omega^2 \int_{\Omega} \epsilon \mathbf{u} \cdot \mathbf{v} = \int_{\Omega} \mathbf{j} \cdot \mathbf{v} \label{equ:maxwell-weak-initial}
 \end{equation}
 % !REMINDME: Put derivation in appendix
-This may further be simplified (\ref{equ:maxwell-weak-initial}) to (see Section 
-\ref{sec:abstract} for details)
+This may further be simplified (\ref{equ:maxwell-weak-initial}) to (I allow myself
+to spare you the details of this computation, but put a proper derivation
+in an appendix at the end of the report):
 \begin{fancybox}{Weak formulation of the time-harmonic potential equation}
     \begin{equation}
         \int_{\Omega} ({\mu^{-1} \nabla \times \mathbf{u}}) \cdot (\nabla \times \mathbf{v})
@@ -143,58 +162,69 @@ This may further be simplified (\ref{equ:maxwell-weak-initial}) to (see Section
         \label{equ:maxwell-weak}
     \end{equation}
 \end{fancybox}
-where $\mathbf{n}$ denotes the surface normal to the boundary $\partial \Omega$.
+where $\mathbf{n}$ denotes the surface normal to the boundary $\partial \Omega$
+of the computational domain $\Omega$.
 
-Boundary conditions on the electric field $\mathbf{E}$ may be enforced in a Dirichlet-type
-fashion through the relation (\ref{equ:electricfield}) and the assumption
-(\ref{equ:time-harmonic})
+Boundary conditions on the electric field $\mathbf{E}$ may be most easily enforced
+in a Dirichlet-type fashion through the relation (\ref{equ:electricfield}) and
+the assumption (\ref{equ:time-harmonic})
 \begin{equation}
-    \left.\mathbf{u}\right|_{\partial \Omega} = -\frac{1}{i\omega} \left.\mathbf{E}\right|_{\partial \Omega} \label{equ:dirichlet-boundary}
+    \left.\mathbf{u}\right|_{\Gamma_D} = -\frac{1}{i\omega} \left.\mathbf{E}\right|_{\Gamma_D} \label{equ:dirichlet-boundary}
 \end{equation}
 Those on the magnetic field $\mathbf{B}$ through a Neumann-type condition following
 from (\ref{equ:magneticfield}) and again (\ref{equ:time-harmonic})
 \begin{equation}
-    \left.\mathbf{g}\right|_{\partial \Omega} = (\mu^{-1} \left.\mathbf{B}\right|_{\partial \Omega}) \times \mathbf{n} \label{equ:neumann-boundary}
+    \left.\mathbf{g}\right|_{\Gamma_N} = (\mu^{-1} \left.\mathbf{B}\right|_{\Gamma_N}) \times \mathbf{n} \label{equ:neumann-boundary}
 \end{equation}
 
 \subsection{Examples}
 \label{subsec:examples}
 
-We apply this weak formulation to three different but very intimately related 
-problems:
+I will now specialize and simplify this weak formulation for three different
+applications which will be studied in Section \ref{sec:examples}. To show you
+that these problems are intimately related problems, I refer you to Figure \ref{fig:examples}.
 
 \begin{figure}[h]
     \centering
     \input{figures/simple_examples.tex}
-    \caption{Schematically the most trivial case for each example.}
+    \caption{Schematic visualization of the most trivial case for each of the
+    boundary configurations that will be analyzed in Section \ref{sec:examples}.
+    The perfectly conducting boundaries are drawn in black, while the imperfectly
+    conducting boundary appears dashed. Inlets and exits are left unmarked.}
     \label{fig:examples}
 \end{figure}
 
 \subsubsection{Two-dimensional resonant cavity}
 \label{subsubsec:cavity}
 
-A resonant cavity is a region $\Omega$ enclosed by a boundary $\partial \Omega$.
-The boundary is subdivided into one (or more) inlets $\Gamma_N$ and a perfect
-electrically conducting wall $\Gamma_D = \partial \Omega \setminus \Gamma_N$.
+I refer to a resonant cavity as a region $\Omega$ enclosed by a boundary $\partial \Omega$.
+The boundary can be subdivided into one (or more) inlets $\Gamma_N$ and a perfect
+conducting wall $\Gamma_D = \partial \Omega \setminus \Gamma_N$
+(see Figure \ref{fig:2d-cavity} for an abstract visualization of such a cavity).
 
 \begin{figure}[h]
     \centering
     \input{figures/2d_cavity.tex}
-    \caption{2d resonant cavity.}
+    \caption{An abstract example of a two-dimensional resonant cavity enclosing
+    a domain $\Omega$ with a perfectly conducting boundary $\Gamma_D$ and
+    featuring a single inlet $\Gamma_N$.}
     \label{fig:2d-cavity}
 \end{figure}
 
 % !REMINDME: Why only need test against v_z?!
 Suppose the current density $\mathbf{j} \equiv 0$ and orient the coordinate
 system in such a way that $\mathbf{u} = u_z \mathbf{e}_z$ and 
-$\mathbf{v} = v_z \mathbf{e}_z$. Consequently,
+$\mathbf{v} = v_z \mathbf{e}_z$. Consequently, the scalar product of the two 
+curls in Equation (\ref{equ:equ:maxwell-weak}) simplifies to the scalar product 
+of two gradients:
 \begin{equation}
     (\mu^{-1} \nabla \times \mathbf{u}) \cdot (\nabla \times \mathbf{v})
     = (\mu^{-1} \nabla u_z) \cdot (\nabla v_z)
 \end{equation}
-Use $g_z = (\mathbf{g})_z$ along the boundary $\Gamma_N$,
-to convert (\ref{equ:maxwell-weak}) into
-the weak formulation for a two-dimensional resonant cavity
+Denote by $g_z$ the component of $\mathbf{g}$ in the $z$-direction along the
+inlet $\Gamma_N$. These simplifications allow the conversion of 
+(\ref{equ:maxwell-weak}) into the weak formulation for a two-dimensional
+resonant cavity
 \begin{equation}
     \int_{\Omega} (\mu^{-1} \nabla u_z) \cdot (\nabla v_z)
     - \omega^2 \int_{\Omega} \epsilon u_z v_z
@@ -202,10 +232,10 @@ the weak formulation for a two-dimensional resonant cavity
 \end{equation}
 
 % Boundary conditions Dirichlet and Neumann (from Monk)
-Let $\mathbf{E}$ and $\mathbf{B}$ refer to the electric and magnetic fields inside
-the cavity. For now, I distinguish two types of boundaries.
+Now, let $\mathbf{E}$ and $\mathbf{B}$ refer to the electric and magnetic fields inside
+the cavity. For now, I distinguish between two types of boundaries:
 
-For the perfectly conducting boundary, treated in \citep{monk}, it holds that
+For the perfectly conducting boundary $\Gamma_D$, treated in \citep{monk}, it holds that
 \begin{equation}
     \mathbf{n} \times \mathbf{E} = 0,~~\text{on}~\Gamma_D
 \end{equation}
@@ -215,43 +245,49 @@ to the Dirichlet boundary condition $\left.\mathbf{u}\right|_{\Gamma_D} = 0$
 in light of (\ref{equ:dirichlet-boundary}).
 
 For the inlet, it is easiest to enforce the boundary condition through the
-magnetic field $\mathbf{B}$ (considering $\mathbf{n} = -\mathbf{e}_x$ as
-depicted in Figure \ref{fig:2d-cavity}):
+magnetic field $\mathbf{B}$ in exactly the way proposed in
+(\ref{equ:neumann-boundary}) (assuming $\mathbf{n} = -\mathbf{e}_x$ as
+will always be the case in Section \ref{sec:examples}, cf. Figure \ref{fig:rectangular_cavity}):
 \begin{equation}
-    g_z = (({\mu^{-1} \mathbf{B}}) \times (-\mathbf{e}_x))_z = \mu^{-1} B_x
+    g_z = (({\mu^{-1} \mathbf{B}}) \times (-\mathbf{e}_x))_z = \mu^{-1} B_x,~~\text{on}~\Gamma_N
 \end{equation}
 
 \subsubsection{Imperfect conductor}
 \label{subsubsec:impedance}
 
 % Additionally impedance boundary condition from Monk
-At an imperfect boundary \cite{monk}, (\ref{equ:electricfield}), with (\ref{equ:time-harmonic})
+To simulate an imperfect boundary $\Gamma_I$, also called impedance boundary in literature, 
+\cite{monk} suggests to replace the integrand $\mathbf{g}$ that appeared in 
+(\ref{equ:maxwell-weak}) with
 \begin{equation}
     \mathbf{g} = (\mu^{-1} \nabla \times \mathbf{u}) \times \mathbf{n}
-    = i \omega \lambda (\mathbf{n} \times \mathbf{u}) \times \mathbf{n}
+    = i \omega \lambda (\mathbf{n} \times \mathbf{u}) \times \mathbf{n}~~\text{on}~\Gamma_D
 \end{equation}
-which, supposing that $\mathbf{u} = u_z \mathbf{e}_z$ and only treating a
-two-dimensional domain, simplifies (using the fact that $\mathbf{n} \perp \mathbf{u}$
-and $||\mathbf{n}|| = 1$, so $(\mathbf{n} \times \mathbf{u}) \times \mathbf{n} = \mathbf{u}$)
-% !REMINDME: Maybe proof it in appendix
+with a parameter $\lambda>0$ I will henceforth refer to as the impedance.
+Supposing that $\mathbf{u} = u_z \mathbf{e}_z$ and only treating a
+two-dimensional domain, this condition simplifies to (using the fact that $\mathbf{n} \perp \mathbf{u}$
+and $||\mathbf{n}|| = 1$, so $(\mathbf{n} \times \mathbf{u}) \times \mathbf{n} = \mathbf{u}$,
+as is demonstrated in the appendix at the end of this report)
 \begin{equation}
-    g_z = i \omega \lambda u_z
+    g_z = i \omega \lambda u_z~~\text{on}~\Gamma_D
 \end{equation}
-Therefore, reuse (\ref{equ:maxwell-weak-resonant-cavity}) as it is, but split 
-boundary integral term for Neumann and impedance boundary.
+Therefore, an impedance boundary can be treated in almost the same way as a
+Neumann boundary in the two-dimensional weak formulation (\ref{equ:maxwell-weak-resonant-cavity})
+of a resonant cavity.
 
 \subsubsection{Waveguide}
 \label{subsubsec:waveguide}
 
-We go back to (\ref{equ:maxwell-weak}). Again, $\mathbf{j} \equiv 0$, but now 
-we stay in 3d. Supposing that the inlet is located at a constant $x$-value,
-such that the surface normal to this inlet is $-\mathbf{e}_x$. For an incoming
-magnetic field $\left.\mathbf{B}\right|_{\Gamma_N} = B_0 \mathbf{e}_y$ at the
-inlet, we see from (\ref{equ:neumann-boundary}) that $\left.\mathbf{g}\right|_{\Gamma_i}
-= - \mu^{-1} B_0 \mathbf{e}_z$. At the outlet, we set $\left.\mathbf{g}\right|_{\Gamma_o} = \boldsymbol{0}$
-
 % Just j=0 and 3d, need to discuss boundary conditions
-
+Going back to (\ref{equ:maxwell-weak}) and this time staying in three dimensions,
+we again assume no electric current density $\mathbf{j} \equiv 0$ is present.
+I suppose that the inlet is located at a constant $x$-value,
+such that the surface normal to this inlet is $-\mathbf{e}_x$. Conveniently, the example 
+in Section \ref{subsec:examples-dmcwf} happens to be set up in just this way. For an incoming
+magnetic field at the inlet $\Gamma_i$ with $\left.\mathbf{B}\right|_{\Gamma_i} = B_0 \mathbf{e}_y$,
+we see from (\ref{equ:neumann-boundary}) that this may be modelled by setting
+$\left.\mathbf{g}\right|_{\Gamma_i} = - \mu^{-1} B_0 \mathbf{e}_z$.
+At the \enquote{exit} $\Gamma_e$, we set $\left.\mathbf{g}\right|_{\Gamma_e} = \boldsymbol{0}$.
 
 \newpage
 \section{Finite element approximation with FEniCS}
@@ -332,8 +368,16 @@ L2 norms
 Solution at frequencies
 \lstinputlisting[firstnumber=56, firstline=57, lastline=62]{code/fenics_example.py}
 
-Plotting the L2-norms
-\lstinputlisting[firstnumber=64, firstline=65, lastline=66]{code/fenics_example.py}
+\begin{figure}[h]
+    \centering
+    \input{plots/fenics_demonstration.pgf}
+    \caption{TODO.}
+    \label{fig:fenics-demonstration}
+\end{figure}
+
+
+%Plotting the L2-norms
+%\lstinputlisting[firstnumber=64, firstline=65, lastline=66]{code/fenics_example.py}
 
 % Nédelec elements
 
@@ -687,6 +731,14 @@ For $||\mathbf{u}||_{L_2(\Gamma)}^2 = \int_{\Gamma} ||\mathbf{u}||^2$
 % argmin |Q| only valid in undamped regime
 \begin{figure}[ht]
     \centering
+    \includegraphics{plots/imperfect_conductor_solution.pdf}
+    \caption{$\omega = 3.5$.}
+    \label{fig:imperfect-conductor-solution}
+\end{figure}
+
+
+\begin{figure}[ht]
+    \centering
     \input{plots/imperfect_conductor_norms.pgf}
     \caption{Caption.}
     \label{fig:imperfect-conductor-norms}
@@ -815,7 +867,7 @@ In order to simplify the curls and apply the Gauss theorem, I first show
 the following vector calculus identity:
 \begin{fancybox}{Curl product rule}
     \begin{equation}
-        (\nabla \times \mathbf{a}) \cdot \mathbf{b} = \nabla \cdot (\mathbf{a} \times \mathbf{b}) + \mathbf{a} \cdot (\nabla \times \mathbf{b}) \label{equ:vector-calculus} \\
+        (\nabla \times \mathbf{a}) \cdot \mathbf{b} = \nabla \cdot (\mathbf{a} \times \mathbf{b}) + \mathbf{a} \cdot (\nabla \times \mathbf{b}) \label{equ:vector-calculus}
     \end{equation}
 \end{fancybox}
 % !REMINDME: Appropriate spaces
@@ -875,5 +927,30 @@ may be rewritten as
     + \int_{\Omega} ({\mu^{-1} \nabla \times \mathbf{u}}) \cdot (\nabla \times \mathbf{v})
 \end{equation}
 
+I would also like to demonstrate that
+\begin{fancybox}{Curl product rule}
+    If $\mathbf{n} \perp \mathbf{u}$ and $||\mathbf{n}|| = 1$, then
+    \begin{equation}
+        (\mathbf{n} \times \mathbf{u}) \times \mathbf{n} = \mathbf{u} \label{equ:double-cross-normal}
+    \end{equation}
+\end{fancybox}
 
+I again resort to the old faithful Levi-Civita tensor which satisfies the
+identity
+\begin{equation}
+    \sum_i \varepsilon_{jki} \varepsilon_{lmi} = \delta_{jl} \delta_{km} - \delta_{jm} \delta_{kl}
+\end{equation}
+Furthermore, I make use of the invariance of the tensor under cyclic permutation
+of the indices to obtain
+\begin{align}
+    [(\mathbf{n} \times \mathbf{u}) \times \mathbf{n}]_k
+    &= \sum_i \sum_j \varepsilon_{ijk} (\mathbf{n} \times \mathbf{u})_i n_j \notag \\ 
+    &= \sum_i \sum_j \varepsilon_{ijk} \sum_l \sum_m \varepsilon_{lmi} n_l u_m n_j \notag \\ 
+    &= \sum_i \sum_j \sum_l \sum_m \varepsilon_{jki} \varepsilon_{lmi} n_l u_m n_j \notag \\ 
+    &= \sum_j \sum_l \sum_m (\delta_{jl} \delta_{km} - \delta_{jm} \delta_{kl}) n_l u_m n_j \notag \\
+    &= \sum_j n_j u_k n_j - \sum_j n_k u_j n_j \notag \\
+    &= ||\mathbf{n}||^2 u_k - (\mathbf{u} \cdot \mathbf{n}) n_k \notag \\ 
+    &= u_k
+\end{align}
+which concludes the component-wise proof.
 \end{document}

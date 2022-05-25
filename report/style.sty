@@ -38,18 +38,12 @@
                                    {1ex \@plus .2ex \@minus .2ex}
                                    {\scshape\normalsize\bfseries}}
 
-%\makeatletter
-%\renewenvironment{abstract}{%
-%    \if@twocolumn
-%      \section*{\abstractname}%
-%    \else %% <- here I've removed \small
-%      \begin{center}%
-%        {\scshape\Large\bfseries\abstractname}%  %% <- here I've added \Large
-%      \end{center}%
-%      \quotation
-%    \fi}
-%    {\if@twocolumn\else\endquotation\fi}
-%\makeatother
+\makeatletter
+\renewenvironment{abstract}{%
+      \begin{center}%
+        {\scshape\Large\bfseries\abstractname}% 
+      \end{center}}
+\makeatother
 
 
 %%% COLOR DEFINITIONS
@@ -149,10 +143,12 @@
 \makeglossaries
 
 % Create acronyms
-\newacronym{MRI}{MRI}{Minimal rational interpolation}
-\newacronym{gMRI}{gMRI}{Greedy minimal rational interpolation}
-\newacronym{DMCWF}{DMCWF}{Dual-mode circular waveguide filter}
-\newacronym{SVD}{SVD}{Singular value decomposition}
+\newacronym{MRI}{MRI}{Minimal Rational Interpolation}
+\newacronym{gMRI}{gMRI}{Greedy Minimal Rational Interpolation}
+\newacronym{DMCWF}{DMCWF}{Dual-Mode Circular Waveguide Filter}
+\newacronym{SVD}{SVD}{Singular Value Decomposition}
+\newacronym{FEM}{FEM}{Finite Element Method}
+
 
 %%% Code listings
 
