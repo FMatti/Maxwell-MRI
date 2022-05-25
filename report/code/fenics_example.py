@@ -1,6 +1,6 @@
+
 import numpy as np
 import fenics as fen
-import matplotlib.pyplot as plt
 
 # Get a unit cube mesh
 nx, ny, nz = 10, 10, 10
