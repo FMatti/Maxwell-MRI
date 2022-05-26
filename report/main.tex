@@ -1158,7 +1158,41 @@ can be seen in Figure \ref{fig:circular-waveguide-error}.
 \section{Conclusion and outlook}
 \label{sec:conclusion}
 
-In the above report...
+In the above report I have studied the suitability of the \acrfull{MRI} method and
+particularly the \acrfull{gMRI} algorithm for the time-harmonic Maxwell's equations.
+In general, the \acrshort{gMRI} algorithm paired with the \acrfull{FEM} 
+offer an efficient, reliable and flexible way of producing an approximation 
+of the frequency dependence of the vector potential $\mathbf{u}$ in problems
+of the form (\ref{equ:maxwell-timeharmonic}).
+
+Finding resonant frequencies of a simple system with the help of \acrshort{gMRI} was found to 
+be comparable to conventional approaches when considering the accuracy and
+time spent in computation (cf. Section \ref{subsec:examples-rectangularcavity}
+and particularly Table \ref{tab:rectangular_cavity_comparison}). In terms of
+ease of use, \acrshort{gMRI} proved to exhibit the key property of not incorrectly
+identifying resonant frequencies that are suppressed in the case of a highly
+symmetric model (Figure \ref{fig:rectangular-cavity-suppression}). Furthermore,
+with \acrshort{gMRI} no a priori knowledge of the number of resonant frequencies
+is required, which is not the case with the conventional approach the method was
+compared to.
+
+Furthermore, specifically for larger and more complex systems, e.g.
+the nonlinear eigenproblem solved in Section \ref{subsec:examples-impedance}
+or the treatment of the \acrfull{DMCWF} in Section \ref{subsec:examples-dmcwf},
+excelled in its performance mainly due to its scalability and time efficiency.
+
+A problem with the presence of linearly combinable resonant modes, mainly present
+when restricting the view to only a trace of the full solution, was identified
+in Section \ref{subsubsec:traces} and remedies were suggested and tested to be
+effective in resolving this issue.
+
+Further work would have to be put into the study of the \acrshort{DMCWF}, after
+a proper verification of both the dimensions and the meshing with a reference
+model has been conducted. It would also be interesting to study \acrshort{gMRI}
+for a wider class of time-harmonic Maxwell problems, for instance with a non-trivial
+current density $\mathbf{j}$ or systems with spatially dependent $\epsilon$ and
+$\mu$. Using the implementations I have published in \cite{git}, these extensions
+are made completely straightforward to add into the code.
 
 \newpage
 \bibliography{biblio.bib}
