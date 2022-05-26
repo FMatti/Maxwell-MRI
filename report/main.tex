@@ -93,7 +93,7 @@ let alone their values I always tend to forget).
 % Non-conducting material, else => j = sigma*E + J_a (Monk 21)
 
 Equation (\ref{equ:maxwell2}) motivates the expression of the magnetic field 
-$\mathbf{B} = \nabla \times \mathbf{u}$ in terms of a vector valued function
+$\mathbf{B} = \nabla \times \mathbf{u}$ in terms of a vector-valued function
 $\mathbf{u}$, the vector potential (in literature commonly denoted with
 $\mathbf{A}$). Similarly, (\ref{equ:maxwell3}) suggests
 rewriting the electric field $\mathbf{E} = - \nabla \phi - \partial_t \mathbf{u}$
@@ -718,6 +718,7 @@ The original rational surrogate can again be recovered via
 $\mathbf{\hat{u}}(\omega)$ provides us with a simplified alternative to the
 computation of the error in \acrshort{gMRI} (Algorithm \ref{alg:gMRI}).
 
+TODOLULULULU.
 % NEED TO REWORK THIS A LOOOT!!!
 \begin{equation}
     ||\mathbf{u}_{t+1}(\omega_{t+1}) - \mathbf{\tilde{u}}_{t+1}(\omega_{t+1})||_M
@@ -776,6 +777,7 @@ frequency in Figures \ref{fig:rectangular-cavity-mode1} and \ref{fig:rectangular
 respectively.
 
 \begin{figure}[ht]
+    \centering
     \includegraphics{plots/rectangular_cavity_mode1.pdf}
     \caption{The solution $u_z(x, y)$ obtained with the \acrshort{FEM} at the
     first resonant frequency $\omega = 3.159$ of the cavity. Observe how at
@@ -785,6 +787,7 @@ respectively.
 \end{figure}
 
 \begin{figure}[ht]
+    \centering
     \includegraphics{plots/rectangular_cavity_mode5.pdf}
     \caption{The solution $u_z(x, y)$ obtained with the \acrshort{FEM} at the
     fifth resonant frequency $\omega = 4.675$ of the cavity.}
@@ -908,17 +911,17 @@ Using (\ref{equ:eigen-solution}) yields
 \begin{equation}
     \sum_j \alpha_j (\omega_j^2 - \omega^2) \mathbf{\underline{M}} \mathbf{u}_j = \mathbf{f}
 \end{equation}
-from which we can then multiply both sides with $\mathbf{u}_j^H$ to obtain
+from which we can then multiply both sides with $\mathbf{u}_i^H$ to obtain
 % WHY SHOULD THIS BE A BASIS (DOES IT SPAN?), AND WHY M-ORTHONORMAL
 \begin{equation}
-    \alpha_j = \frac{\mathbf{u}_j^H \mathbf{f}}{\omega_j^2 - \omega^2} \label{equ:suppression}
+    \alpha_i = \frac{\mathbf{u}_i^H \mathbf{f}}{\omega_i^2 - \omega^2} \label{equ:suppression}
 \end{equation}
-using $\mathbf{u}_j^H \mathbf{\underline{M}} \mathbf{u}_j = \mathbf{\underline{1}}$
+using $\mathbf{u}_i^H \mathbf{\underline{M}} \mathbf{u}_j = \delta_{ij}$
 since the eigenvectors stemming from a hermitian eigenvalue problem can be made 
 $\mathbf{\underline{M}}$-orthonormal.
 
-Inspecting (\ref{equ:suppression}), we see that if $\mathbf{u}_j^H \mathbf{f} = 0$,
-then the resonant mode at $\omega = \omega_j$ is suppressed. Because neither the
+Inspecting (\ref{equ:suppression}), we see that if $\mathbf{u}_i^H \mathbf{f} = 0$,
+then the resonant mode at $\omega = \omega_i$ is suppressed. Because neither the
 generalized eigenvalue problem nor the analytical considerations
 are informed about the nature of the source term $\mathbf{f}$, this is not accounted for.
 Specifying as the initial iteration vector for the \texttt{eigsh} eigenvalue solver
@@ -947,29 +950,48 @@ For $||\mathbf{u}||_{L_2(\Gamma)}^2 = \int_{\Gamma} ||\mathbf{u}||^2$
 
 \subsection{Imperfectly conducting boundaries}
 \label{subsec:examples-impedance}
-% argmin |Q| only valid in undamped regime
+
+A slight modification of the problem (derived in Section \ref{subsubsec:impedance})
+brings us to the example of an imperfectly conducting boundary. At the edge 
+opposite of the inlet (i.e. $x=L_x$), the impedance is set to $\lambda=1$.
+
+A solution to the system is plotted in Figure \ref{fig:imperfect-conductor-solution}
+and the $||.||_M$-norm for both the \acrshort{FEM} and \acrshort{gMRI}
+are plotted in Figure \ref{fig:imperfect-conductor-norms}.
+
 \begin{figure}[ht]
     \centering
     \includegraphics{plots/imperfect_conductor_solution.pdf}
-    \caption{$\omega = 3.5$.}
+    \caption{The solution $u_z(x, y)$ obtained with the \acrshort{FEM} at the
+    frequency $\omega = 3.5$. Unlike in Figures \ref{fig:rectangular-cavity-mode1}
+    and \ref{fig:rectangular-cavity-mode5}, the solution does no longer have to
+    vanish at the imperfect boundary on the right-hand edge.}
     \label{fig:imperfect-conductor-solution}
 \end{figure}
-
 
 \begin{figure}[ht]
     \centering
     \input{plots/imperfect_conductor_norms.pgf}
-    \caption{Caption.}
+    \caption{The $||.||_M$-norm of the \acrshort{FEM} solution $\mathbf{u}(\omega)$ (top) and
+    its surrogate $\mathbf{\tilde{u}}(\omega)$ (middle) for the rectangular cavity with
+    an imperfectly conducting edge is shown. The locations of the greedy support
+    points are indicated (bottom).}
     \label{fig:imperfect-conductor-norms}
 \end{figure}
 
-% Numerical eigenfrequencies
-Numerical eigenfrequencies, solve
+To find resonant frequencies for this system numerically, the nonlinear eigenproblem
 \begin{equation}
-    (\mathbf{\underline{K}} - i \omega \mathbf{\underline{I}} - \omega^2 \mathbf{\underline{M}}) \mathbf{u} = 0
+    (\mathbf{\underline{K}} - i \omega \mathbf{\underline{I}} - \omega^2 \mathbf{\underline{M}}) \mathbf{u} = \mathbf{0} \label{equ:nonlinear-eigenproblem}
 \end{equation}
-Define $\mathbf{v} = \omega \mathbf{u}$, so that we may write this as the
-generalized eigenvalue problem
+with $\mathbf{I}$ being the matrix representation of the form
+\begin{equation}
+    \int_{\partial \Omega} \lambda u_z v_z 
+\end{equation}
+Unfortunately, solving this eigenvalue problem is not as straight forward as the
+one that was encountered in the previous example. Likely the simplest approach
+to solving (\ref{equ:nonlinear-eigenproblem}) is to linearize the system by
+defining $\mathbf{v} = \omega \mathbf{u}$, such that we can convert it to a
+system twice the size that reads
 \begin{equation}
     \begin{bmatrix}
          & \boldsymbol{\underline{1}} \\
@@ -990,81 +1012,153 @@ generalized eigenvalue problem
         \mathbf{v}
     \end{bmatrix}
 \end{equation}
-which is, however, no longer Hermitian (LHS chosen as \enquote{diagonal} as possible).
-% Pole plot
-
-\begin{figure}[ht]
-    \centering
-    \input{plots/imperfect_conductor_eigfreqs.pgf}
-    \caption{Spurious resonant frequency far away from others and definitely 
-    not of interest for this problem, but indeed for rational surrogate.}
-    \label{fig:imperfect-conductor-eigfreqs}
-\end{figure}
+Usually, however, the two matrices involved in the eigenproblem are no longer
+going to be hermitian. Combined with the fact that the problem is now twice
+the size of the original one, solving the system with the sparse eigenvalue
+solver \texttt{eigs} included in the \texttt{scipy} library will cost more
+computational resources than \acrshort{gMRI} does (see Table \ref{tab:imperfect-conductor-comparison}
+for the comparison of the time spent in computation between the two methods).
+% Why as diagonal as possible?
 
 \begin{table}[ht]
-    \caption{Comparison eigsh and gMRI.}
+    \caption{Comparison of the computation times for identifying the resonant
+    frequencies with a real part in the interval $\omega=[3, 5]$ between \texttt{eigs} and
+    \acrshort{gMRI} with a tolerance of $\tau = 10^{-2}$. To get a full
+    comparison to the equivalent computations in Table \ref{tab:rectangular_cavity_comparison}
+    an attempt was made to use \texttt{eigs} for solving the problem with 
+    745513 \acrshort{DOF}s, but proved to be unsuccessful due to a memory overflow.}
     \label{tab:imperfect-conductor-comparison}
     \input{tables/imperfect_conductor_comparison.tex}
 \end{table}
+
+The effect of the impedance $\lambda$ on the position of the (complex) resonant
+frequencies is visualized in Figure \ref{fig:imperfect-conductor-eigfreqs}.
+For $\lambda \to 0$ we recover a Neumann boundary condition, while for 
+$\lambda \to \infty$, a Dirichlet-type boundary is produced.
+% REMINDME! ^^^ a bit vague
+% argmin |Q| only valid in undamped regime
+\begin{figure}[ht]
+    \centering
+    \input{plots/imperfect_conductor_eigfreqs.pgf}
+    \caption{Resonant frequencies of a rectangular cavity with an imperfect boundary
+    with impedances $\lambda \in \{0.1, 1, 10\}$. Spurious resonant frequency far
+    away from the relevant interval are not of interest for this problem and hence
+    cropped off.}
+    \label{fig:imperfect-conductor-eigfreqs}
+\end{figure}
 
 \subsection{Dual mode circular waveguide filter}
 \label{subsec:examples-dmcwf}
 
 % Describe geometry and physical meaning
+The \acrfull{DMCWF} depicted in Figure \ref{fig:DMCWF} is studied. It is a
+highly symmetric three-dimensional waveguide that consists of two opposing
+ports connected by a cylinder that is split in two by a cross iris. 
+Breaking this symmetry are merely four screws: The two horizontal tuning
+screws as well as the two coupling screws. A brief theoretical treatment is given
+in Section \ref{subsubsec:waveguide}.
 
 \begin{figure}[h]
     \centering
     \input{figures/DMCWF.tex}
-    \caption{Dual-mode circular waveguide filter. \cite{DMCWF-Dimensions}
+    \caption{The surface-mesh of the modelled dual-mode circular waveguide filter
+    (left). An effort was made to keep the dimensions as similar to the ones
+    given in \cite{DMCWF-Dimensions}, but a full correspondence cannot be guaranteed
+    due to yours truly being unable to resolve certain ambiguities that were encountered.
+    The model adheres to the following dimensions:
     $W_C=43.87$ mm, $D_C=28.0$ mm, $L_B=43.87$ mm, $W_B=19.05$ mm, $H_B=9.525$ mm,
     $L_B=20.0$ mm, $W_S=10.05$ mm, $H_S=3.0$ mm, $W_A=2.0$ mm, $H_A=3.375$ mm,
-    $L_A=2.825$ mm, thickness of all irises $2.0$ mm, screws half way up
-    the cavity horizontal tuning screws with depth $3.82$ mm
-    and coupling screws at angles $\pm 45^{\circ}$ with depth $3.57$ mm.}
+    $L_A=2.825$ mm; The thickness of all irises is $2.0$ mm; The screws
+    are placed exactly half way up the two resonant cylinders,
+    with the horizontal tuning screws reaching a depth of $3.82$ mm into the cavity
+    and coupling screws at angles $\pm 45^{\circ}$ with a depth of $3.57$ mm.
+    Observe that the \acrshort{DMCWF} is point symmetric with respect to the center 
+    of the cross iris.}
     \label{fig:DMCWF}
 \end{figure}
 
 % Modeling process cite rubia
-Modeled according to \cite{DMCWF-Dimensions} in the computer-aided design 
-modeler software application FreeCAD\footnote{\url{https://www.freecadweb.org/}}.
-Mesh generated using Gmsh\footnote{\url{https://gmsh.info/}}. 5 smoothing
-steps, element size factor of 0.2 and Delaunay 3D meshing algorithm.
-The mesh was refined around critical components such as the screws and irises
-using transfinite curves.
-Conversion using meshio\footnote{\url{https://github.com/nschloe/meshio}} to .xml
-format which can be understood by FEniCS.
+I created the model in the computer-aided design modeler software application
+FreeCAD\footnote{\url{https://www.freecadweb.org/}}. The mesh was defined using 
+the 3D finite element mesh generator Gmsh\footnote{\url{https://gmsh.info/}} and 
+is available for download on the git repository\footnote{\url{https://github.com/FMatti/Maxwell-MRI}}
+of this project. In Gmsh, a element size factor of 0.2 and 5 smoothing steps
+are used for the Delaunay 3D meshing algorithm. Additionally, 
+the mesh was refined around critical components such as the screws and irises
+using transfinite curves (the sharp-eyed reader may observe these refinements
+in the surface mesh visualized in Figure \ref{fig:DMCWF}). A total of
+185726 \acrshort{DOF}s are accounted for. The conversion of the
+mesh to the FEniCS supported .xml format was performed with the mesh format converter
+meshio\footnote{\url{https://github.com/nschloe/meshio}}. 
 
 % Scattering coefficient
-\cite{shortMRI}
+In the following, I would like to demonstrate the capability of the 
+\acrshort{gMRI} algorithm to approximate scattering coefficients for the \acrshort{DMCWF}.
+The definition of the scattering matrix is a adaptation from \cite{shortMRI} to
 \begin{equation}
     \mathbf{\underline{S}}(\omega) = \mathbf{\underline{1}}
-    - 2\left( \mathbf{\underline{1}} + i \frac{\omega}{2\pi}
+    - 2\left( \mathbf{\underline{1}} + i \frac{\omega}{2\pi} \sqrt{\frac{\mu}{\epsilon}}
     \sqrt{\frac{1 - (\omega_c / \omega_0)^2}{1 - (\omega_c / \omega)^2}} 
     \mathbf{\underline{F}}^H \mathbf{\underline{U}}(\omega) \right)^{-1}
 \end{equation}
+where $\mathbf{\underline{F}} = [\mathbf{f}_1, \mathbf{f}_2]$ and
+$\mathbf{\underline{U}} = [\mathbf{u}_1, \mathbf{u}_2]$ with $\mathbf{f}_1$ the source term
+resulting when the \acrshort{DMCWF} is forced from one side, producing the
+solution $\mathbf{u}_1$, and the $\mathbf{f}_2$ when forcing from the other side to
+produce $\mathbf{u}_2$. $\omega_c = 4.122 \times 10^{10}$ and $\omega_0 = 6.283 \times 10^{10}$
+were assumed. The scattering coefficients $S_{ij}$ are then precisely the
+entries of the scattering matrix
+\begin{equation}
+    \mathbf{\underline{S}}(\omega) =
+    \begin{bmatrix}
+            S_{11}(\omega) & S_{12}(\omega) \\
+            S_{21}(\omega) & S_{22}(\omega)
+    \end{bmatrix}\label{equ:scattering-coefficients}
+\end{equation}
 
-with $\mathbf{\underline{F}} = [\mathbf{f}_1, \mathbf{f}_2]$ and
-$\mathbf{\underline{U}} = [\mathbf{u}_1, \mathbf{u}_2]$ with $f_1$ the term
-resulting when forcing from one side producing the solution $\mathbf{u}_1$,
-and the $f_2$ when forcing from the other side to produce $\mathbf{u}_2$.
+For the simulation, $\epsilon = 4 \pi \times 10^{-7}$ and 
+$\mu = 8.854187 \times 10^{-12}$ were assumed. The one-sided forcing
+was performed with $\left.\mathbf{g}\right|_{\Gamma_i} = - \mathbf{e}_z$ from the
+left-hand inlet, and $\left.\mathbf{g}\right|_{\Gamma_i} = \mathbf{e}_z$ from the
+right-hand inlet. The scattering coefficients $S_{11}(\omega)$ and $S_{12}(\omega)$
+once computed by using the solutions at 150 uniformly spaced sample frequencies
+directly obtained with the \acrshort{FEM},
+and once from the rational surrogate computed with \acrshort{gMRI} at a tolerance
+of $\tau = 10^{-2}$. Both are shown (but only one is seen) in Figure
+\ref{fig:circular-waveguide-scattering}. At somewhat more than four minutes,
+the \acrshort{gMRI} was able to deliver the approximated scattering coefficients
+roughly 25 times faster than the \acrshort{FEM}.
 
 \begin{figure}[ht]
     \centering
     \input{plots/circular_waveguide_scattering.pgf}
-    \caption{Caption.}
+    \caption{The scattering coefficients $S_11(\omega)$ and $S_22(\omega)$
+    defined in (\ref{equ:scattering-coefficients}) computed as a reference
+    from solving the system at discrete sample points and the
+    \acrshort{FEM}, as well as the ones obtained by using \acrshort{gMRI}.}
     \label{fig:circular-waveguide-scattering}
 \end{figure}
+
+The progression of the
+absolute error with the number of support points used to build the surrogate
+can be seen in Figure \ref{fig:circular-waveguide-error}.
 
 \begin{figure}[ht]
     \centering
     \input{plots/circular_waveguide_error.pgf}
-    \caption{Caption.}
+    \caption{Progression of the absolute error between the reference scattering
+    coefficients ($S_{11, \textrm{FEM}}$ and $S_{12, \textrm{FEM}}$) obtained by solving the problem with \acrshort{FEM} and the 
+    ones obtained by using \acrshort{gMRI} ($S_{11, \textrm{gMRI}}$ and $S_{12, \textrm{gMRI}}$).}
     \label{fig:circular-waveguide-error}
 \end{figure}
+% REMINDME: Comment on these results maybe?!
+\clearpage
 
 \newpage
 \section{Conclusion and outlook}
 \label{sec:conclusion}
+
+In the above report...
 
 \newpage
 \bibliography{biblio.bib}
@@ -1074,8 +1168,6 @@ and the $f_2$ when forcing from the other side to produce $\mathbf{u}_2$.
 \label{sec:appendix}
 
 % !REMINDME: Levi-Civita tensor explanations (right here).
-% 
-
 \subsection{Detailed derivation for the weak formulation of the time-harmonic potential equation}
 \label{subsec:derivation}
 
@@ -1092,7 +1184,7 @@ the following vector calculus identity:
     \end{equation}
 \end{fancybox}
 % !REMINDME: Appropriate spaces
-where $\mathbf{a}$, $\mathbf{b}$ are vector-value functions. The completely
+where $\mathbf{a}$, $\mathbf{b}$ are vector-valued functions. The completely
 antisymmetric tensor $\varepsilon_{ijk}$, frequently referred to as the
 Levi-Civita tensor, may be employed to rewrite the components of the
 curl of a vector-function $\mathbf{a}$ as the sum
