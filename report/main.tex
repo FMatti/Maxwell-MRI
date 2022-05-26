@@ -490,7 +490,7 @@ $\mathbf{u}$ and $\mathbf{v}$ are the vectors collecting the vertex values for
 all degrees of freedom, while $\mathbf{\underline{M}}$ is the representation matrix
 of the inner product in the vertex basis. Similarly, let
 \begin{equation}
-    ||u||_M = \sqrt{\langle u, u \rangle} \approx ||u||_{L_2(\omega)} \label{equ:matrix-norm}
+    ||u||_M = \sqrt{\langle u, u \rangle}_M \approx ||u||_{L_2(\Omega)} \label{equ:matrix-norm}
 \end{equation}
 
 % Algorithm (last column SVD is definition of MRI)
@@ -681,7 +681,7 @@ ordered in descending order, which the Python package
 The conditioning of the problem may be measured with the relative
 spectral gap \cite{davidePHD}
 \begin{equation}
-    \frac{\sigma_{S-1} - \sigma_S}{\sigma_1 - \sigma_S}
+    \frac{\sigma_{S-1} - \sigma_S}{\sigma_1 - \sigma_S} \label{equ:spectral-gap}
 \end{equation}
 
 \subsubsection{Alternative representations of the surrogate}
@@ -943,11 +943,58 @@ to it did not prove to be effective.
 
 \subsubsection{Approximating solutions along a trace}
 \label{subsubsec:traces}
- 
-TODOLULULULU.
-% Problems with linearly combinable solutions -> Use cubby to perturb waveguide
-For $||\mathbf{u}||_{L_2(\Gamma)}^2 = \int_{\Gamma} ||\mathbf{u}||^2$
 
+I now restrict my view to solutions $u|_{\Gamma}$ along a trace $\Gamma$. Setting
+\begin{equation}
+    ||u||_{M(\Gamma)}^2 = \mathbf{u}|_{\Gamma}^H \mathbf{\underline{M}}(\Gamma) \mathbf{u}|_{\Gamma}
+        \approx \int_{\Gamma} u^2
+\end{equation}
+Running \acrshort{gMRI} (Algorithm \ref{alg:gMRI}) on the restriction $u|_{\Gamma}$
+instead of the full solution $u$ is a straight forward generalization of the
+algorithm. Nevertheless, when taking as $\Gamma = \Gamma_N$ the inlet of the
+rectangular resonant cavity, no convergence in the relative error norm restricted
+to this trace appears to happen with \acrshort{gMRI} (see Figure \ref{fig:resonant-cavity-trace-errornorm}),
+and the spectral gap (\ref{equ:spectral-gap}) becomes gigantic.
+This is due to the fact that the traces of the solutions at the boundary $\Gamma_N$
+are heavily linearly dependent (MUST IMPROVE THIS EXPLANATION).
+%, and while trying to computing the \acrshort{SVD},
+%a lot of information is compressed into one component
+
+\begin{figure}[ht]
+    \centering
+    \input{plots/rectangular_cavity_trace_errorprogression.pgf}
+    \caption{The non-convergent behavior of the approximate relative error norm
+    during every second iteration of \acrshort{gMRI} of the solution
+    restricted to the inlet $\Gamma_N$. Here, $\tilde{u}|_{\Gamma_N}^{(S)}$ stands 
+    for the rational surrogate for the solution on the trace built using $S$
+    support points.}
+    \label{fig:rectangular-cavity-trace-errornorm}
+\end{figure}
+
+The symmetry may be broken by introducing a small \enquote{cubby} along the side
+of the cavity (see Figure \ref{fig:rectangular-cavity-cubby}). 
+
+\begin{figure}[h]
+    \centering
+    \input{figures/rectangular_cavity_cubby.tex}
+    \caption{A tiny cubby is introduced alongside one of the edges in order to
+    break the linear dependence of solutions restricted to a trace. It extends
+    along a quarter of the length of the cavity but extends outwards only by
+    1/100-th of the height of the cavity.}
+    \label{fig:rectangular-cavity-cubby}
+\end{figure}
+
+Desipte the only tiny perturbation in the geometry of the cavity, the improved
+convergence behavior may immediately be seen in Figure \ref{fig:rectangular-cubby-trace-errornorm}.
+
+\begin{figure}[ht]
+    \centering
+    \input{plots/rectangular_cubby_trace_errorprogression.pgf}
+    \caption{}
+    \label{fig:rectangular-cubby-trace-errornorm}
+\end{figure}
+
+\clearpage
 \subsection{Imperfectly conducting boundaries}
 \label{subsec:examples-impedance}
 
@@ -1047,6 +1094,7 @@ $\lambda \to \infty$, a Dirichlet-type boundary is produced.
     \label{fig:imperfect-conductor-eigfreqs}
 \end{figure}
 
+\clearpage
 \subsection{Dual mode circular waveguide filter}
 \label{subsec:examples-dmcwf}
 
@@ -1081,8 +1129,8 @@ in Section \ref{subsubsec:waveguide}.
 I created the model in the computer-aided design modeler software application
 FreeCAD\footnote{\url{https://www.freecadweb.org/}}. The mesh was defined using 
 the 3D finite element mesh generator Gmsh\footnote{\url{https://gmsh.info/}} and 
-is available for download on the git repository\footnote{\url{https://github.com/FMatti/Maxwell-MRI}}
-of this project. In Gmsh, a element size factor of 0.2 and 5 smoothing steps
+is available for download on the git repository 
+of this project \cite{git}. In Gmsh, a element size factor of 0.2 and 5 smoothing steps
 are used for the Delaunay 3D meshing algorithm. Additionally, 
 the mesh was refined around critical components such as the screws and irises
 using transfinite curves (the sharp-eyed reader may observe these refinements
@@ -1127,7 +1175,8 @@ and once from the rational surrogate computed with \acrshort{gMRI} at a toleranc
 of $\tau = 10^{-2}$. Both are shown (but only one is seen) in Figure
 \ref{fig:circular-waveguide-scattering}. At somewhat more than four minutes,
 the \acrshort{gMRI} was able to deliver the approximated scattering coefficients
-roughly 25 times faster than the \acrshort{FEM}.
+roughly 25 times faster than the \acrshort{FEM}. Compared to \cite{DMCWF-FrequencySweep},
+the passband is shifted to a slightly lower frequency.
 
 \begin{figure}[ht]
     \centering
@@ -1151,9 +1200,8 @@ can be seen in Figure \ref{fig:circular-waveguide-error}.
     ones obtained by using \acrshort{gMRI} ($S_{11, \textrm{gMRI}}$ and $S_{12, \textrm{gMRI}}$).}
     \label{fig:circular-waveguide-error}
 \end{figure}
-% REMINDME: Comment on these results maybe?!
-\clearpage
 
+\clearpage
 \newpage
 \section{Conclusion and outlook}
 \label{sec:conclusion}
@@ -1198,11 +1246,30 @@ are made completely straightforward to add into the code.
 \bibliography{biblio.bib}
 
 \newpage
-\section{Appendix}
+\section*{Appendix}
 \label{sec:appendix}
 
+This section contains some derivations that did not end up making it into the
+report, but were too much fun not to include them anyway. Most of them make
+use of the Levi-Civita tensor. This completely antisymmetric tensor
+$\varepsilon_{ijk}$ is fully characterized by the following defining properties:
+\begin{align}
+    \begin{cases}
+        \varepsilon_{123} = 1 & \text{gauge}\\
+        \varepsilon_{ijk} = 0~~\text{if}~~|\{i, j, k\}| < 3 & \text{cardinality} \\
+        \varepsilon_{ijk} = \varepsilon_{kij} & \text{cyclic permutation}\\
+        \varepsilon_{ijk} = - \varepsilon_{jik} & \text{non-cyclic permutation}
+    \end{cases}
+\end{align}
+It may be employed to rewrite the
+components of the curl of a vector-function $\mathbf{a}$ as the sum
+\begin{equation}
+    (\nabla \times \mathbf{a})_k = \sum_i \sum_j \varepsilon_{ijk} \partial_i u_j \label{equ:levi-civita}
+\end{equation}
+where $\partial_i$ denotes the partial derivative with respect to the $i$-th coordinate
+direction. 
 % !REMINDME: Levi-Civita tensor explanations (right here).
-\subsection{Detailed derivation for the weak formulation of the time-harmonic potential equation}
+\subsection*{Detailed derivation for the weak formulation of the time-harmonic potential equation}
 \label{subsec:derivation}
 
 The goal is to rewrite the curl-integral on the left-hand side of 
@@ -1218,15 +1285,9 @@ the following vector calculus identity:
     \end{equation}
 \end{fancybox}
 % !REMINDME: Appropriate spaces
-where $\mathbf{a}$, $\mathbf{b}$ are vector-valued functions. The completely
-antisymmetric tensor $\varepsilon_{ijk}$, frequently referred to as the
-Levi-Civita tensor, may be employed to rewrite the components of the
-curl of a vector-function $\mathbf{a}$ as the sum
-\begin{equation}
-    (\nabla \times \mathbf{a})_k = \sum_i \sum_j \varepsilon_{ijk} \partial_i u_j
-\end{equation}
-where $\partial_i$ denotes the partial derivative with respect to the $i$-th coordinate
-direction. This yields
+where $\mathbf{a}$, $\mathbf{b}$ are vector-valued functions. Rewriting the 
+left-hand side of this equation by using the Levi-Civita tensor (\ref{equ:levi-civita})
+yields
 \begin{align}
     (\nabla \times \mathbf{a}) \cdot \mathbf{b} &= \sum_k (\nabla \times \mathbf{a})_k b_k \notag \\ 
     &= \sum_k (\sum_i \sum_j \varepsilon_{ijk} \partial_i a_j) b_k \notag \\ 
@@ -1273,11 +1334,11 @@ may be rewritten as
     + \int_{\Omega} ({\mu^{-1} \nabla \times \mathbf{u}}) \cdot (\nabla \times \mathbf{v})
 \end{equation}
 
-\subsection{Detailed derivation for the weak formulation of the time-harmonic potential equation}
-\label{subsec:derivation}
+\subsection*{Invariance of repeated cross products}
+\label{subsec:invariance}
 
 I would like to demonstrate the
-\begin{fancybox}{Invariance of repeated cross product}
+\begin{fancybox}{Invariance of repeated cross products}
     If $\mathbf{n} \perp \mathbf{u}$ and $||\mathbf{n}|| = 1$, then
     \begin{equation}
         (\mathbf{n} \times \mathbf{u}) \times \mathbf{n} = \mathbf{u} \label{equ:double-cross-normal}

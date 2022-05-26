@@ -38,22 +38,18 @@ class ImperfectConductor(TimeHarmonicMaxwellProblem):
         TimeHarmonicMaxwellProblem.__init__(self, V, mu, eps, j, B_D(), u_D, B_N(), g_N, B_I(), imp)
 
     def plot_solution(self, **kwargs):
-        solution = self.get_solution(tonumpy=False)
+        solution = self.get_solution()
+        omega = self.get_frequency()
         for i, u in enumerate(solution):
-            plt.figure()
-            plt.title('Solution to system at frequency \u03C9 = {:.3f} rad/s'.format(self.omega[i]))
-            fig = fen.plot(u, **kwargs)
-            plt.colorbar(fig, orientation='horizontal')
-            plt.show()
+            self.plot_external_solution(u, contains_boundary_values=True, omega=omega[i], **kwargs)
 
     def plot_solution_trace(self, trace, **kwargs):
-        solution = self.get_solution(tonumpy=False)
-        for i, u in enumerate(solution):
+        solution = self.get_solution(trace=trace)
+        for i, u_trace in enumerate(solution):
             plt.figure()
             plt.title('Solution on trace at frequency \u03C9 = {:.3f} rad/s'.format(self.omega[i]))
             all_coords = self.V.tabulate_dof_coordinates()
             trace_coords = np.array([x for x in all_coords if trace.inside(x, 'on_boundary')])
-            u_trace = [u(x) for x in trace_coords]
             plt.plot(trace_coords[:, 1], u_trace, **kwargs)
             plt.show()
 

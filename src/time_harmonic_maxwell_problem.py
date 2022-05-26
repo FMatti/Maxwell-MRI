@@ -131,8 +131,8 @@ class TimeHarmonicMaxwellProblem(object):
         self.bc = None
 
         class EmptyBoundary(fen.SubDomain):
-                def inside(self, x, on_boundary):
-                    return False
+            def inside(self, x, on_boundary):
+                return False
 
         if B_N is None:
             self.B_N = EmptyBoundary()
@@ -192,7 +192,7 @@ class TimeHarmonicMaxwellProblem(object):
 
     def solve(self, omega, accumulate=False, solver='scipy'):
         """Solve the variational problem defined with .setup()"""
-        if isinstance(omega, (float, int)):
+        if isinstance(omega, (float, int, complex)):
             omega = [omega]
         if isinstance(self.N, list):
             n = len(self.N)

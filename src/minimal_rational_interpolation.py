@@ -144,7 +144,7 @@ class MinimalRationalInterpolation(object):
         q = V_conj[-1, :].conj()
         self.u_ring = RationalFunction(omegas, q, np.diag(q))
 
-    def compute_surrogate(self, target, omegas=None, greedy=True, tol=1e-2, n_iter=None, return_history=False, solver='scipy'):
+    def compute_surrogate(self, target, omegas=None, greedy=True, tol=1e-2, n_iter=None, return_history=False, return_relerr=False, solver='scipy'):
         """Compute the rational surrogate""" 
         if not greedy:
             self.supports = target.get_frequency()
@@ -164,7 +164,8 @@ class MinimalRationalInterpolation(object):
             tol = 0.0
         if return_history:
             surrogate_history = [self.get_surrogate(target.get_solution(trace=self.VS.trace))]
-
+        if return_relerr:
+            relerr_history = []
         # Greedy: Add support points until relative surrogate error below tol
         t = 2
         while t < n_iter:
@@ -180,12 +181,18 @@ class MinimalRationalInterpolation(object):
                 surrogate_history.append(self.get_surrogate(target.get_solution(trace=self.VS.trace)))
             rel_err = np.linalg.norm(self.R[:, -1] - np.append(u_hat, 0)) \
                     / np.linalg.norm(self.R[:, -1])
+            if return_relerr:
+                relerr_history.append(rel_err)
             if rel_err <= tol:
                 break
             t += 1
 
-        if return_history:
+        if return_history and return_relerr:
+            return surrogate_history, relerr_history
+        elif return_history:
             return surrogate_history
+        elif return_relerr:
+            return relerr_history
 
     def get_surrogate(self, snapshots):
         """Returns the rational interpolation surrogate"""

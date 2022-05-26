@@ -25,7 +25,7 @@ class TwoDimensionalCavity(TimeHarmonicMaxwellProblem):
         TimeHarmonicMaxwellProblem.__init__(self, V, mu, eps, j, B_D(), u_D, B_N(), g_N)
 
     def plot_solution(self):
-        solution = self.get_solution(tonumpy=False)
+        solution = self.get_solution()
         for i, u in enumerate(solution):
             plt.figure()
             plt.title('Solution to system at frequency \u03C9 = {:.3f} rad/s'.format(self.omega[i]))
@@ -34,7 +34,7 @@ class TwoDimensionalCavity(TimeHarmonicMaxwellProblem):
             plt.show()
 
     def plot_solution_trace(self, trace, axis=1):
-        solution = self.get_solution(tonumpy=False)
+        solution = self.get_solution()
         for i, u in enumerate(solution):
             plt.figure()
             plt.title('Solution on trace at frequency \u03C9 = {:.3f} rad/s'.format(self.omega[i]))
