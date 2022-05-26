@@ -315,6 +315,7 @@ and the linear form
     L(\mathbf{u}) = \int_{\Omega} \mathbf{j} \cdot \mathbf{v} + \int_{\partial \Omega} \mathbf{g} \cdot \mathbf{v} \label{equ:linear-form}
 \end{equation}
 and the appropriate Hilbert space $H_{\textrm{curl}}(\Omega)$ defined in (\ref{equ:h-curl}).
+% REMINDME! Define mass (difference from M-inner product), stiffness, ... matrices
 
 A sequence of appropriate 
 finite dimensional spaces $H_{\textrm{curl}, h}(\Omega)$ is introduced, and the
@@ -740,104 +741,207 @@ Euclidean norms.
 \section{Examples}
 \label{sec:examples}
 
-\subsection{Two-dimensional rectangular cavity}
+The goal is now to apply the techniques introduced in the previous sections
+to three examples (see Figure \ref{fig:examples} to get an idea about the
+difference between these examples).
+
+\subsection{Two-dimensional rectangular resonant cavity}
 \label{subsec:examples-rectangularcavity}
 
+Based on the theoretical considerations from Section \ref{subsec:examples-rectangularcavity},
+a rectangular resonant cavity with dimensions $L_x=5$ and $L_y=1$ (see Figure 
+\ref{fig:rectangular_cavity}) is studied.
 \begin{figure}[h]
     \centering
     \input{figures/rectangular_cavity.tex}
-    \caption{TODO.}
+    \caption{The rectangular resonant cavity is a medium $\Omega$ enclosed
+    by a perfectly conducting boundary $\Gamma_D$ and an inlet $\Gamma_N$
+    chosen to coincide with the rectangle's edge at $x=0$ for the experiments in this
+    section.}
     \label{fig:rectangular_cavity}
 \end{figure}
 
+For simplicity, I set $\epsilon=\mu=1$. A uniform grid with 101 subdivisions in
+the $x$- and 21 in the $y$-direction whose cells are again subdivided by their
+diagonals was used to generate a mesh that allows for 4365 degrees of freedom.
+The system is forced from the inlet at $x=0$ with $g_z(y) = sin(\pi y / L_y)$.
+
 % Exploratory plots
+\subsubsection{Exploration of the problem}
+\label{subsubsec:exploration}
+
+To give the reader an impression of what the solution $u_z(x, y)$ to this problem
+looks like, I plot the \acrshort{FEM}-solution at the first and fifth resonant
+frequency in Figures \ref{fig:rectangular-cavity-mode1} and \ref{fig:rectangular-cavity-mode5}
+respectively.
 
 \begin{figure}[ht]
-    \centering
-    \begin{subfigure}{\textwidth}
-        \includegraphics{plots/rectangular_cavity_mode1.pdf}
-        \caption{First resonant frequency $\omega = 3.159$.}
-    \end{subfigure}
-    \begin{subfigure}{\textwidth}
-        \includegraphics{plots/rectangular_cavity_mode5.pdf}
-        \caption{Fifth resonant frequency $\omega = 4.675$.}
-    \end{subfigure}
-    \caption{Caption.}
-    \label{fig:rectangular-cavity-modes}
+    \includegraphics{plots/rectangular_cavity_mode1.pdf}
+    \caption{The solution $u_z(x, y)$ obtained with the \acrshort{FEM} at the
+    first resonant frequency $\omega = 3.159$ of the cavity. Observe how at
+    every perfectly conducting boundary $\Gamma_D$ (cf. Figure
+    \ref{fig:rectangular_cavity}) the solution gradually goes to zero, as was imposed.}
+    \label{fig:rectangular-cavity-mode1}
+\end{figure}
+
+\begin{figure}[ht]
+    \includegraphics{plots/rectangular_cavity_mode5.pdf}
+    \caption{The solution $u_z(x, y)$ obtained with the \acrshort{FEM} at the
+    fifth resonant frequency $\omega = 4.675$ of the cavity.}
+    \label{fig:rectangular-cavity-mode5}
 \end{figure}
 
 % Rational interpolation demonstration
-For $||\mathbf{u}||_{L_2(\Omega)}^2 = \int_{\Omega} ||\mathbf{u}||^2$
+I now study the \acrshort{gMRI} of the quantity $||u_z||_M$ defined in
+(\ref{equ:matrix-norm}). Algorithm \ref{alg:gMRI} is performed
+with a tolerance of $\tau = 10^{-2}$. The candidate support points $\Omega_{\mathrm{test}}$
+are 1000 uniformly spaced points in $\omega = [3, 5]$. The \acrshort{FEM} solution $u_z$
+is computed and the \acrshort{gMRI} surrogate $\tilde{u}_z$ evaluated at all points in $\Omega_{\mathrm{test}}$,
+and the $||.||_M$-norm for both is plotted in Figure \ref{fig:rectangular-cavity-norms}. 
 
 \begin{figure}[ht]
     \centering
     \input{plots/rectangular_cavity_norms.pgf}
-    \caption{Caption.}
+    \caption{$||.||_M$-norm of the \acrshort{FEM} solution $u_z$ (top) and the 
+    \acrshort{gMRI} surrogate $\tilde{u}_z$ (bottom).}
     \label{fig:rectangular-cavity-norms}
 \end{figure}
+
+For the same problem, the approximation of the relative error 
+in the $||.||_M$-norm of the rational surrogate $\tilde{u}_z^{(S)}$ from the
+\acrshort{FEM} solution in every second iteration $S$ of the \acrshort{gMRI} algorithm
+is shown in Figure \ref{fig:rectangular-cavity-errorprogression}. This time,
+however, the candidate support points for the rational surrogate $\tilde{u}_z^{(S)}$
+and the points at which the \acrshort{FEM}-solution and the rational surrogate
+are compared are completely out of sync. Because if they coincided, the relative error
+would obviously tend to zero at each of the support points chosen for building
+the surrogate, which would obscure the point I want to make with this plot.
 
 \begin{figure}[ht]
     \centering
     \input{plots/rectangular_cavity_errorprogression.pgf}
-    \caption{Caption.}
+    \caption{Progression of a relative approximation error of the rational
+    surrogates $\tilde{u}_z^{(S)}$ that was built using $S$ support points.
+    The freshly added support points during the previous two iterations of
+    \acrshort{gMRI} are shown in their corresponding color at the bottom.
+    Notice how the decrease in relative error is not uniform, and wherever a
+    support point is added, the error is locally decreased.}
     \label{fig:rectangular-cavity-errorprogression}
 \end{figure}
 
+\subsubsection{Numerical approximation of resonant frequencies}
+\label{subsubsec:root-finding}
 
-% Analytical and numerical root finding
-Analytical eigenfrequencies
+As already discussed in Section \ref{subsec:roots}, \acrshort{gMRI} may be used
+to approximate resonant frequencies of a system. Conveniently enough, the analytical
+resonant frequencies for a rectangular resonant cavity as the one currently being 
+studied easy to determine due to separability and the homogeneous boundary conditions. 
 \begin{equation}
     \omega_{n, m} = \pi \sqrt{\left(\frac{2n + 1}{2L_x}\right)^2 + \left(\frac{m}{L_y}\right)^2},
     ~n \in \{0, 1, \dots\}, ~m \in \{1, 2, \dots \} \label{equ:analytical-eigenmodes}
 \end{equation}
-Numerical eigenfrequencies, solve generalized (symmetric) eigenvalue problem
+Conventionally, resonant frequencies would be determined by solving the generalized
+(hermitian) eigenvalue problem
 \begin{equation}
     \mathbf{\underline{K}} \mathbf{u} = \omega^2 \mathbf{\underline{M}} \mathbf{u}
     \label{equ:numerical-eigenmodes}
 \end{equation}
-% maybe also talk about removing boundary indices
+involving the stiffness matrix $\mathbf{\underline{K}}$ and mass matrix $\mathbf{\underline{M}}$.
+This can for instance be accomplished with the \texttt{eigsh} sparse eigenvalue
+solver included in the \texttt{scipy} Python library. However, it is first necessary
+to remove all the columns and rows from $\mathbf{\underline{K}}$ and $\mathbf{\underline{M}}$
+that correspond to points on the perfectly conducting boundary, since they are
+all zero after having assembled the matrices. This was demonstrated in Section
+\ref{subsec:fem-demo}. In Table \ref{tab:rectangular_cavity_comparison}, I compare
+the two approaches (\texttt{eigsh} and \acrshort{gMRI}) in their mean absolute deviation
+$\Delta$ of the six resonant frequencies inside the interval $\omega = [3, 5]$ 
+from their corresponding analytical resonances. Furthermore, the time each method
+requires to produce a result given the assembled matrices $\mathbf{\underline{K}}$
+and $\mathbf{\underline{M}}$ is measured over multiple runs on a 7th generation
+Intel 8750H CPU at 2.20 GHz using the \texttt{timeit} library. This is done
+for four logarithmically spaced refinements of the mesh with a resulting number
+of \acrfull{DOF}.
+
 \begin{table}[ht]
-    \caption{Comparison eigsh and gMRI.}
+    \caption{In the same context as on the previous pages, two approaches to
+    finding resonant frequencies: The sparse hermitian eigenvalue solver
+    \texttt{eigsh} from the \texttt{scipy} library and the procedure using
+    \acrshort{gMRI} that was introduced in Section \ref{subsec:roots}. For
+    various \acrshort{DOF}s, the mean absolute deviation $\Delta$ from the analytical
+    resonant frequencies and the time spent in computation $t$ are shown.}
     \label{tab:rectangular_cavity_comparison}
     \input{tables/rectangular_cavity_comparison.tex}
 \end{table}
 
+Hereafter I would like to discuss two major benefits the \acrshort{gMRI} method
+for finding resonant modes holds over the \texttt{eigsh} approach.
+
+Fistly, \texttt{eigsh} requires us to specify the exact number of eigenvalues that
+should be approximated. Unless it is a priori known how many resonant modes are
+expected to fall within an interval of interest, there is no guarantee of having
+found all. The \acrshort{gMRI} way will reliably find all resonant modes within
+and even in a close neighborhood of the interval of interest.
+
 % Problems with non-resonant solutions suppressed by the boundary integral
-Take $\{ \mathbf{u}_j, \omega_j^2 \}_j$ be the resonant modes, i.e. solutions to 
+Secondly, while solving the generalized eigenvalue problem, some resonant modes
+are identified that, depending on the boundary condition at the inlet, are 
+suppressed and do not emerge when solving the actual problem. Moreover, even
+the analytical resonant frequencies suffer from the exact same effect. The reason
+for this caveat is the following:
+
+Take $\{ \mathbf{u}_j, \omega_j^2 \}_j$ to be resonant modes, i.e. solutions to 
 the eigenvalue problem (\ref{equ:numerical-eigenmodes}), such that
 \begin{equation}
     \mathbf{\underline{K}} \mathbf{u}_j = \omega_j^2 \mathbf{\underline{M}} \mathbf{u}_j
     \label{equ:eigen-solution}
 \end{equation}
-Adding a source term $\mathbf{f}$ 
+Adding a source term $\mathbf{f}$, the new system is described by
 \begin{equation}
     \mathbf{\underline{K}} \mathbf{u} - \omega^2 \mathbf{\underline{M}} \mathbf{u} = \mathbf{f}
 \end{equation}
-If $\mathbf{u}$ is expressed in terms of the basis $\{ \mathbf{u}_j \}_j$, i.e.
-$\mathbf{u} = \sum_j \alpha_j \mathbf{u}_j$
+If a solution $\mathbf{u}$ can be expressed in terms of the basis $\{ \mathbf{u}_j \}_j$,
+meaning $\mathbf{u} = \sum_j \alpha_j \mathbf{u}_j$ for some $\alpha_j$, then
 \begin{equation} 
     \sum_j \alpha_j (\mathbf{\underline{K}} \mathbf{u}_j - \omega^2 \mathbf{\underline{M}} \mathbf{u}_j) = \mathbf{f}
 \end{equation}
-Using (\ref{equ:eigen-solution})
+Using (\ref{equ:eigen-solution}) yields
 \begin{equation}
     \sum_j \alpha_j (\omega_j^2 - \omega^2) \mathbf{\underline{M}} \mathbf{u}_j = \mathbf{f}
 \end{equation}
-from which we can take the scalar product with $\mathbf{u}_j^H$ to obtain
+from which we can then multiply both sides with $\mathbf{u}_j^H$ to obtain
 % WHY SHOULD THIS BE A BASIS (DOES IT SPAN?), AND WHY M-ORTHONORMAL
 \begin{equation}
-    \alpha_j = \frac{\mathbf{u}_j^H \mathbf{f}}{\omega_j^2 - \omega^2}
+    \alpha_j = \frac{\mathbf{u}_j^H \mathbf{f}}{\omega_j^2 - \omega^2} \label{equ:suppression}
 \end{equation}
-If $\mathbf{u}_j^H \mathbf{f} = 0$, then the resonant mode at $\omega_j$ is 
-suppressed (fine with MRI, but eigsh will detect a resonant mode).
+using $\mathbf{u}_j^H \mathbf{\underline{M}} \mathbf{u}_j = \mathbf{\underline{1}}$
+since the eigenvectors stemming from a hermitian eigenvalue problem can be made 
+$\mathbf{\underline{M}}$-orthonormal.
+
+Inspecting (\ref{equ:suppression}), we see that if $\mathbf{u}_j^H \mathbf{f} = 0$,
+then the resonant mode at $\omega = \omega_j$ is suppressed. Because neither the
+generalized eigenvalue problem nor the analytical considerations
+are informed about the nature of the source term $\mathbf{f}$, this is not accounted for.
+Specifying as the initial iteration vector for the \texttt{eigsh} eigenvalue solver
+the source term $\mathbf{f}$ to avoid finding eigensolutions that are orthogonal
+to it did not prove to be effective.
 
 \begin{figure}[ht]
     \centering
     \input{plots/rectangular_cavity_suppression.pgf}
-    \caption{Caption.}
+    \caption{For still the same problem but this time in a slightly higher
+    frequency range $\omega = [6, 7]$, resonant frequencies determined using the
+    three discussed approaches are shown (bottom). Only two resonant
+    frequencies visibly emerge from the $||.||_M$-norm spectrum determined by
+    solving the problem with the \acrshort{FEM} (top). Suppressed resonant
+    frequencies appear (or much rather do not appear) whenever the corresponding
+    eigensolution $u(\omega_{n, m})$ is orthogonal to the source term $f$ (middle).}
     \label{fig:rectangular-cavity-suppression}
 \end{figure}
 
-
+\subsubsection{Approximating solutions along a trace}
+\label{subsubsec:traces}
+ 
+TODOLULULULU.
 % Problems with linearly combinable solutions -> Use cubby to perturb waveguide
 For $||\mathbf{u}||_{L_2(\Gamma)}^2 = \int_{\Gamma} ||\mathbf{u}||^2$
 
@@ -969,10 +1073,12 @@ and the $f_2$ when forcing from the other side to produce $\mathbf{u}_2$.
 \section{Appendix}
 \label{sec:appendix}
 
+% !REMINDME: Levi-Civita tensor explanations (right here).
+% 
+
 \subsection{Detailed derivation for the weak formulation of the time-harmonic potential equation}
 \label{subsec:derivation}
 
-% !REMINDME: Levi-Civita tensor explanations.
 The goal is to rewrite the curl-integral on the left-hand side of 
 (\ref{equ:maxwell-weak-initial}):
 \begin{equation}
@@ -990,7 +1096,6 @@ where $\mathbf{a}$, $\mathbf{b}$ are vector-value functions. The completely
 antisymmetric tensor $\varepsilon_{ijk}$, frequently referred to as the
 Levi-Civita tensor, may be employed to rewrite the components of the
 curl of a vector-function $\mathbf{a}$ as the sum
-% !REMINDME: Maybe lemma and proof formatting
 \begin{equation}
     (\nabla \times \mathbf{a})_k = \sum_i \sum_j \varepsilon_{ijk} \partial_i u_j
 \end{equation}
@@ -1042,8 +1147,11 @@ may be rewritten as
     + \int_{\Omega} ({\mu^{-1} \nabla \times \mathbf{u}}) \cdot (\nabla \times \mathbf{v})
 \end{equation}
 
-I would also like to demonstrate that
-\begin{fancybox}{Curl product rule}
+\subsection{Detailed derivation for the weak formulation of the time-harmonic potential equation}
+\label{subsec:derivation}
+
+I would like to demonstrate the
+\begin{fancybox}{Invariance of repeated cross product}
     If $\mathbf{n} \perp \mathbf{u}$ and $||\mathbf{n}|| = 1$, then
     \begin{equation}
         (\mathbf{n} \times \mathbf{u}) \times \mathbf{n} = \mathbf{u} \label{equ:double-cross-normal}
