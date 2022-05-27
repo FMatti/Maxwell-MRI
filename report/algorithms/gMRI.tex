@@ -10,7 +10,7 @@
         \State $\omega_{t+1} \leftarrow \textrm{argmin}_{\omega \in \Omega_{\mathrm{test}}} |Q_t(\omega)|$
         \State Solve $a_{\omega_{t+1}}(u_{t+1}, v) = L(v)$
         \State Build surrogate $\tilde{u}_{t+1} = P_{t+1}(\omega) / Q_{t+1}(\omega)$ using the solutions $u_1, \dots, u_{t+1}$
-        \If{$||u_{t+1}(\omega_{t+1}) - \tilde{u}_{t+1}(\omega_{t+1})||_M / ||u_{t+1}(\omega_{t+1})||_M< \tau$}
+        \If{$||u_{t+1}(\omega_{t+1}) - \tilde{u}_{t}(\omega_{t+1})||_M / ||u_{t+1}(\omega_{t+1})||_M< \tau$}
             \Return
         \EndIf
         \State $t \leftarrow t+1$

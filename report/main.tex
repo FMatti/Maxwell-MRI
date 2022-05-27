@@ -24,8 +24,8 @@
     such as resonant modes, of interest for problems of this type is conducted.
 \end{abstract}
 
-\newpage
-\printglossary[type=\acronymtype, nonumberlist]
+%\newpage
+%\printglossary[type=\acronymtype, nonumberlist]
 
 \newpage
 \tableofcontents
@@ -307,8 +307,8 @@ It is readily seen that the weak formulation (\ref{equ:maxwell-weak}) assumes th
 \end{equation}
 with the bilinear form 
 \begin{equation}
-    a_{\omega}(\mathbf{u}, \mathbf{v}) = \int_{\Omega} (\mu^{-1} \nabla \times \mathbf{u}) \cdot (\nabla \times \mathbf{v})
-    - \omega^2 \int_{\Omega} \epsilon \mathbf{u} \cdot \mathbf{v} \label{equ:bilinear-form}
+    a_{\omega}(\mathbf{u}, \mathbf{v}) = \underbrace{\int_{\Omega} (\mu^{-1} \nabla \times \mathbf{u}) \cdot (\nabla \times \mathbf{v})}_{K(\mathbf{u}, \mathbf{v})}
+    - \omega^2 \underbrace{\int_{\Omega} \epsilon \mathbf{u} \cdot \mathbf{v}}_{M(\mathbf{u}, \mathbf{v})} \label{equ:bilinear-form}
 \end{equation}
 and the linear form 
 \begin{equation}
@@ -328,6 +328,10 @@ Galerkin problem is then formulated as (see \cite{numapproxPDEs} for details)
 One class of finite elements, the Nédélec elements of the first
 kind, are particularly well suited for discretizing curl-problems of the type
 we have derived in Section \ref{sec:maxwell} (see \cite{monk}).
+
+I refer to the \acrshort{FEM} matrix representations in the vertex basis of the forms
+$K(\mathbf{u}, \mathbf{v})$ and $M(\mathbf{u}, \mathbf{v})$ as the
+stiffness matrix $\mathbf{\underline{K}}$ and mass matrix $\mathbf{\underline{M}}$.
 
 \subsection{Numerical approximation of \acrshort{PDE}s using FEniCS}
 \label{subsec:fem-demo}
@@ -393,7 +397,9 @@ boundary to zero.
 \lstinputlisting[firstnumber=47, firstline=48, lastline=49]{code/fenics_example.py}
 
 A function to compute an approximation of the $L_2(\Omega)$-norm of a solution
-to the system can be created.
+to the system can be created. Notice how I can reuse the mass matrix
+$\mathbf{\underline{M}}$ for this purpose only due to the fact that
+$\epsilon = 1$ was taken.
 \lstinputlisting[firstnumber=51, firstline=52, lastline=54]{code/fenics_example.py}
 
 Finally, for 200 uniformly spaced frequencies $\omega \in [6.2, 6.8]$, the 
@@ -406,7 +412,7 @@ for the cubic cavity (see Figure \ref{fig:fenics-demonstration}).
 \begin{figure}[h]
     \centering
     \input{plots/fenics_demonstration.pgf}
-    \caption{Frequency response in the $L_2(\Omega)$-norm of a cubic cavity with
+    \caption{Approximate frequency response in the $L_2(\Omega)$-norm of a cubic cavity with
     one face acting as an inlet and all others as perfectly conducting boundaries.
     At resonant frequencies, the $L_2(\Omega)$-norm theoretically tends to infinity.
     Numerically, they appear as finite peaks in the frequency response.}
@@ -418,7 +424,7 @@ for the cubic cavity (see Figure \ref{fig:fenics-demonstration}).
 \label{sec:mri}
 
 % General idea 
-Let $\mathbf{u} : \mathbb{C} \to \mathbb{C}^3$. Given \enquote{snapshots} of the
+Let $\mathbf{u} : \mathbb{C} \to \mathbb{C}^3$ or $\mathbb{C}^2$. Given \enquote{snapshots} of the
 function $\mathbf{u}(\omega_j)$ at $\omega_j$ for $j \in \{1, \dots, S\}$, the
 goal is to find a surrogate that locally (i.e. near $\omega_1, \dots, \omega_S$)
 satisfies
@@ -474,7 +480,7 @@ with
 \end{equation}
 and
 \begin{equation}
-    Q(\omega) = \sum_i \frac{q_i}{\omega - \omega_i} \label{equ:surrogate-denomniator}
+    Q(\omega) = \sum_i \frac{q_i}{\omega - \omega_i} \label{equ:surrogate-denominator}
 \end{equation}
 in the barycentric representation.
 
@@ -644,7 +650,9 @@ Inserting this into (\ref{equ:gramian-QR}) results in
     \label{equ:gramian-SVD}
 \end{equation}
 which coincides with the \acrshort{SVD} of the Gramian matrix $\mathbf{\underline{G}}$
-if we take the square root of the singular values.
+if we take the square root of the singular values. Since for \acrshort{MRI} only
+really the last left singular vector in $\mathbf{\underline{V}}$ is of interest,
+computing $\mathbf{\underline{G}}$ explicitly may be avoided.
 
 There is one additional benefit to taking the route via the \acrshort{SVD} of
 $\mathbf{\underline{R}}$ instead of $\mathbf{\underline{G}}$
@@ -683,6 +691,8 @@ spectral gap \cite{davidePHD}
 \begin{equation}
     \frac{\sigma_{S-1} - \sigma_S}{\sigma_1 - \sigma_S} \label{equ:spectral-gap}
 \end{equation}
+Usually, values of above $10^{13}$ indicate that the rational surrogate could not
+be built in a stable way and in my implementations the user is warned.
 
 \subsubsection{Alternative representations of the surrogate}
 \label{subsubsec:u-ring}
@@ -707,27 +717,34 @@ and the locations of the interpolation nodes $\{\omega_1, \dots, \omega_S\}$.
 
 Additionally, let
 \begin{equation}
-    \mathbf{\hat{u}}(\omega) = \mathbf{\underline{R}} \accentset{\circ}{\mathbf{u}}(\omega) \label{equ:u-hat}
+    \mathbf{\hat{u}}(\omega) = \sum_{j=1}^S \frac{q_j \mathbf{r}_j}{\omega - \omega_j}
+    / \sum_{j=1}^S \frac{q_j}{\omega - \omega_j} \label{equ:u-ring}
 \end{equation}
-with $\mathbf{\underline{R}}$ being the triangular matrix stemming from the QR decomposition 
-of the snapshot matrix $\mathbf{\underline{U}} = \mathbf{\underline{Q}} ~ \mathbf{\underline{R}}$.
-The original rational surrogate can again be recovered via
+with $\mathbf{r}_j$ being the $j$-th column in the triangular matrix
+$\mathbf{\underline{R}}$ stemming from the QR decomposition of the snapshot
+matrix $\mathbf{\underline{U}} = \mathbf{\underline{Q}} ~ \mathbf{\underline{R}}$.
+Then, the original rational surrogate can again be recovered via
 \begin{equation}
     \mathbf{\tilde{u}}(\omega) = \mathbf{\underline{Q}} \mathbf{\hat{u}}(\omega)
 \end{equation}
 $\mathbf{\hat{u}}(\omega)$ provides us with a simplified alternative to the
-computation of the error in \acrshort{gMRI} (Algorithm \ref{alg:gMRI}).
+computation of the relative error which is used as a stopping criterion in
+\acrshort{gMRI} (Algorithm \ref{alg:gMRI}):
 
-TODOLULULULU.
-% NEED TO REWORK THIS A LOOOT!!!
-\begin{equation}
-    ||\mathbf{u}_{t+1}(\omega_{t+1}) - \mathbf{\tilde{u}}_{t+1}(\omega_{t+1})||_M
-    = ||\mathbf{\underline{Q}} \mathbf{r}_{t+1} - \mathbf{\underline{Q}}\mathbf{\hat{u}}_{t+1}(\omega_{t+1})||_M
-    = ||\mathbf{r}_{t+1} - \mathbf{\hat{u}}_{t+1}(\omega_{t+1})||_M
-\end{equation}
-where $\mathbf{r}_{t+1}$ is the last column in $\mathbf{\underline{R}}^{(t+1)}$,
+First, one may use the $\mathbf{\underline{M}}$-orthonormality of $\mathbf{\underline{Q}}$
+to get
+\begin{align}
+    ||\mathbf{u}_{t+1}(\omega_{t+1}) - \mathbf{\tilde{u}}_{t}(\omega_{t+1})||_M^2
+    &= ||\mathbf{\underline{Q}}^{(t+1)} \mathbf{r}_{t+1} - \mathbf{\underline{Q}}^{(t+1)}\mathbf{\hat{u}}_{t}'(\omega_{t+1})||_M^2 \notag \\
+    %&= (\mathbf{r}_{t+1} - \mathbf{\hat{u}}_{t}'(\omega_{t+1}))^H (\mathbf{\underline{Q}}^{(t+1)})^H \mathbf{\underline{M}} \mathbf{\underline{Q}}^{(t+1)} (\mathbf{r}_{t+1} - \mathbf{\hat{u}}_{t}'(\omega_{t+1})) \notag \\
+    &= ||\mathbf{r}_{t+1} - \mathbf{\hat{u}}_{t}'(\omega_{t+1})||^2
+\end{align}
+with the short hand $\mathbf{\hat{u}}_{t}' = [\mathbf{\hat{u}}_{t}^T, 0]^T$
+and where $\mathbf{r}_{t+1}$ is the last column in $\mathbf{\underline{R}}^{(t+1)}$,
 he triangular matrix from the $(t+1)$-th step in the additive Housholder decomposition
-(Algorithm \ref{alg:householder}).
+(Algorithm \ref{alg:householder}). $||.||$ is the Euclidean norm.
+
+Additionally, one may similarly approximate
 \begin{equation}
     ||\mathbf{u}(\omega)||_M^2 \approx ||\mathbf{\tilde{u}}(\omega)||_M^2
     = ||\mathbf{\underline{U}} \accentset{\circ}{\mathbf{u}}(\omega)||_M^2
@@ -735,8 +752,7 @@ he triangular matrix from the $(t+1)$-th step in the additive Housholder decompo
     = \mathbf{\hat{u}}(\omega)^H \mathbf{\hat{u}}(\omega)
     = ||\mathbf{\hat{u}}(\omega)||^2
 \end{equation}
-Thus, computing the relative error norm can be approximated by only computing
-Euclidean norms.
+Thus, the relative error norm can be approximated with only Euclidean norms.
 
 \newpage
 \section{Examples}
@@ -953,11 +969,11 @@ Running \acrshort{gMRI} (Algorithm \ref{alg:gMRI}) on the restriction $u|_{\Gamm
 instead of the full solution $u$ is a straight forward generalization of the
 algorithm. Nevertheless, when taking as $\Gamma = \Gamma_N$ the inlet of the
 rectangular resonant cavity, no convergence in the relative error norm restricted
-to this trace appears to happen with \acrshort{gMRI} (see Figure \ref{fig:resonant-cavity-trace-errornorm}),
+to this trace appears to happen with \acrshort{gMRI} (see Figure \ref{fig:rectangular-cavity-trace-errornorm}),
 and the spectral gap (\ref{equ:spectral-gap}) becomes gigantic.
 This is due to the fact that the traces of the solutions at the boundary $\Gamma_N$
-are heavily linearly dependent (MUST IMPROVE THIS EXPLANATION).
-%, and while trying to computing the \acrshort{SVD},
+are heavily linearly dependent.
+%, and while trying to computing the \acrshort{SVD}, (MUST IMPROVE THIS EXPLANATION)
 %a lot of information is compressed into one component
 
 \begin{figure}[ht]
@@ -990,7 +1006,14 @@ convergence behavior may immediately be seen in Figure \ref{fig:rectangular-cubb
 \begin{figure}[ht]
     \centering
     \input{plots/rectangular_cubby_trace_errorprogression.pgf}
-    \caption{}
+    \caption{Breaking the symmetry (i.e. the linear dependence of the solutions
+    on a trace) with a tiny cubby (see Figure \ref{fig:rectangular-cavity-cubby})
+    proves to be a quite effective remedy for the stability in building the
+    rational surrogate with \acrshort{gMRI}. For every second iteration of the 
+    algorithm, an estimate for the relative error of the surrogate $u_{\Gamma_N}^{(S)}$
+    built with $S$ support points (shown at the bottom) is plotted. Compared to
+    Figure \ref{fig:rectangular-cavity-trace-errornorm}, the error goes down much
+    more uniformly.}
     \label{fig:rectangular-cubby-trace-errornorm}
 \end{figure}
 
@@ -1257,14 +1280,15 @@ $\varepsilon_{ijk}$ is fully characterized by the following defining properties:
     \begin{cases}
         \varepsilon_{123} = 1 & \text{gauge}\\
         \varepsilon_{ijk} = 0~~\text{if}~~|\{i, j, k\}| < 3 & \text{cardinality} \\
-        \varepsilon_{ijk} = \varepsilon_{kij} & \text{cyclic permutation}\\
-        \varepsilon_{ijk} = - \varepsilon_{jik} & \text{non-cyclic permutation}
+        \varepsilon_{ijk} = \varepsilon_{jki} & \text{cyclic permutation}\\
+        \varepsilon_{ijk} = - \varepsilon_{ikj} & \text{non-cyclic permutation}
+        \label{equ:levi-civita-properties}
     \end{cases}
 \end{align}
 It may be employed to rewrite the
 components of the curl of a vector-function $\mathbf{a}$ as the sum
 \begin{equation}
-    (\nabla \times \mathbf{a})_k = \sum_i \sum_j \varepsilon_{ijk} \partial_i u_j \label{equ:levi-civita}
+    (\nabla \times \mathbf{a})_k = \sum_i \sum_j \varepsilon_{ijk} \partial_i a_j \label{equ:levi-civita}
 \end{equation}
 where $\partial_i$ denotes the partial derivative with respect to the $i$-th coordinate
 direction. 
@@ -1351,7 +1375,7 @@ identity
     \sum_i \varepsilon_{jki} \varepsilon_{lmi} = \delta_{jl} \delta_{km} - \delta_{jm} \delta_{kl}
 \end{equation}
 Furthermore, I make use of the invariance of the tensor under cyclic permutation
-of the indices to obtain
+of the indices (according to Equation (\ref{equ:levi-civita-properties})) to obtain
 \begin{align}
     [(\mathbf{n} \times \mathbf{u}) \times \mathbf{n}]_k
     &= \sum_i \sum_j \varepsilon_{ijk} (\mathbf{n} \times \mathbf{u})_i n_j \notag \\ 
