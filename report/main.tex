@@ -72,7 +72,6 @@ corresponding weak formulation.
 
 \subsection{Vector potential formulation of the time-harmonic Maxwell's equations}
 \label{subsec:maxwell-potential}
-% !REMINDME: Add boundary conditions to th equations!!!!
 
 % Everything smooth enough to do all manipulations...
 I assume that all quantities in this section are smooth enough to perform the
@@ -149,7 +148,6 @@ and then integrated over the whole computational domain $\Omega$ to obtain
     \int_{\Omega} (\nabla \times ({\mu^{-1} \nabla \times \mathbf{u}})) \cdot \mathbf{v}
     - \omega^2 \int_{\Omega} \epsilon \mathbf{u} \cdot \mathbf{v} = \int_{\Omega} \mathbf{j} \cdot \mathbf{v} \label{equ:maxwell-weak-initial}
 \end{equation}
-% !REMINDME: Put derivation in appendix
 This may further be simplified (\ref{equ:maxwell-weak-initial}) to (I allow myself
 to spare you the details of this computation, but put a proper derivation
 in an appendix at the end of the report):
@@ -211,7 +209,6 @@ conducting wall $\Gamma_D = \partial \Omega \setminus \Gamma_N$
     \label{fig:2d-cavity}
 \end{figure}
 
-% !REMINDME: Why only need test against v_z?!
 Suppose the current density $\mathbf{j} \equiv 0$ and orient the coordinate
 system in such a way that $\mathbf{u} = u_z \mathbf{e}_z$ and 
 $\mathbf{v} = v_z \mathbf{e}_z$. Consequently, the scalar product of the two 
@@ -315,7 +312,6 @@ and the linear form
     L(\mathbf{u}) = \int_{\Omega} \mathbf{j} \cdot \mathbf{v} + \int_{\partial \Omega} \mathbf{g} \cdot \mathbf{v} \label{equ:linear-form}
 \end{equation}
 and the appropriate Hilbert space $H_{\textrm{curl}}(\Omega)$ defined in (\ref{equ:h-curl}).
-% REMINDME! Define mass (difference from M-inner product), stiffness, ... matrices
 
 A sequence of appropriate 
 finite dimensional spaces $H_{\textrm{curl}, h}(\Omega)$ is introduced, and the
@@ -463,7 +459,6 @@ Here, the diagonal elements of $\boldsymbol{\underline{\Lambda}}$ are denoted wi
 $\lambda_i$ (the eigenvalues of $\mathbf{\underline{A}}$) and the columns of
 $\mathbf{\underline{V}}$ with $\mathbf{v}_i$ (the eigenvectors of $\mathbf{\underline{A}}$).
 
-% !REMINDME: This is not really phrased academically yet...
 With the expression of the solution $\mathbf{u}$ in terms of a rational polynomial
 function (see (\ref{equ:motivation})), we can motivate why rational interpolation
 is a valid approach for approximating $\mathbf{u}$. Some alternatives such as polynomial
@@ -1291,8 +1286,8 @@ components of the curl of a vector-function $\mathbf{a}$ as the sum
     (\nabla \times \mathbf{a})_k = \sum_i \sum_j \varepsilon_{ijk} \partial_i a_j \label{equ:levi-civita}
 \end{equation}
 where $\partial_i$ denotes the partial derivative with respect to the $i$-th coordinate
-direction. 
-% !REMINDME: Levi-Civita tensor explanations (right here).
+direction.
+
 \subsection*{Detailed derivation for the weak formulation of the time-harmonic potential equation}
 \label{subsec:derivation}
 
@@ -1308,7 +1303,6 @@ the following vector calculus identity:
         (\nabla \times \mathbf{a}) \cdot \mathbf{b} = \nabla \cdot (\mathbf{a} \times \mathbf{b}) + \mathbf{a} \cdot (\nabla \times \mathbf{b}) \label{equ:vector-calculus}
     \end{equation}
 \end{fancybox}
-% !REMINDME: Appropriate spaces
 where $\mathbf{a}$, $\mathbf{b}$ are vector-valued functions. Rewriting the 
 left-hand side of this equation by using the Levi-Civita tensor (\ref{equ:levi-civita})
 yields
