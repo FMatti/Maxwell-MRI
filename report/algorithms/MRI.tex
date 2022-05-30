@@ -1,8 +1,8 @@
 \begin{algorithmic}
     \Require $\omega_1, \dots, \omega_S$ \Comment{Supports}
-    \Require $u(\omega_1), \dots, u(\omega_S)$ \Comment{Snapshots}
-    \State Compute $G$ with $g_{ij} = \langle u(\omega_i), u(\omega_j)\rangle_M,~ i, j \in \{1, \dots, S \}$ \Comment{Gramian matrix}
-    \State Compute the singular value decomposition $G = V \Sigma V^H$
-    \State Define $q = V[:, S]$
-    \State Define $\tilde{u}(\omega) = P(\omega) / Q(\omega)$ with $P(\omega) = \sum_{j=1}^S \frac{q_j u(\omega_j)}{\omega - \omega_j}$ and $Q(\omega) = \sum_{j=1}^S \frac{q_j}{\omega - \omega_j}$
+    \Require $\mathbf{u}(\omega_1), \dots, \mathbf{u}(\omega_S)$ \Comment{Snapshots}
+    \State Compute $\mathbf{\underline{G}}$ with $g_{ij} = \langle \mathbf{u}(\omega_i), \mathbf{u}(\omega_j)\rangle_M,~ i, j \in \{1, \dots, S \}$ \Comment{Gramian matrix}
+    \State Compute the singular value decomposition $\mathbf{\underline{G}} = \mathbf{\underline{V}}~\boldsymbol{\underline{\Sigma}}~\mathbf{\underline{V}}^H$
+    \State Define $\mathbf{q} = \mathbf{\underline{V}}[:, S]$
+    \State Define $\mathbf{\tilde{u}}(\omega) = \mathbf{P}(\omega) / Q(\omega)$ with $\mathbf{P}(\omega) = \sum_{j=1}^S \frac{q_j \mathbf{u}(\omega_j)}{\omega - \omega_j}$ and $Q(\omega) = \sum_{j=1}^S \frac{q_j}{\omega - \omega_j}$
 \end{algorithmic}

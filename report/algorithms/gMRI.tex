@@ -1,16 +1,16 @@
 \begin{algorithmic}
     \Require $\tau > 0$ \Comment{Relative $L_2$-error tolerance}
     \Require $\Omega_{\mathrm{test}} = \{\omega_i\}_{i=1}^M$ \Comment{Set of candidate support points}
-    \Require $a_{\omega}(u, v) = L(v)$ \Comment{Finite element formulation of the problem}
+    \Require $a_{\omega}(\mathbf{u}, \mathbf{v}) = L(\mathbf{v})$ \Comment{Finite element formulation of the problem}
     \State Choose $\omega_1, \dots, \omega_t \in \Omega_{\mathrm{test}}$ \Comment{Usually the smallest and largest element}
     \State Remove $\omega_1, \dots, \omega_t$ from $\Omega_{\mathrm{test}}$
-    \State Solve $a_{\omega_i}(u_i, v) = L(v)$ for $i \in \{1, \dots, t\}$
-    \State Build surrogate $\tilde{u}_t = P_t(\omega) / Q_t(\omega)$ using the solutions $u_1, \dots, u_t$
+    \State Solve $a_{\omega_i}(\mathbf{u}_i, \mathbf{v}) = L(\mathbf{v})$ for $i \in \{1, \dots, t\}$
+    \State Build surrogate $\mathbf{\tilde{u}}_t = \mathbf{P}_t(\omega) / Q_t(\omega)$ using the solutions $\mathbf{u}_1, \dots, \mathbf{u}_t$
     \While{$\Omega_{\mathrm{test}} \neq \emptyset$}
         \State $\omega_{t+1} \leftarrow \textrm{argmin}_{\omega \in \Omega_{\mathrm{test}}} |Q_t(\omega)|$
-        \State Solve $a_{\omega_{t+1}}(u_{t+1}, v) = L(v)$
-        \State Build surrogate $\tilde{u}_{t+1} = P_{t+1}(\omega) / Q_{t+1}(\omega)$ using the solutions $u_1, \dots, u_{t+1}$
-        \If{$||u_{t+1}(\omega_{t+1}) - \tilde{u}_{t}(\omega_{t+1})||_M / ||u_{t+1}(\omega_{t+1})||_M< \tau$}
+        \State Solve $a_{\omega_{t+1}}(\mathbf{u}_{t+1}, \mathbf{v}) = L(\mathbf{v})$
+        \State Build surrogate $\mathbf{\tilde{u}}_{t+1} = \mathbf{P}_{t+1}(\omega) / Q_{t+1}(\omega)$ using the solutions $\mathbf{u}_1, \dots, \mathbf{u}_{t+1}$
+        \If{$||\mathbf{u}_{t+1} - \mathbf{\tilde{u}}_{t}(\omega_{t+1})||_M / ||\mathbf{u}_{t+1}||_M < \tau$}
             \Return
         \EndIf
         \State $t \leftarrow t+1$
