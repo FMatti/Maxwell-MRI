@@ -41,12 +41,14 @@
 \label{sec:introduction}
 
 A wide class of problems in physics and engineering concerns itself with the
-study of the dependence of a model on one of its parameters. 
-Of interest is usually a characteristic quantity that covaries with said parameter.
+study of the dependence of a model on one of its parameters $\omega$. 
+Of interest is usually a characteristic quantity
+$\mathbf{u}(\omega)$ depending on this parameter.
 Unless the system allows for an analytical solution, one may usually only
 find numerical solutions to the system for discrete values of the parameter.
-\acrfull{MRI} offers a way to locally approximate in a continuous way
-quantities that exhibit a meromorphic dependence on one of its 
+\acrfull{MRI} offers a way to locally approximate the
+quantity $u:\mathbb{C}\ni\omega\mapsto u(\omega)\in H_{\mathrm{curl}}$
+that exhibit a meromorphic dependence on one of its 
 parameters. The approach has proven
 effective and efficient (both memory- and computation wise) in applications
 on Helmholtz-type problems \cite{greedyMRI, shortMRI}.
@@ -54,7 +56,10 @@ on Helmholtz-type problems \cite{greedyMRI, shortMRI}.
 Central to this report are time-harmonic electromagnetic problems, whose 
 parameter is the (angular) frequency. These problems are governed by
 the time-harmonic Maxwell's equations. Choosing the quantity of interest
-to be a vector potential, these equations reduce to a single curl-curl equation.
+to be a vector potential, these equations reduce to the curl-curl equation
+\begin{equation}
+    \nabla \times (\mu^{-1} \nabla \times \mathbf{u}) - \epsilon \omega^2 \mathbf{u} = \mathbf{j}
+\end{equation}
 A justification for why a rational interpolation approach is appropriate for
 this class of problems will be presented in Section \ref{subsec:motivation}.
 
@@ -145,25 +150,25 @@ a little results in the
 \subsection{Weak formulation for the time-harmonic potential equation}
 \label{subsec:maxwell-weak}
 
-Equation (\ref{equ:maxwell-timeharmonic}) may be multiplied by an arbitrary
+Take the inner product of equation (\ref{equ:maxwell-timeharmonic}) with an arbitrary
 vector-valued test function $\mathbf{v} \in H_{\textrm{curl}}(\Omega)$, where
 \begin{equation}
     H_{\textrm{curl}}(\Omega) = \{\mathbf{v} : \Omega \to \mathbb{C}^3,~\text{such that}~\mathbf{v}\in L_2(\mathbb{C})^3, \nabla \times \mathbf{v} \in L_2(\mathbb{C})^3\} \label{equ:h-curl}
 \end{equation}
-and then integrated over the whole computational domain $\Omega$ to obtain 
+and then integrate over the whole computational domain $\Omega$ to obtain 
 \begin{equation}
-    \int_{\Omega} (\nabla \times ({\mu^{-1} \nabla \times \mathbf{u}})) \cdot \mathbf{v}
-    - \omega^2 \int_{\Omega} \epsilon \mathbf{u} \cdot \mathbf{v} = \int_{\Omega} \mathbf{j} \cdot \mathbf{v} \label{equ:maxwell-weak-initial}
+    \int_{\Omega} \mathbf{v}^H \cdot (\nabla \times ({\mu^{-1} \nabla \times \mathbf{u}}))
+    - \omega^2 \int_{\Omega} \epsilon \mathbf{v}^H \cdot \mathbf{u} = \int_{\Omega} \mathbf{v}^H \cdot \mathbf{j} \label{equ:maxwell-weak-initial}
 \end{equation}
 This may further be simplified (\ref{equ:maxwell-weak-initial}) to (I allow myself
 to spare you the details of this computation, but put a proper derivation
 in an appendix at the end of the report):
 \begin{fancybox}{Weak formulation of the time-harmonic potential equation}
     \begin{equation}
-        \int_{\Omega} ({\mu^{-1} \nabla \times \mathbf{u}}) \cdot (\nabla \times \mathbf{v})
-        - \omega^2 \int_{\Omega} \epsilon \mathbf{u} \cdot \mathbf{v} 
-        = \int_{\Omega} \mathbf{j} \cdot \mathbf{v}
-        + \int_{\partial \Omega} \underbrace{(({\mu^{-1} \nabla \times \mathbf{u}}) \times \mathbf{n})}_{= \mathbf{g}} \cdot \mathbf{v}
+        \int_{\Omega} (\nabla \times \mathbf{v})^H \cdot ({\mu^{-1} \nabla \times \mathbf{u}})
+        - \omega^2 \int_{\Omega} \epsilon \mathbf{v}^H \cdot \mathbf{u}
+        = \int_{\Omega} \mathbf{v}^H \cdot \mathbf{j}
+        + \int_{\partial \Omega} \mathbf{v}^H \cdot \underbrace{(({\mu^{-1} \nabla \times \mathbf{u}}) \times \mathbf{n})}_{= \mathbf{g}}
         \label{equ:maxwell-weak}
     \end{equation}
 \end{fancybox}
@@ -223,17 +228,17 @@ $\mathbf{v} = v_z \mathbf{e}_z$. Consequently, the scalar product of the two
 curls in Equation (\ref{equ:maxwell-weak}) simplifies to the scalar product 
 of two gradients:
 \begin{equation}
-    (\mu^{-1} \nabla \times \mathbf{u}) \cdot (\nabla \times \mathbf{v})
-    = (\mu^{-1} \nabla u_z) \cdot (\nabla v_z)
+    (\nabla \times \mathbf{v})^H \cdot (\mu^{-1} \nabla \times \mathbf{u})
+    = (\nabla v_z)^H \cdot (\mu^{-1} \nabla u_z)
 \end{equation}
 Denote by $g_z$ the component of $\mathbf{g}$ in the $z$-direction along the
 inlet $\Gamma_N$. These simplifications allow the conversion of 
 (\ref{equ:maxwell-weak}) into the weak formulation for a two-dimensional
 resonant cavity
 \begin{equation}
-    \int_{\Omega} (\mu^{-1} \nabla u_z) \cdot (\nabla v_z)
-    - \omega^2 \int_{\Omega} \epsilon u_z v_z
-    = \int_{\partial \Omega} g_z v_z \label{equ:maxwell-weak-resonant-cavity}
+    \int_{\Omega} (\nabla v_z)^H (\mu^{-1} \nabla u_z)
+    - \omega^2 \int_{\Omega} \epsilon v_z* u_z
+    = \int_{\partial \Omega} v_z* g_z \label{equ:maxwell-weak-resonant-cavity}
 \end{equation}
 % REMINDME! vvv Correct definiton of H1-space?
 for an arbitrary $v_z \in H_1(\Omega) = \{v : \Omega \to \mathbb{C},~\text{such that}~\mathbf{v}\in L_2(\mathbb{C}), \nabla v \in L_2(\mathbb{C})^2\}$.
@@ -313,13 +318,13 @@ It is readily seen that the weak formulation (\ref{equ:maxwell-weak}) assumes th
 \end{equation}
 with the bilinear form 
 \begin{equation}
-    a_{\omega}(\mathbf{u}, \mathbf{v}) = \underbrace{\int_{\Omega} (\mu^{-1} \nabla \times \mathbf{u}) \cdot (\nabla \times \mathbf{v})}_{K(\mathbf{u}, \mathbf{v})}
-    - \omega^2 \underbrace{\int_{\Omega} \epsilon \mathbf{u} \cdot \mathbf{v}}_{M(\mathbf{u}, \mathbf{v})} \label{equ:bilinear-form}
+    a_{\omega}(\mathbf{u}, \mathbf{v}) = \underbrace{\int_{\Omega} (\nabla \times \mathbf{v})^H \cdot (\mu^{-1} \nabla \times \mathbf{u}) }_{K(\mathbf{u}, \mathbf{v})}
+    - \omega^2 \underbrace{\int_{\Omega} \epsilon \mathbf{v}^H \cdot \mathbf{u}}_{M(\mathbf{u}, \mathbf{v})} \label{equ:bilinear-form}
 \end{equation}
 composed with the stiffness form $K(\mathbf{u}, \mathbf{v})$ and the mass form $M(\mathbf{u}, \mathbf{v})$, and
 the linear form 
 \begin{equation}
-    L(\mathbf{u}) = \int_{\Omega} \mathbf{j} \cdot \mathbf{v} + \int_{\partial \Omega} \mathbf{g} \cdot \mathbf{v} \label{equ:linear-form}
+    L(\mathbf{u}) = \int_{\Omega} \mathbf{v}^H \cdot \mathbf{j} + \int_{\partial \Omega} \mathbf{v}^H \cdot \mathbf{g} \label{equ:linear-form}
 \end{equation}
 and the appropriate Hilbert space $H_{\textrm{curl}}(\Omega)$ defined in (\ref{equ:h-curl}).
 
@@ -431,10 +436,9 @@ for the cubic cavity (see Figure \ref{fig:fenics-demonstration}).
 \newpage
 \section{Minimal rational interpolation for the time-harmonic Maxwell's equations}
 \label{sec:mri}
-
 % General idea 
-Let $\mathbf{u} : \mathbb{C} \to \mathbb{C}^3$ or $\mathbb{C}^2$. Given \enquote{snapshots} of the
-function $\mathbf{u}(\omega_j)$ at $\omega_j$ for $j \in \{1, \dots, S\}$, the
+Let $\mathbf{u} : \mathbb{C}\ni\omega \mapsto H_{\mathrm{curl}}$. Given \enquote{snapshots} of the
+vector field $\mathbf{u}(\omega_j)$ at $\omega_j$ for $j \in \{1, \dots, S\}$, the
 goal is to find a surrogate that locally (i.e. near $\omega_1, \dots, \omega_S$)
 satisfies
 \begin{equation}
@@ -480,7 +484,7 @@ frequencies $\omega^2 = \lambda_i$.
 
 Consequently, the goal is to find rational surrogates of the form
 \begin{equation}
-    \mathbf{\tilde{u}}(\omega) = \frac{\mathbf{P}(\omega)}{Q(\omega)}
+    \mathbf{\tilde{u}}(\omega) = \frac{\mathbf{P}(\omega)}{Q(\omega)} \label{equ:surrogate}
 \end{equation}
 with
 \begin{equation}
@@ -497,7 +501,7 @@ in the barycentric representation.
 
 In the following, I denote with
 \begin{equation}
-    \langle \mathbf{\bar{u}}, \mathbf{\bar{v}} \rangle_M = \mathbf{\bar{u}}^H \mathbf{\underline{M}} \mathbf{\bar{v}} \approx \int_{\Omega} \mathbf{u} \mathbf{v} \label{equ:matrix-inner-product}
+    \langle \mathbf{\bar{u}}, \mathbf{\bar{v}} \rangle_M = \mathbf{\bar{u}}^H \mathbf{\underline{M}} \mathbf{\bar{v}} \approx \int_{\Omega} \mathbf{u}^H \cdot \mathbf{v} \label{equ:matrix-inner-product}
 \end{equation}
 the finite element approximation of the inner product in $L_2(\Omega)$.
 With $\mathbf{\bar{u}}, \mathbf{\bar{v}} \in \mathbb{C}^N$ I denote the vertex basis
@@ -555,8 +559,8 @@ The \acrshort{gMRI} algorithm can be found in Algorithm \ref{alg:gMRI}.
 \label{subsec:properties}
 
 % Interpolation property (in barycentric expansion, l'Hôpital whatever)
-The rational surrogate $\mathbf{\tilde{u}}$ obtained with Algorithm \ref{alg:MRI}
-can be rewritten as
+Multiplying the numerator and denominator of the rational surrogate $\mathbf{\tilde{u}}$
+(\ref{equ:surrogate}) with the nodal polynomial, yields
 \begin{equation}
     \mathbf{\tilde{u}}(\omega)
     = \sum_{j=1}^S \prod_{\substack{i=1 \\ i \neq j}}^S (\omega - \omega_i) q_j \mathbf{u}(\omega_j)
@@ -590,7 +594,7 @@ can be elegantly converted to an eigenvalue problem \citep{klein}:
 
 Define
 \begin{equation}
-    v_i = (\omega - \omega_i)^{-1}
+    v_i(\omega) = (\omega - \omega_i)^{-1}
 \end{equation}
 We want to find $\omega$, such that
 \begin{equation}
@@ -598,7 +602,7 @@ We want to find $\omega$, such that
 \end{equation}
 This can be equivalently expressed as the generalized eigenvalue problem
 \begin{equation}
-    \mathbf{\underline{A}} \mathbf{u} = \omega \mathbf{\underline{B}} \mathbf{u} \label{equ:eigenvalue-problem}
+    \mathbf{\underline{A}} \mathbf{w} = \omega \mathbf{\underline{B}} \mathbf{w} \label{equ:eigenvalue-problem}
 \end{equation}
 with
 \begin{equation}
@@ -619,7 +623,8 @@ with
 \end{equation}
 Solving the eigenproblem (\ref{equ:eigenvalue-problem}) numerically will confidently
 yield two spurious, infinite eigenvalues which, however, can be filtered out
-manually with ease.
+manually with ease. The eigenvector corresponding to the eigenvalue $\omega$ is
+$\mathbf{w}(\omega) = (1, v_1(\omega), \dots, v_S(\omega))^T$ \cite{klein}.
 
 \subsection{Optimization tricks for greedy minimal rational interpolation}
 \label{subsec:optimization}
@@ -992,7 +997,7 @@ to it did not prove to be effective.
 I now restrict my view to solutions $u|_{\Gamma}$ along a trace $\Gamma$. Setting
 \begin{equation}
     ||u||_{M(\Gamma)}^2 = \mathbf{u}|_{\Gamma}^H \mathbf{\underline{M}}(\Gamma) \mathbf{u}|_{\Gamma}
-        \approx \int_{\Gamma} u^2
+        \approx \int_{\Gamma} \mathbf{u}^H \cdot \mathbf{u}
 \end{equation}
 Running \acrshort{gMRI} (Algorithm \ref{alg:gMRI}) on the restriction $u|_{\Gamma}$
 instead of the full solution $u$ is a straight forward generalization of the

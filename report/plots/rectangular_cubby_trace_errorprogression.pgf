@@ -27,7 +27,7 @@
 \begingroup%
 \makeatletter%
 \begin{pgfpicture}%
-\pgfpathrectangle{\pgfpointorigin}{\pgfqpoint{5.284218in}{3.765921in}}%
+\pgfpathrectangle{\pgfpointorigin}{\pgfqpoint{5.284218in}{3.780573in}}%
 \pgfusepath{use as bounding box, clip}%
 \begin{pgfscope}%
 \pgfsetbuttcap%
@@ -39,8 +39,8 @@
 \pgfsetdash{}{0pt}%
 \pgfpathmoveto{\pgfqpoint{-0.000000in}{0.000000in}}%
 \pgfpathlineto{\pgfqpoint{5.284218in}{0.000000in}}%
-\pgfpathlineto{\pgfqpoint{5.284218in}{3.765921in}}%
-\pgfpathlineto{\pgfqpoint{-0.000000in}{3.765921in}}%
+\pgfpathlineto{\pgfqpoint{5.284218in}{3.780573in}}%
+\pgfpathlineto{\pgfqpoint{-0.000000in}{3.780573in}}%
 \pgfpathlineto{\pgfqpoint{-0.000000in}{0.000000in}}%
 \pgfpathclose%
 \pgfusepath{}%
@@ -409,7 +409,7 @@
 \definecolor{textcolor}{rgb}{0.000000,0.000000,0.000000}%
 \pgfsetstrokecolor{textcolor}%
 \pgfsetfillcolor{textcolor}%
-\pgftext[x=0.323147in,y=2.195759in,,bottom,rotate=90.000000]{\color{textcolor}\rmfamily\fontsize{11.000000}{13.200000}\selectfont \(\displaystyle ||\tilde{u}|_{\Gamma_N}^{(S)}(\omega) - u|_{\Gamma_N}(\omega)||_{M(\Gamma_N)} / ||\tilde{u}|_{\Gamma_N}^{(S)}(\omega)||_{M(\Gamma_N)}\)}%
+\pgftext[x=0.323147in,y=2.195759in,,bottom,rotate=90.000000]{\color{textcolor}\rmfamily\fontsize{11.000000}{13.200000}\selectfont \(\displaystyle ||\mathbf{\tilde{u}}|_{\Gamma_N}^{(S)}(\omega) - \mathbf{u}|_{\Gamma_N}(\omega)||_{M(\Gamma_N)} / ||\mathbf{\tilde{u}}|_{\Gamma_N}^{(S)}(\omega)||_{M(\Gamma_N)}\)}%
 \end{pgfscope}%
 \begin{pgfscope}%
 \pgfpathrectangle{\pgfqpoint{0.785803in}{0.823031in}}{\pgfqpoint{4.301250in}{2.745455in}}%
