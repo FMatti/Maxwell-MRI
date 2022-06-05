@@ -130,6 +130,7 @@ class TimeHarmonicMaxwellProblem(object):
         self.omega = None
         self.bc = None
 
+        # Dummy-boundary object used if no Neumann/impedance boundary specified
         class EmptyBoundary(fen.SubDomain):
             def inside(self, x, on_boundary):
                 return False
@@ -137,6 +138,7 @@ class TimeHarmonicMaxwellProblem(object):
         if B_N is None:
             self.B_N = EmptyBoundary()
 
+        # Trivial Neumann boundary condition if none is specified
         if g_N is None:
             if self.V.mesh().topology().dim() == 2:
                 self.g_N = fen.Expression('0.0', degree=2)
@@ -146,6 +148,7 @@ class TimeHarmonicMaxwellProblem(object):
         if B_I is None:
             self.B_I = EmptyBoundary()
 
+        # Trivial impedance boundary if none is specified
         if imp is None:
             self.imp = fen.Expression('0.0', degree=2)
 
@@ -198,6 +201,8 @@ class TimeHarmonicMaxwellProblem(object):
             n = len(self.N)
         else:
             n = 1
+
+        # With accumulate, solutions are appended to the already solved states
         if not accumulate:
             k = 0
             self.solution = np.empty((len(omega)*n, self.V.dim()), dtype=complex)
@@ -242,6 +247,8 @@ class TimeHarmonicMaxwellProblem(object):
         K = self.get_K(tosparse=True)[inner_indices, :][:, inner_indices]
         M = self.get_M(tosparse=True)[inner_indices, :][:, inner_indices]
         I = self.get_I(tosparse=True)[inner_indices, :][:, inner_indices]
+
+        # In case an impedance boundary is specified, linearize complex system
         if I.count_nonzero() > 0:
             n = len(inner_indices)
             identity = scipy.sparse.diags(np.ones(n), shape=(n, n), format='csr')
@@ -265,6 +272,8 @@ class TimeHarmonicMaxwellProblem(object):
             if I.count_nonzero() == 0:
                 eigvecs_in_ab = [e2 for e1, e2 in zip(eigvals, eigvecs.T) if a <= e1 and e1 <= b]
             else:
+                # Only return the first n components of eigenvectors which
+                # in the case of the impedance boundary are of interest
                 eigvecs_in_ab = [e2[:n] for e1, e2 in zip(eigvals, eigvecs.T) if a <= e1 and e1 <= b]
             return eigvals_in_ab, eigvecs_in_ab
         return eigvals_in_ab
@@ -323,6 +332,7 @@ class TimeHarmonicMaxwellProblem(object):
         return self.solution
 
     def save_solution(self, dirname=None, trace=None):
+        """Save the solution to a directory or SnapshotMatrix object"""
         SM = SnapshotMatrix(self.get_solution(trace=trace), self.omega)
         if dirname is None:
             return SM
@@ -330,6 +340,7 @@ class TimeHarmonicMaxwellProblem(object):
             pickle.dump(SM, file)
 
     def load_solution(self, dirname):
+        """Load the solution from a directory"""
         with open(dirname, 'rb') as file:
             SM = pickle.load(file)
         self.solution = SM.get_solution()

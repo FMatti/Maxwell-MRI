@@ -24,7 +24,9 @@ class SnapshotMatrix(object):
         self.omega = omega
 
     def get_solution(self, trace=None):
+        """Return stored solution (trace argument for backward compatibility)"""
         return self.solution
 
     def get_frequency(self):
+        """Return frequencies corresponding to stored solutions"""
         return self.omega

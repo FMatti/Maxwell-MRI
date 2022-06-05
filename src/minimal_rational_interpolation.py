@@ -3,8 +3,6 @@
 import numpy as np
 import copy
 
-from src.time_harmonic_maxwell_problem import TimeHarmonicMaxwellProblem
-
 from .rational_function import RationalFunction
 
 class MinimalRationalInterpolation(object):
@@ -29,22 +27,28 @@ class MinimalRationalInterpolation(object):
 
     Methods
     -------
-    compute_surrogate(target, ...) : TimeHarmonicMaxwellProblem -> None
+    compute_surrogate(target, ...) : TimeHarmonicMaxwellProblem, ... -> None
         Compute the rational interpolation surrogate for a THMP.
-    get_surrogate() : None -> RationalFunction
+    get_surrogate(snapshots, z) : np.ndarray, np.ndarray -> RationalFunction
         Returns the computed rational interpolation surrogate.
     get_interpolatory_eigenfrequencies() : None -> np.ndarray
         Returns the eigenfrequencies determined with the surrogate.
+    evaluate_surrogate(snapshots, z) : np.ndarray, np.ndarray -> np.ndarray 
+        Evaluates the rational surrogate at point or list of points z.
 
     References
     ----------
     [1] Pradovera D. and Nobile F.: Frequency-domain non-intrusive greedy
         Model Order Reduction based on minimal rational approximation
+        Springer International Publ. (2021). DOI: 10.1007/978-3-030-84238-3_16
     [2] Giraud L. and Langou J. and Rozloznk M.: On the round-off error
         analysis of the Gram-Schmidt algorithm with reorthogonalization.
         URL: https://www.cerfacs.fr/algor/reports/2002/TR_PA_02_33.pdf
     [3] Lloyd N. Trefethen: Householder triangularization of a quasimatrix.
         IMA Journal of Numerical Analysis (2008). DOI: 10.1093/imanum/dri017
+    [4] Bonzzoni F., Pradovera D., and Ruggeri M.: Rational-based model order
+        reduction of Helmholtz frequency response problems with adaptive finite
+        element snapshots. (2021). DOI: 10.48550/arXiv.2112.04302
     """
     def __init__(self, VS):
         self.VS = VS
@@ -137,39 +141,49 @@ class MinimalRationalInterpolation(object):
             self.V = None
         self._householder_triangularization(snapshots)
         _, sv, V_conj = np.linalg.svd(self.R)
+
+        # Check conditioning of build
         cond = (sv[1] - sv[-1]) / (sv[-2] - sv[-1])
         if cond > 1e+13:
             print('WARNING: Could not build surrogate in a stable way.')
             print('Relative range of singular values is {:.2e}.'.format(cond))
+        
+        # Rational surrogate as defined in MRI [4] in reduced-order form u_ring
         q = V_conj[-1, :].conj()
         self.u_ring = RationalFunction(omegas, q, np.diag(q))
 
-    def compute_surrogate(self, target, omegas=None, greedy=True, tol=1e-2, n_iter=None, return_history=False, return_relerr=False, solver='scipy'):
-        """Compute the rational surrogate""" 
+    def compute_surrogate(self, target, omegas=None, greedy=True, tol=1e-2,
+                          n_iter=None, return_history=False, return_relerr=False,
+                          solver='scipy'):
+        """Compute the rational surrogate"""
+        # In the non-greedy mode, use all omegas to build rational surrogate
         if not greedy:
             self.supports = target.get_frequency()
             self._build_surrogate(target.get_solution(trace=self.VS.trace), self.supports)
             return
 
-        # Greedy: Take smallest and largest omegas as initial support points
+        # Take smallest and largest omegas as initial support points
         self.supports = [np.argmin(omegas), np.argmax(omegas)]
         is_eligible = np.ones(len(omegas), dtype=bool)
         is_eligible[self.supports] = False
         target.solve(omegas[self.supports], solver=solver)
         self._build_surrogate(target.get_solution(trace=self.VS.trace), omegas[self.supports])
 
+        # Distinguish the case where a fixed number of iterations are desired
         if n_iter is None:
             n_iter = len(omegas)
         else:
             tol = 0.0
+
+        # Keep track of surrogate history or relative error history
         if return_history:
             surrogate_history = [self.get_surrogate(target.get_solution(trace=self.VS.trace))]
         if return_relerr:
             relerr_history = []
-        # Greedy: Add support points until relative surrogate error below tol
+
+        # Add support points until relative surrogate error below tol
         t = 2
         while t < n_iter:
-
             reduced_argmin = self.u_ring.get_denominator_argmin(omegas[is_eligible])
             argmin = np.arange(len(omegas))[is_eligible][reduced_argmin]
             self.supports.append(argmin)
@@ -179,6 +193,8 @@ class MinimalRationalInterpolation(object):
             self._build_surrogate(target.get_solution(trace=self.VS.trace), omegas[self.supports], additive=True)
             if return_history:
                 surrogate_history.append(self.get_surrogate(target.get_solution(trace=self.VS.trace)))
+            
+            # Approximate relative error with euclidean norms
             rel_err = np.linalg.norm(self.R[:, -1] - np.append(u_hat, 0)) \
                     / np.linalg.norm(self.R[:, -1])
             if return_relerr:

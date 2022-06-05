@@ -46,6 +46,7 @@ def plot_lines(ax, values, **kwargs):
     ax.set_ylim(0, 1)
 
 def complex_scatter(ax, values, **kwargs):
+    """Create scatter plot of complex values"""
     real = np.real(values)
     imag = np.imag(values)
     ax.grid()

@@ -28,12 +28,15 @@ class VectorSpace(object):
         self.trace = None
 
     def inner_product(self, u, v):
+        """Compute the inner product between two vectors in the vector space"""
         return v.dot(self.matrix.dot(u.conj().T))
 
     def norm(self, u):
+        """Compute the norm of a vector in the vector space"""
         return pow(self.inner_product(u, u), 0.5)
 
     def get_trace(self):
+        """Returns the trace corresponding to the vector space"""
         return self.trace
 
 class VectorSpaceL2(VectorSpace):
@@ -41,6 +44,22 @@ class VectorSpaceL2(VectorSpace):
     L2 vector space for a time-harmonic Maxwell problem, either
     involving the whole space or just a subspace defined by a
     trace.
+
+    Members
+    -------
+    matrix : scipy.sparse.coo_matrix
+        Matrix representation of the inner product.
+    trace : fen.SubDomain
+        Subdomain locating the trace.
+
+    Methods
+    -------
+    inner_product(u, v) : np.ndarray -> float
+        Inner product between two vectors in the space.
+    norm(u) : np.ndarray -> float
+        Norm of a vector in the space.
+    get_trace() : None -> fen.SubDomain
+        Returns the subdomain object locating the trace.
     """
     def __init__(self, THMP, trace=None):
         self.trace = trace
@@ -58,6 +77,7 @@ class VectorSpaceL2(VectorSpace):
             self.matrix = self._get_trace_matrix(THMP, form)
 
     def _get_trace_form(self, THMP):
+        """Get form corresponding to integral of square norm along trace"""
         mesh = THMP.get_V().mesh()
         indicator = fen.MeshFunction('size_t', mesh, mesh.topology().dim() - 1)
         indicator.set_all(0)
@@ -68,6 +88,7 @@ class VectorSpaceL2(VectorSpace):
         return fen.assemble(fen.dot(u, v)* ds(1))
 
     def _get_trace_matrix(self, THMP, form):
+        """Get matrix representation of trace integral form"""
         coords = THMP.V.tabulate_dof_coordinates()
         is_on_trace = lambda x: self.trace.inside(x, 'on_boundary')
         on_trace = np.apply_along_axis(is_on_trace, 1, coords)
