@@ -138,6 +138,15 @@ dmypy.json
 *.png
 *.bbl
 *.blg
+*.pkl
+
+# LaTeX
+*.bcf
+*.run.xml
+*.toc
+*.glo
+*.acn
+*.ist
 
 # Modelling
 *.FCStd
@@ -145,5 +154,11 @@ dmypy.json
 *.geo.opt
 *.msh
 
+# Modeling Directories
+examples/circular_waveguide_filter/model
+
 # Snapshots
 *.obj
+
+# VsCode
+*.json

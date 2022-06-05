@@ -11,7 +11,7 @@
         \State $\omega_{t+1} \leftarrow \textrm{argmin}_{\omega \in \Omega_{\mathrm{test}}} |Q_t(\omega)|$
         \State Remove $\omega_{t+1}$ from $\Omega_{\mathrm{test}}$
         \State Solve $a_{\omega_{t+1}}(\mathbf{u}_{t+1}, \mathbf{v}) = L(\mathbf{v})$
-        \State Build surrogate $\mathbf{\tilde{u}}_{t+1} = \mathbf{P}_{t+1}(\omega) / Q_{t+1}(\omega)$ using the solutions $\mathbf{u}_1, \dots, \mathbf{u}_{t+1}$ with \acrshort{MRI} (Algorithm \ref{alg:MRI})
+        \State Build surrogate $\mathbf{\tilde{u}}_{t+1} = \mathbf{P}_{t+1}(\omega) / Q_{t+1}(\omega)$ with \acrshort{MRI} of $\mathbf{u}_1, \dots, \mathbf{u}_{t+1}$ (Algorithm \ref{alg:MRI})
         \If{$||\mathbf{u}_{t+1} - \mathbf{\tilde{u}}_{t}(\omega_{t+1})||_M / ||\mathbf{u}_{t+1}||_M < \tau$}
             \Return
         \EndIf

@@ -9,10 +9,6 @@
 \supervisor{Prof. Fabio Nobile \\ Dr. Davide Pradovera}
 \date{\today}
 
-% TODO Report
-% - Everywhere in the plot labels u -> \mathbf{u}
-% - Figure for u_ring, u_hat, ...
-
 \begin{document}
 
 \maketitle
@@ -22,11 +18,13 @@
     a meromorphic dependence of a characteristic quantity of a model on one
     of its parameters.
     The focus of this report is put on the \acrfull{gMRI} algorithm and particularly
-    on way to enhance its performance. This algorithm is then applied to three 
+    on ways to enhance its performance. This algorithm is then applied to three 
     example problems concerning the time-harmonic Maxwell's equations in the 
-    frequency domain. A brief evaluation of the advantages and disadvantages of
-    \acrshort{gMRI} as compared to conventional approaches for finding quantities,
-    such as resonant modes, of interest for problems of this type is conducted.
+    frequency domain. The advantages and disadvantages of
+    \acrshort{gMRI} as compared to conventional approaches for finding quantities
+    such as resonant modes that are of interest for problems of this type are discussed.
+    Furthermore, the application of the \acrshort{gMRI} algorithm for finding the 
+    scattering coefficients of a \acrfull{DMCWF} is studied.
     % REMINDME! GIVE RESULTS
 \end{abstract}
 
@@ -40,17 +38,17 @@
 \section{Introduction}
 \label{sec:introduction}
 
-A wide class of problems in physics and engineering concerns itself with the
-study of the dependence of a model on one of its parameters $\omega$. 
+A wide class of problems in physics and engineering concerns itself with studying
+the dependence of a model on one of its parameters $\omega$. 
 Of interest is usually a characteristic quantity
 $\mathbf{u}(\omega)$ depending on this parameter.
 Unless the system allows for an analytical solution, one may usually only
 find numerical solutions to the system for discrete values of the parameter.
-\acrfull{MRI} offers a way to locally approximate the
-quantity $u:\mathbb{C}\ni\omega\mapsto u(\omega)\in H_{\mathrm{curl}}$
-that exhibit a meromorphic dependence on one of its 
+\acrfull{MRI} offers a way to locally approximate vector fields
+$\mathbf{u}:\mathbb{C}\ni\omega\mapsto \mathbf{u}(\omega)$
+which exhibit a meromorphic dependence on one of their 
 parameters. The approach has proven
-effective and efficient (both memory- and computation wise) in applications
+effective and efficient (both memory- and time-wise) in applications
 on Helmholtz-type problems \cite{greedyMRI, shortMRI}.
 
 Central to this report are time-harmonic electromagnetic problems, whose 
@@ -72,12 +70,17 @@ discussed: the resonant modes of a two-dimensional resonant cavity,
 the two-dimensional cavity with an imperfectly conducting boundary, and lastly
 the scattering coefficients of a \acrfull{DMCWF}.
 
+My implementations can be found on \cite{git}. Vectors are printed in \textbf{bold}
+while matrices additionally have an \textbf{\underline{underline}}. 
+Euclidean scalar products are denoted with $\langle \cdot , \cdot \rangle$
+and norms with $||\cdot||$. For simplicity, results are delivered without units.
+
 \newpage
 \section{Finite element discretization of the time-harmonic Maxwell's equations}
 \label{sec:maxwell}
 
-\acrfull{MRI} requires the knowledge of the solution of the problem for multiple 
-values of the model parameter that is of interested. A way of obtaining these
+\acrfull{MRI} requires the knowledge of the solution of the problem for discrete 
+values of the model parameter that is of interest. A way of obtaining these
 solutions is the \acrfull{FEM}. For that purpose, I now derive a strong formulation
 for the time-harmonic Maxwell problem and subsequently convert it to its
 corresponding weak formulation.
@@ -93,8 +96,8 @@ Let $\mathbf{E}$ denote an electric field, $\mathbf{B}$ a magnetic field
 strength, $\rho$ an electric charge density, and $\mathbf{j}$ an electric
 current density. Maxwell's equations are stated in \citep{monk} as
 \begin{align}
-    \nabla \cdot (\epsilon \mathbf{E}) &= \rho \label{equ:maxwell1} \\
-    \nabla \cdot \mathbf{B} &= 0 \label{equ:maxwell2} \\
+    \langle \nabla, \epsilon \mathbf{E} \rangle &= \rho \label{equ:maxwell1} \\
+    \langle \nabla, \mathbf{B} \rangle &= 0 \label{equ:maxwell2} \\
     \nabla \times \mathbf{E} &= -\partial_t \mathbf{B} \label{equ:maxwell3} \\
     \nabla \times (\mu^{-1} \mathbf{B}) &= \partial_t (\epsilon \mathbf{E}) + \mathbf{j} \label{equ:maxwell4}
 \end{align}
@@ -112,7 +115,7 @@ using a scalar function $\phi$, referred to as the scalar potential.
 
 The physical quantities $\mathbf{E}$ and $\mathbf{B}$ remain unchanged 
 if we transform $\mathbf{u} \to \mathbf{u}' = \mathbf{u} + \nabla \psi$ or
-$\phi \to \phi' = \phi - \partial_t \psi$ for arbitrary functions $\psi$.
+$\phi \to \phi' = \phi - \partial_t \psi$ for an arbitrary function $\psi$.
 A convenient choice of $\psi$ is suggested in \citep{gauge-transformation} to be
 \begin{equation}
     \psi = \int_0^t \phi dt' \label{equ:gauge}
@@ -127,7 +130,7 @@ magnetic field become
 where I have subtly renamed the variable $\mathbf{u}'$ to $\mathbf{u}$ for simplicity.
 
 Plugging the identities (\ref{equ:electricfield}) and (\ref{equ:magneticfield})
-into (\ref{equ:maxwell4}) yields 
+into (\ref{equ:maxwell4}) yields (assuming a static permittivity $\epsilon$)
 \begin{equation}
     \nabla \times (\mu^{-1} \nabla \times \mathbf{u}) = - \epsilon \partial_t^2 \mathbf{u} + \mathbf{j} \label{equ:maxwell-potential}
 \end{equation}
@@ -157,18 +160,19 @@ vector-valued test function $\mathbf{v} \in H_{\textrm{curl}}(\Omega)$, where
 \end{equation}
 and then integrate over the whole computational domain $\Omega$ to obtain 
 \begin{equation}
-    \int_{\Omega} \mathbf{v}^H \cdot (\nabla \times ({\mu^{-1} \nabla \times \mathbf{u}}))
-    - \omega^2 \int_{\Omega} \epsilon \mathbf{v}^H \cdot \mathbf{u} = \int_{\Omega} \mathbf{v}^H \cdot \mathbf{j} \label{equ:maxwell-weak-initial}
+    \int_{\Omega} \langle \nabla \times ({\mu^{-1} \nabla \times \mathbf{u}}), \mathbf{v} \rangle
+    - \omega^2 \int_{\Omega} \epsilon \langle \mathbf{u}, \mathbf{v} \rangle =
+    \int_{\Omega} \langle \mathbf{j}, \mathbf{v} \rangle \label{equ:maxwell-weak-initial}
 \end{equation}
 This may further be simplified (\ref{equ:maxwell-weak-initial}) to (I allow myself
-to spare you the details of this computation, but put a proper derivation
-in an appendix at the end of the report):
+to spare you the details of this computation, but nevertheless put a proper derivation
+in the appendix at the end of this report):
 \begin{fancybox}{Weak formulation of the time-harmonic potential equation}
     \begin{equation}
-        \int_{\Omega} (\nabla \times \mathbf{v})^H \cdot ({\mu^{-1} \nabla \times \mathbf{u}})
-        - \omega^2 \int_{\Omega} \epsilon \mathbf{v}^H \cdot \mathbf{u}
-        = \int_{\Omega} \mathbf{v}^H \cdot \mathbf{j}
-        + \int_{\partial \Omega} \mathbf{v}^H \cdot \underbrace{(({\mu^{-1} \nabla \times \mathbf{u}}) \times \mathbf{n})}_{= \mathbf{g}}
+        \int_{\Omega} \langle {\mu^{-1} \nabla \times \mathbf{u}}, \nabla \times \mathbf{v} \rangle
+        - \omega^2 \int_{\Omega} \epsilon \langle \mathbf{u}, \mathbf{v} \rangle
+        = \int_{\Omega} \langle \mathbf{j}, \mathbf{v} \rangle
+        + \int_{\partial \Omega} \langle \underbrace{({\mu^{-1} \nabla \times \mathbf{u}}) \times \mathbf{n}}_{= \mathbf{g}}, \mathbf{v} \rangle
         \label{equ:maxwell-weak}
     \end{equation}
 \end{fancybox}
@@ -176,24 +180,25 @@ where $\mathbf{n}$ denotes the surface normal to the boundary $\partial \Omega$
 of the computational domain $\Omega$ and $\mathbf{v}$ is an arbitrary element
 of $H_{\textrm{curl}}(\Omega)$.
 
-Boundary conditions on the electric field $\mathbf{E}$ may be most easily enforced
+Boundary conditions on the electric field $\mathbf{E}$ along a part of the 
+boundary $\Gamma \subset \partial \Omega$ may be most easily enforced
 in a Dirichlet-type fashion through the relation (\ref{equ:electricfield}) and
 the assumption (\ref{equ:time-harmonic})
 \begin{equation}
-    \left.\mathbf{u}\right|_{\Gamma_D} = -\frac{1}{i\omega} \left.\mathbf{E}\right|_{\Gamma_D} \label{equ:dirichlet-boundary}
+    \left.\mathbf{u}\right|_{\Gamma} = -\frac{1}{i\omega} \left.\mathbf{E}\right|_{\Gamma} \label{equ:dirichlet-boundary}
 \end{equation}
 Those on the magnetic field $\mathbf{B}$ through a Neumann-type condition following
 from (\ref{equ:magneticfield}) and again (\ref{equ:time-harmonic})
 \begin{equation}
-    \left.\mathbf{g}\right|_{\Gamma_N} = (\mu^{-1} \left.\mathbf{B}\right|_{\Gamma_N}) \times \mathbf{n} \label{equ:neumann-boundary}
+    \left.\mathbf{g}\right|_{\Gamma} = (\mu^{-1} \left.\mathbf{B}\right|_{\Gamma}) \times \mathbf{n} \label{equ:neumann-boundary}
 \end{equation}
 
 \subsection{Examples}
 \label{subsec:examples}
 
 I will now specialize and simplify this weak formulation for three different
-applications which will be studied in Section \ref{sec:examples}. To show you
-that these problems are intimately related problems, I refer you to Figure \ref{fig:examples}.
+applications which will be studied in Section \ref{sec:examples}. To see
+that these problems are intimately related, I refer you to Figure \ref{fig:examples}.
 
 \begin{figure}[h]
     \centering
@@ -201,7 +206,7 @@ that these problems are intimately related problems, I refer you to Figure \ref{
     \caption{Schematic visualization of the most trivial case for each of the
     boundary configurations that will be analyzed in Section \ref{sec:examples}.
     The perfectly conducting boundaries are drawn in black, while the imperfectly
-    conducting boundary appears dashed. Inlets and exits are left unmarked.}
+    conducting boundary appears dashed. Inlets and outlets are left unmarked.}
     \label{fig:examples}
 \end{figure}
 
@@ -209,7 +214,7 @@ that these problems are intimately related problems, I refer you to Figure \ref{
 \label{subsubsec:cavity}
 
 I refer to a resonant cavity as a region $\Omega$ enclosed by a boundary $\partial \Omega$.
-The boundary can be subdivided into one (or more) inlets $\Gamma_N$ and a perfect
+The boundary can be subdivided into one (or more) inlets $\Gamma_N$ and a perfectly
 conducting wall $\Gamma_D = \partial \Omega \setminus \Gamma_N$
 (see Figure \ref{fig:2d-cavity} for an abstract visualization of such a cavity).
 
@@ -222,23 +227,24 @@ conducting wall $\Gamma_D = \partial \Omega \setminus \Gamma_N$
     \label{fig:2d-cavity}
 \end{figure}
 
+Now, we move down to two dimensions, i.e. assume the resonant cavity lies in a plane.
 Suppose the current density $\mathbf{j} \equiv 0$ and orient the coordinate
 system in such a way that $\mathbf{u} = u_z \mathbf{e}_z$ and 
 $\mathbf{v} = v_z \mathbf{e}_z$. Consequently, the scalar product of the two 
 curls in Equation (\ref{equ:maxwell-weak}) simplifies to the scalar product 
 of two gradients:
 \begin{equation}
-    (\nabla \times \mathbf{v})^H \cdot (\mu^{-1} \nabla \times \mathbf{u})
-    = (\nabla v_z)^H \cdot (\mu^{-1} \nabla u_z)
+    \langle \mu^{-1} \nabla \times \mathbf{u}, \nabla \times \mathbf{v} \rangle
+    = \langle \mu^{-1} \nabla u_z, \nabla v_z \rangle
 \end{equation}
 Denote by $g_z$ the component of $\mathbf{g}$ in the $z$-direction along the
 inlet $\Gamma_N$. These simplifications allow the conversion of 
 (\ref{equ:maxwell-weak}) into the weak formulation for a two-dimensional
 resonant cavity
 \begin{equation}
-    \int_{\Omega} (\nabla v_z)^H (\mu^{-1} \nabla u_z)
-    - \omega^2 \int_{\Omega} \epsilon v_z* u_z
-    = \int_{\partial \Omega} v_z* g_z \label{equ:maxwell-weak-resonant-cavity}
+    \int_{\Omega} \langle \mu^{-1} \nabla u_z, \nabla v_z \rangle
+    - \omega^2 \int_{\Omega} \epsilon u_z v_z^{\ast}
+    = \int_{\partial \Omega} g_z v_z^{\ast} \label{equ:maxwell-weak-resonant-cavity}
 \end{equation}
 % REMINDME! vvv Correct definiton of H1-space?
 for an arbitrary $v_z \in H_1(\Omega) = \{v : \Omega \to \mathbb{C},~\text{such that}~\mathbf{v}\in L_2(\mathbb{C}), \nabla v \in L_2(\mathbb{C})^2\}$.
@@ -248,11 +254,11 @@ the cavity. For now, I distinguish between two types of boundaries:
 
 For the perfectly conducting boundary $\Gamma_D$, treated in \citep{monk}, it holds that
 \begin{equation}
-    \mathbf{n} \times \mathbf{E} = 0,~~\text{on}~\Gamma_D \label{equ:perfect-conductor-boundary}
+    \mathbf{n} \times \mathbf{E} = \mathbf{0},~~\text{on}~\Gamma_D \label{equ:perfect-conductor-boundary}
 \end{equation}
 For the boundaries in a two-dimensional resonant cavity (see Figure 
 \ref{fig:2d-cavity}), this only holds true if $E_z = 0$, which translates
-to the Dirichlet boundary condition $\left.\mathbf{u}\right|_{\Gamma_D} = 0$
+to the Dirichlet boundary condition $\left.u_z\right|_{\Gamma_D} = 0$
 in light of (\ref{equ:dirichlet-boundary}).
 
 For the inlet, it is easiest to enforce the boundary condition through the
@@ -268,7 +274,7 @@ will always be the case in Section \ref{sec:examples}, cf. Figure \ref{fig:recta
 
 % Additionally impedance boundary condition from Monk
 To simulate an imperfect boundary $\Gamma_I$, also called impedance boundary in literature, 
-\cite{monk} suggests to replace the integrand $\mathbf{g}$ that appeared in 
+\cite{monk} suggests replacing the integrand $\mathbf{g}$ that appeared in 
 (\ref{equ:maxwell-weak}) with
 \begin{equation}
     \mathbf{g} = (\mu^{-1} \nabla \times \mathbf{u}) \times \mathbf{n}
@@ -298,7 +304,7 @@ in Section \ref{subsec:examples-dmcwf} happens to be set up in just this way. Fo
 magnetic field at the inlet $\Gamma_i$ with $\left.\mathbf{B}\right|_{\Gamma_i} = B_0 \mathbf{e}_y$,
 we see from (\ref{equ:neumann-boundary}) that this may be modelled by setting
 $\left.\mathbf{g}\right|_{\Gamma_i} = - \mu^{-1} B_0 \mathbf{e}_z$.
-At the \enquote{exit} $\Gamma_e$, we set $\left.\mathbf{g}\right|_{\Gamma_e} = \boldsymbol{0}$.
+At the \enquote{outlet} $\Gamma_o$, we set $\left.\mathbf{g}\right|_{\Gamma_o} = \boldsymbol{0}$.
 
 \newpage
 \section{Finite element approximation with FEniCS}
@@ -318,13 +324,13 @@ It is readily seen that the weak formulation (\ref{equ:maxwell-weak}) assumes th
 \end{equation}
 with the bilinear form 
 \begin{equation}
-    a_{\omega}(\mathbf{u}, \mathbf{v}) = \underbrace{\int_{\Omega} (\nabla \times \mathbf{v})^H \cdot (\mu^{-1} \nabla \times \mathbf{u}) }_{K(\mathbf{u}, \mathbf{v})}
-    - \omega^2 \underbrace{\int_{\Omega} \epsilon \mathbf{v}^H \cdot \mathbf{u}}_{M(\mathbf{u}, \mathbf{v})} \label{equ:bilinear-form}
+    a_{\omega}(\mathbf{u}, \mathbf{v}) = \underbrace{\int_{\Omega} \langle \mu^{-1} \nabla \times \mathbf{u}, \nabla \times \mathbf{v}\rangle }_{K(\mathbf{u}, \mathbf{v})}
+    - \omega^2 \underbrace{\int_{\Omega} \epsilon \langle \mathbf{u}, \mathbf{v} \rangle}_{M(\mathbf{u}, \mathbf{v})} \label{equ:bilinear-form}
 \end{equation}
 composed with the stiffness form $K(\mathbf{u}, \mathbf{v})$ and the mass form $M(\mathbf{u}, \mathbf{v})$, and
 the linear form 
 \begin{equation}
-    L(\mathbf{u}) = \int_{\Omega} \mathbf{v}^H \cdot \mathbf{j} + \int_{\partial \Omega} \mathbf{v}^H \cdot \mathbf{g} \label{equ:linear-form}
+    L(\mathbf{u}) = \int_{\Omega} \langle \mathbf{j}, \mathbf{v} \rangle + \int_{\partial \Omega} \langle \mathbf{g}, \mathbf{v} \rangle \label{equ:linear-form}
 \end{equation}
 and the appropriate Hilbert space $H_{\textrm{curl}}(\Omega)$ defined in (\ref{equ:h-curl}).
 
@@ -332,19 +338,20 @@ A sequence of appropriate finite dimensional spaces $H_{\textrm{curl}, h}(\Omega
 parametrized by $h$ is introduced. As $h \to 0$, this sequence should become dense
 in $H_{\textrm{curl}}(\Omega)$, loosely meaning that for any element in $H_{\textrm{curl}}(\Omega)$
 we may find a sequence $w_h \in H_{\textrm{curl}, h}(\Omega)$ which approximates this
-element arbitrarily well. The Galerkin problem is then formulated as
+element arbitrarily well in the limit. The Galerkin problem is then formulated as
 (see \cite{numapproxPDEs} for details)
 \begin{fancybox}{Galerkin problem for the time-harmonic potential equation}
     \begin{equation}
-        \text{Find}~\mathbf{u}_h \in H_{\textrm{curl},h}(\Omega),~\text{such that}~a_{\omega}(\mathbf{u}_h, \mathbf{v}_h) = L(\mathbf{v}_h), ~\forall \mathbf{v} \in H_{\textrm{curl}, h}(\Omega) \label{equ:galerkin-problem}
+        \text{Find}~\mathbf{u}_h \in H_{\textrm{curl},h}(\Omega),~\text{such that}~a_{\omega}(\mathbf{u}_h, \mathbf{v}_h) = L(\mathbf{v}_h), ~\forall \mathbf{v}_h \in H_{\textrm{curl}, h}(\Omega) \label{equ:galerkin-problem}
     \end{equation}
 \end{fancybox}
 One class of finite elements, the Nédélec elements of the first
-kind, are particularly well suited kfor discretizing curl-problems of the type
+kind, are particularly well suited for discretizing curl-curl-problems of the type
 we have derived in Section \ref{sec:maxwell} (see \cite{monk}).
 
 I refer to the \acrshort{FEM} matrix representations in the vertex basis of the forms
-$K(\mathbf{u}, \mathbf{v})$ and $M(\mathbf{u}, \mathbf{v})$ as the
+$K(\mathbf{u}, \mathbf{v})$ and $M(\mathbf{u}, \mathbf{v})$ distinguished in
+(\ref{equ:bilinear-form}) as the
 stiffness matrix $\mathbf{\underline{K}}$ and mass matrix $\mathbf{\underline{M}}$.
 
 \subsection{Numerical approximation of \acrshort{PDE}s using FEniCS}
@@ -354,17 +361,15 @@ stiffness matrix $\mathbf{\underline{K}}$ and mass matrix $\mathbf{\underline{M}
 FEniCS\footnote{\url{https://fenicsproject.org/}} bundles a collection of Python
 modules designed to automate solving a \acrfull{PDE}.
 Inspired by the demonstrations encountered in \cite{fenics}, I will now guide you
-through a simple example, relevant to the context of this report, in order to
-show how the process of obtaining
-approximate solutions to \acrshort{PDE}s with FEniCS.
+through a simple example, relevant to the context of this report to
+show the process of obtaining approximate solutions to \acrshort{PDE}s with FEniCS.
 
 Consider the time-harmonic potential equation (\ref{equ:maxwell-timeharmonic})
 with the computational domain $\Omega$ being a cubic cavity with an inlet $\Gamma_N$
 on one of its sides, but all other boundaries being perfect conductors.
 Set $\mu = \epsilon = 1$ and $\mathbf{j} = 0$ for simplicity.
 
-The \texttt{fenics} package is imported along with \texttt{numpy} and
-\texttt{matplotlib.pyplot} for array manipulation and visualization respectively.
+The \texttt{fenics} package is imported along with \texttt{numpy} for array manipulations.
 \lstinputlisting[firstnumber=1, firstline=2, lastline=3]{code/fenics_example.py}
 
 A mesh for the cubic cavity $\Omega$ is generated by dividing the cube into a
@@ -391,10 +396,12 @@ is enforced through
 \lstinputlisting[firstnumber=28, firstline=29, lastline=30]{code/fenics_example.py}
 
 Let $\mathbf{g} = \mathbf{e}_z$ in (\ref{equ:neumann-boundary}), which corresponds
-to a magnetic field $\mu^{-1} \mathbf{B} = \mathbf{e}_y$.
+to a magnetic field $\mu^{-1} \mathbf{B} = \mathbf{e}_y$, and define a boundary
+measure.
 \lstinputlisting[firstnumber=32, firstline=33, lastline=34]{code/fenics_example.py}
 
-Trial and test functions for the function space $H_{\mathrm{curl},h}(\Omega)$ are instantiated.
+Trial and test functions for the function space $H_{\mathrm{curl},h}(\Omega)$ are
+instantiated to express the weak formulation (cf. Equation \ref{equ:maxwell-weak}).
 \lstinputlisting[firstnumber=36, firstline=37, lastline=38]{code/fenics_example.py}
 
 The linear form (\ref{equ:linear-form}) is assembled.
@@ -439,12 +446,12 @@ for the cubic cavity (see Figure \ref{fig:fenics-demonstration}).
 % General idea 
 Let $\mathbf{u} : \mathbb{C}\ni\omega \mapsto H_{\mathrm{curl}}$. Given \enquote{snapshots} of the
 vector field $\mathbf{u}(\omega_j)$ at $\omega_j$ for $j \in \{1, \dots, S\}$, the
-goal is to find a surrogate that locally (i.e. near $\omega_1, \dots, \omega_S$)
+goal is to find a surrogate $\mathbf{\tilde{u}}$ that locally (i.e. near $\omega_1, \dots, \omega_S$)
 satisfies
 \begin{equation}
     \mathbf{\tilde{u}}(\omega) \approx \mathbf{u}(\omega)
 \end{equation}
-This may be achieved using the \acrfull{MRI} technique, which I will motivate,
+This may be achieved using the \acrfull{MRI} method, which I will motivate,
 discuss, and extend in the following.
 
 \subsection{Motivation}
@@ -467,7 +474,7 @@ The eigenvalue decomposition $\mathbf{\underline{A}} = \mathbf{\underline{V}}
 leads to a similar form as the one proposed in \cite{helmholtz-motivation}
 \begin{equation}
     \mathbf{u} = \mathbf{\underline{V}} (\boldsymbol{\underline{\Lambda}} - \omega^2 \boldsymbol{\underline{1}})^{-1} \mathbf{\underline{V}}^H \mathbf{j} 
-    = \sum_i \frac{\mathbf{v}_i \mathbf{v}_i^H \mathbf{j}}{\lambda_i - \omega^2} \label{equ:motivation}
+    = \sum_i \frac{\mathbf{v}_i \langle \mathbf{v}_i, \mathbf{j} \rangle}{\lambda_i - \omega^2} \label{equ:motivation}
     %= \sum_i \frac{\mathbf{r}_i}{\lambda_i - \omega^2} \label{equ:motivation}
 \end{equation}
 This follows from the fact that $\boldsymbol{\underline{\Lambda}}$ is diagonal,
@@ -482,7 +489,7 @@ is a valid approach for approximating $\mathbf{u}$. Some alternatives such as po
 interpolation are not as capable to model the singularities at the resonant
 frequencies $\omega^2 = \lambda_i$.
 
-Consequently, the goal is to find rational surrogates of the form
+Subsequently, the goal is to find rational surrogates of the form
 \begin{equation}
     \mathbf{\tilde{u}}(\omega) = \frac{\mathbf{P}(\omega)}{Q(\omega)} \label{equ:surrogate}
 \end{equation}
@@ -501,13 +508,13 @@ in the barycentric representation.
 
 In the following, I denote with
 \begin{equation}
-    \langle \mathbf{\bar{u}}, \mathbf{\bar{v}} \rangle_M = \mathbf{\bar{u}}^H \mathbf{\underline{M}} \mathbf{\bar{v}} \approx \int_{\Omega} \mathbf{u}^H \cdot \mathbf{v} \label{equ:matrix-inner-product}
+    \langle \mathbf{\bar{u}}, \mathbf{\bar{v}} \rangle_M = \mathbf{\bar{u}}^H \mathbf{\underline{M}} \mathbf{\bar{v}} \approx \int_{\Omega} \langle \mathbf{u}, \mathbf{v} \rangle = \langle \mathbf{u}, \mathbf{v} \rangle_{L_2(\Omega)} \label{equ:matrix-inner-product}
 \end{equation}
 the finite element approximation of the inner product in $L_2(\Omega)$.
 With $\mathbf{\bar{u}}, \mathbf{\bar{v}} \in \mathbb{C}^N$ I denote the vertex basis
-representations of $\mathbf{u}, \mathbf{v} \in \mathbb{C}^3$ or $\mathbb{C}^2$,
-i.e. the collection of all degrees of freedom in a vector, while $\mathbf{\underline{M}}$
-is the matrix representing the inner product in the vertex basis. Similarly, let
+representations of $\mathbf{u}, \mathbf{v} \in \mathbb{C}^3$,
+i.e. the collection of all $N$ \acrfull{DOF} in a vector, while $\mathbf{\underline{M}}$
+is the matrix representing the inner product in this vertex basis. Similarly, let
 \begin{equation}
     ||\mathbf{\bar{u}}||_M = \sqrt{\langle \mathbf{\bar{u}}, \mathbf{\bar{u}} \rangle}_M \approx ||\mathbf{u}||_{L_2(\Omega)} \label{equ:matrix-norm}
 \end{equation}
@@ -516,10 +523,10 @@ will be used, I will not go through the trouble to put a bar on each such variab
 but will instead also refer to it with $\mathbf{u}$.
 
 % Algorithm (last column SVD is definition of MRI)
-For completeness, I state the strategy for numerically computing the \acrfull{MRI} 
-for a collection of snapshots sampled from the target $\mathbf{u}$ \citep{greedyMRI}
-in Algorithm \ref{alg:MRI}. The heart of the algorithm consists in computing the
-\acrfull{SVD} of the so-called Gramian matrix, and using the last
+For completeness, I state the strategy for numerically computing the \acrshort{MRI} 
+for a collection of snapshots sampled from the target $\mathbf{u}$
+in Algorithm \ref{alg:MRI} \citep{greedyMRI}. The heart of the algorithm consists in computing the
+\acrfull{SVD} of the so-called Gramian matrix $\mathbf{\underline{G}}$, and using the last
 left-singular vector to build the surrogate.
 
 \begin{algorithm}
@@ -533,8 +540,9 @@ left-singular vector to build the surrogate.
 A question that arises from the previous section is what the ideal choice of
 support points $\omega_1, \dots, \omega_S$ is: How many support points are
 required to achieve a good enough approximation and how should the supports
-be distributed when given a target domain. The \acrfull{gMRI} algorithm 
-\citep{shortMRI} tackles both questions simultaneously.
+be distributed when given a target domain? The \acrfull{gMRI} algorithm 
+\citep{shortMRI} tackles both questions simultaneously by sequentially adding new
+support points to the build.
 
 In brief, the algorithm starts with a set of candidate support points
 $\Omega_{\mathrm{test}} = \{\omega_i\}_{i=1}^M$, for which we can guarantee
@@ -545,8 +553,8 @@ supports. Using these solutions, a rational surrogate is built with
 \acrshort{MRI} (Algorithm \ref{alg:MRI}). Motivated by the expression for the
 upper bound on the residual norm demonstrated in \cite{theoryMRI}, new support
 points are chosen as the minimizers of the denominator polynomial $Q(\omega)$
-and added to the set of supports. Support points are iteratively added until
-the relative error norm drops below a certain tolerance.
+and added to the existing set of support points. This procedure is iteratively
+continued until the relative error norm drops below a certain tolerance set in advance.
 
 The \acrshort{gMRI} algorithm can be found in Algorithm \ref{alg:gMRI}.
 
@@ -555,12 +563,12 @@ The \acrshort{gMRI} algorithm can be found in Algorithm \ref{alg:gMRI}.
     \input{algorithms/gMRI.tex}
 \end{algorithm}
 
-\subsection{Properties of rational interpolants in barycentric coordinates}
+\subsection{Properties of the rational surrogate}
 \label{subsec:properties}
 
 % Interpolation property (in barycentric expansion, l'Hôpital whatever)
 Multiplying the numerator and denominator of the rational surrogate $\mathbf{\tilde{u}}$
-(\ref{equ:surrogate}) with the nodal polynomial, yields
+(\ref{equ:surrogate}) with the nodal polynomial yields
 \begin{equation}
     \mathbf{\tilde{u}}(\omega)
     = \sum_{j=1}^S \prod_{\substack{i=1 \\ i \neq j}}^S (\omega - \omega_i) q_j \mathbf{u}(\omega_j)
@@ -569,7 +577,7 @@ Multiplying the numerator and denominator of the rational surrogate $\mathbf{\ti
 Hence, if the rational surrogate $\mathbf{\tilde{u}}$ is evaluated at one of the
 interpolation nodes $\omega_i$, the snapshot $\mathbf{u}(\omega_i)$ supplied to 
 the \acrshort{MRI} algorithm is recovered. This shows that the rational surrogate
-satisfies the interpolation property.
+indeed satisfies the interpolation property.
 
 \subsection{Finding roots of rational functions}
 \label{subsec:roots}
@@ -640,7 +648,7 @@ a small collection of them.
 
 Algorithm \ref{alg:MRI} requires the computation of the \acrfull{SVD}
 of the Gramian matrix $\mathbf{\underline{G}}$ in order to build the rational
-surrogate. A more efficient and better conditioned \cite{davidePHD} alternative is to compute
+surrogate. A more efficient and better conditioned \cite{davidePHD} alternative is to instead compute
 the QR decomposition of the snapshot matrix $\mathbf{\underline{U}} = [\mathbf{u}(\omega_1), \dots, \mathbf{u}(\omega_S)]$.
 Since
 \begin{equation}
@@ -672,7 +680,7 @@ Inserting this into (\ref{equ:gramian-QR}) results in
 which coincides with the \acrshort{SVD} of the Gramian matrix $\mathbf{\underline{G}}$
 if we take the square root of the singular values. Since for \acrshort{MRI} only
 really the last left singular vector in $\mathbf{\underline{V}}$ is of interest,
-computing $\mathbf{\underline{G}}$ explicitly may be avoided.
+computing $\mathbf{\underline{G}}$ explicitly may be avoided in this way.
 
 There is one additional benefit to taking the route via the \acrshort{SVD} of
 $\mathbf{\underline{R}}$ instead of $\mathbf{\underline{G}}$
@@ -680,7 +688,7 @@ for building the surrogate: When extending the snapshot matrix by an additional
 snapshot $\mathbf{u}(\omega_{S+1})$, the resulting triangular matrix $\mathbf{\underline{R}}^{(S+1)}$
 from a QR decomposition on this extended snapshot matrix only differs from the 
 (usually already computed) matrix $\mathbf{\underline{R}}^{(S)}$ only in the last column.
-Thus, it is possible to reuse many results obtained in a previous iterations of
+Thus, it is possible to reuse many results obtained in a previous iteration during
 the \acrshort{gMRI} algorithm and therefore significantly increase computational
 efficiency.
 
@@ -696,7 +704,7 @@ to the additional snapshots supplied to the algorithm.
     \input{algorithms/householder.tex}
 \end{algorithm}
 
-Notice that towards the end of the program I have introduced the shorthand 
+Notice that towards the end of Algorithm \ref{alg:householder} I have introduced the shorthand 
 \begin{equation}
     \langle \mathbf{\underline{E}}[S+1:j, :], \mathbf{\underline{V}}[j, :] \rangle_M \mathbf{\underline{E}}[S+1:j, :]
 \end{equation}
@@ -721,8 +729,8 @@ spectral gap \cite{davidePHD}
 \begin{equation}
     \frac{\sigma_{S-1} - \sigma_S}{\sigma_1 - \sigma_S} \label{equ:spectral-gap}
 \end{equation}
-Usually, values of above $10^{13}$ indicate that the rational surrogate could not
-be built in a stable way and in my implementations the user is warned.
+Usually, values of approximately above $10^{13}$ indicate that the rational surrogate could not
+be built in a stable way and in my implementations the user is informed by a warning.
 % REMINDME! Discuss better conditioning for going route via QR-decompostition
 % instead of Gramian matrix.
 
@@ -743,7 +751,7 @@ via
 \begin{equation}
     \mathbf{\tilde{u}}(\omega) = \mathbf{\underline{U}} \accentset{\circ}{\mathbf{u}}(\omega)
 \end{equation}
-Therefore, provided we know the snapshot matrix, a rational surrogate is
+Therefore, provided we know the snapshot matrix $\mathbf{\underline{U}}$, a rational surrogate is
 fully characterized by just $S$ numbers $\{q_1, \dots, q_S\}$
 and the locations of the interpolation nodes $\{\omega_1, \dots, \omega_S\}$.
 
@@ -766,10 +774,10 @@ computation of the relative error which is used as a stopping criterion in
 First, one may use the $\mathbf{\underline{M}}$-orthonormality of $\mathbf{\underline{Q}}$
 to get
 \begin{align}
-    ||\mathbf{u}_{t+1} - \mathbf{\tilde{u}}_{t}(\omega_{t+1})||_M^2
-    &= ||\mathbf{\underline{Q}}^{(t+1)} \mathbf{r}_{t+1} - \mathbf{\underline{Q}}^{(t+1)}\mathbf{\hat{u}}_{t}'(\omega_{t+1})||_M^2 \notag \\
+    ||\mathbf{u}_{t+1} - \mathbf{\tilde{u}}_{t}(\omega_{t+1})||_M
+    &= ||\mathbf{\underline{Q}}^{(t+1)} \mathbf{r}_{t+1} - \mathbf{\underline{Q}}^{(t+1)}\mathbf{\hat{u}}_{t}'(\omega_{t+1})||_M \notag \\
     %&= (\mathbf{r}_{t+1} - \mathbf{\hat{u}}_{t}'(\omega_{t+1}))^H (\mathbf{\underline{Q}}^{(t+1)})^H \mathbf{\underline{M}} \mathbf{\underline{Q}}^{(t+1)} (\mathbf{r}_{t+1} - \mathbf{\hat{u}}_{t}'(\omega_{t+1})) \notag \\
-    &= ||\mathbf{r}_{t+1} - \mathbf{\hat{u}}_{t}'(\omega_{t+1})||^2
+    &= ||\mathbf{r}_{t+1} - \mathbf{\hat{u}}_{t}'(\omega_{t+1})||
 \end{align}
 with the short hand $\mathbf{\hat{u}}_{t}' = [\mathbf{\hat{u}}_{t}^T, 0]^T$
 and where $\mathbf{r}_{t+1}$ is the last column in $\mathbf{\underline{R}}^{(t+1)}$,
@@ -782,11 +790,20 @@ matrix multiplications stems from
 \begin{equation}
     ||\mathbf{u}(\omega)||_M^2 \approx ||\mathbf{\tilde{u}}(\omega)||_M^2
     = ||\mathbf{\underline{U}} \accentset{\circ}{\mathbf{u}}(\omega)||_M^2
-    = \accentset{\circ}{\mathbf{u}}(\omega)^H \underbrace{\mathbf{\underline{U}}^H \mathbf{\underline{M}} \mathbf{\underline{U}}}_{= \mathbf{\underline{G}} = \mathbf{\underline{R}}^H \mathbf{\underline{R}}} \accentset{\circ}{\mathbf{u}}(\omega)
+    = \accentset{\circ}{\mathbf{u}}(\omega)^H \underbrace{\mathbf{\underline{U}}^H \mathbf{\underline{M}}~\mathbf{\underline{U}}}_{= \mathbf{\underline{G}} = \mathbf{\underline{R}}^H \mathbf{\underline{R}}} \accentset{\circ}{\mathbf{u}}(\omega)
     = \mathbf{\hat{u}}(\omega)^H \mathbf{\hat{u}}(\omega)
     = ||\mathbf{\hat{u}}(\omega)||^2
 \end{equation}
-Thus, the relative error norm can be approximated with only Euclidean norms.
+In this way, an approximation of the particular relative error norm  required in
+Algorithm \ref{alg:gMRI}can be approximated with only Euclidean norms:
+\begin{equation}
+    \frac{||\mathbf{u}_{t+1} - \mathbf{\tilde{u}}_t(\omega_{t+1})||_M}{||\mathbf{u}_{t+1}||_M}
+    \approx \frac{||\mathbf{r}_{t+1} - \mathbf{\hat{u}}_t(\omega_{t+1})||}{||\mathbf{\hat{u}_t}(\omega_{t+1})||}
+\end{equation}
+Notice how on the left-hand side, the vectors of dimension $N$ (usually $N \approx 10000$)
+are multiplied with an $N \times N$ matrix to compute the norm, whereas
+the vectors on the right-hand side are only of size $S$ (usually $\leq 20$)
+and do not require a matrix for the norm computation.
 
 \newpage
 \section{Examples}
@@ -794,7 +811,7 @@ Thus, the relative error norm can be approximated with only Euclidean norms.
 
 The goal is now to apply the techniques introduced in the previous sections
 to three examples (see Figure \ref{fig:examples} to get an idea about the
-difference between these examples).
+difference and similarities between these examples).
 
 \subsection{Two-dimensional rectangular resonant cavity}
 \label{subsec:examples-rectangularcavity}
@@ -814,40 +831,41 @@ a rectangular resonant cavity with dimensions $L_x=5$ and $L_y=1$ (see Figure
 
 For simplicity, I set $\epsilon=\mu=1$. A uniform grid with 101 subdivisions in
 the $x$- and 21 in the $y$-direction whose cells are again subdivided by their
-diagonals was used to generate a mesh that allows for 4365 degrees of freedom.
+diagonals was used to generate a highly symmetric triangular mesh that allows for 4365 degrees of freedom.
 The system is forced from the inlet at $x=0$ with $g_z(y) = sin(\pi y / L_y)$.
 
 % Exploratory plots
 \subsubsection{Exploration of the problem}
 \label{subsubsec:exploration}
 
-To give the reader an impression of what the solution $u_z(x, y)$ to this problem
+To give the reader an impression of what the solution $\mathbf{u}_z$ to this problem
 looks like, I plot the \acrshort{FEM}-solution at the first and fifth resonant
-frequency in Figures \ref{fig:rectangular-cavity-mode1} and \ref{fig:rectangular-cavity-mode5}
-respectively.
+frequencies in Figures \ref{fig:rectangular-cavity-mode1} and \ref{fig:rectangular-cavity-mode5}
+respectively. Notice that I type its variable in bold, since it is a large vector with the values
+for each of the \acrshort{DOF}s as its components.
 
 \begin{figure}[ht]
     \centering
     \includegraphics{plots/rectangular_cavity_mode1.pdf}
-    \caption{The solution $u_z(x, y)$ obtained with the \acrshort{FEM} at the
+    \caption{The solution $\mathbf{u}_z$ obtained with the \acrshort{FEM} at the
     first resonant frequency $\omega = 3.159$ of the cavity. Observe how at
     every perfectly conducting boundary $\Gamma_D$ (cf. Figure
-    \ref{fig:rectangular_cavity}) the solution gradually goes to zero, as was imposed.}
+    \ref{fig:rectangular_cavity}) the solution gradually goes to zero, as I imposed.}
     \label{fig:rectangular-cavity-mode1}
 \end{figure}
 
 \begin{figure}[ht]
     \centering
     \includegraphics{plots/rectangular_cavity_mode5.pdf}
-    \caption{The solution $u_z(x, y)$ obtained with the \acrshort{FEM} at the
+    \caption{The solution $\mathbf{u}_z$ obtained with the \acrshort{FEM} at the
     fifth resonant frequency $\omega = 4.675$ of the cavity.}
     \label{fig:rectangular-cavity-mode5}
 \end{figure}
 
 % Rational interpolation demonstration
-I now study the \acrshort{gMRI} of the quantity $||u_z||_M$ defined in
-(\ref{equ:matrix-norm}). Algorithm \ref{alg:gMRI} is performed
-with a tolerance of $\tau = 10^{-2}$. The candidate support points $\Omega_{\mathrm{test}}$
+I now study the \acrshort{gMRI} for the quantity $u_z$.
+Algorithm \ref{alg:gMRI} is performed with a tolerance of $\tau = 10^{-2}$.
+The candidate support points $\Omega_{\mathrm{test}}$
 are 1000 uniformly spaced points in $\omega = [3, 5]$. The \acrshort{FEM} solution $u_z$
 is computed and the \acrshort{gMRI} surrogate $\tilde{u}_z$ evaluated at all points in $\Omega_{\mathrm{test}}$,
 and the $||\cdot||_M$-norm for both is plotted in Figure \ref{fig:rectangular-cavity-norms}. 
@@ -855,16 +873,16 @@ and the $||\cdot||_M$-norm for both is plotted in Figure \ref{fig:rectangular-ca
 \begin{figure}[ht]
     \centering
     \input{plots/rectangular_cavity_norms.pgf}
-    \caption{$||\cdot||_M$-norm of the \acrshort{FEM} solution $u_z$ (top) and the 
-    \acrshort{gMRI} surrogate $\tilde{u}_z$ (bottom).}
+    \caption{$||\cdot||_M$-norm of the \acrshort{FEM} solution $\mathbf{u}_z$ (top) and the 
+    \acrshort{gMRI} surrogate $\mathbf{\tilde{u}}_z$ (bottom).}
     \label{fig:rectangular-cavity-norms}
 \end{figure}
 
 For the same problem, the approximation of the relative error 
-in the $||\cdot||_M$-norm of the rational surrogate $\tilde{u}_z^{(S)}$ from the
+in the $||\cdot||_M$-norm of the rational surrogate $\mathbf{\tilde{u}}_z^{(S)}$ from the
 \acrshort{FEM} solution in every second iteration $S$ of the \acrshort{gMRI} algorithm
 is shown in Figure \ref{fig:rectangular-cavity-errorprogression}. This time,
-however, the candidate support points for the rational surrogate $\tilde{u}_z^{(S)}$
+however, the candidate support points for the rational surrogate $\mathbf{\tilde{u}}_z^{(S)}$
 and the points at which the \acrshort{FEM}-solution and the rational surrogate
 are compared are completely out of sync. Because if they coincided, the relative error
 would obviously tend to zero at each of the support points chosen for building
@@ -874,10 +892,10 @@ the surrogate, which would obscure the point I want to make with this plot.
     \centering
     \input{plots/rectangular_cavity_errorprogression.pgf}
     \caption{Progression of a relative approximation error of the rational
-    surrogates $\tilde{u}_z^{(S)}$ that was built using $S$ support points.
+    surrogates $\mathbf{\tilde{u}}_z^{(S)}$ that were built using $S$ support points.
     The freshly added support points during the previous two iterations of
     \acrshort{gMRI} are shown in their corresponding color at the bottom.
-    Notice how the decrease in relative error is not uniform, and wherever a
+    Notice how the decrease in relative error is not uniform and wherever a
     support point is added, the error is locally decreased.}
     \label{fig:rectangular-cavity-errorprogression}
 \end{figure}
@@ -888,18 +906,21 @@ the surrogate, which would obscure the point I want to make with this plot.
 As already discussed in Section \ref{subsec:roots}, \acrshort{gMRI} may be used
 to approximate resonant frequencies of a system. Conveniently enough, the analytical
 resonant frequencies for a rectangular resonant cavity as the one currently being 
-studied easy to determine due to separability and the homogeneous boundary conditions. 
+studied easy to determine due to the homogeneous boundary conditions:
 \begin{equation}
     \omega_{n, m} = \pi \sqrt{\left(\frac{2n + 1}{2L_x}\right)^2 + \left(\frac{m}{L_y}\right)^2},
     ~n \in \{0, 1, \dots\}, ~m \in \{1, 2, \dots \} \label{equ:analytical-eigenmodes}
 \end{equation}
-Conventionally, resonant frequencies would be determined by solving the generalized
+Conventionally, resonant frequencies can be determined by solving the generalized
 (hermitian) eigenvalue problem
 \begin{equation}
-    \mathbf{\underline{K}} \mathbf{u} = \omega^2 \mathbf{\underline{M}} \mathbf{u}
+    \mathbf{\underline{K}} \mathbf{w} = \omega^2 \mathbf{\underline{M}} \mathbf{w}
     \label{equ:numerical-eigenmodes}
 \end{equation}
-involving the stiffness matrix $\mathbf{\underline{K}}$ and mass matrix $\mathbf{\underline{M}}$.
+involving a stiffness matrix $\mathbf{\underline{K}}$ and a mass matrix $\mathbf{\underline{M}}$
+(here, the ones defined in Section \ref{sec:fem} will be used, such that the
+eigenvectors $\mathbf{w}$ correspond to the solutions $\mathbf{u}_z$ at the
+corresponding resonant frequencies).
 This can for instance be accomplished with the \texttt{eigsh} sparse eigenvalue
 solver included in the \texttt{scipy} Python library. However, it is first necessary
 to remove all the columns and rows from $\mathbf{\underline{K}}$ and $\mathbf{\underline{M}}$
@@ -907,76 +928,80 @@ that correspond to points on the perfectly conducting boundary, since they are
 all zero after having assembled the matrices. This was demonstrated in Section
 \ref{subsec:fem-demo}. In Table \ref{tab:rectangular_cavity_comparison}, I compare
 the two approaches (\texttt{eigsh} and \acrshort{gMRI}) in their mean absolute deviation
-$\Delta$ of the six resonant frequencies inside the interval $\omega = [3, 5]$ 
+$\bar{\Delta}$ of the six resonant frequencies inside the interval $\omega = [3, 5]$ 
 from their corresponding analytical resonances. Furthermore, the time each method
 requires to produce a result given the assembled matrices $\mathbf{\underline{K}}$
 and $\mathbf{\underline{M}}$ is measured over multiple runs on a 7th generation
 Intel 8750H CPU at 2.20 GHz using the \texttt{timeit} library. This is done
 for four logarithmically spaced refinements of the mesh with a resulting number
-of \acrfull{DOF}.
+of \acrshort{DOF}s.
 
 \begin{table}[ht]
     \caption{In the same context as on the previous pages, two approaches to
     finding resonant frequencies: The sparse hermitian eigenvalue solver
     \texttt{eigsh} from the \texttt{scipy} library and the procedure using
     \acrshort{gMRI} that was introduced in Section \ref{subsec:roots}. For
-    various \acrshort{DOF}s, the mean absolute deviation $\Delta$ from the analytical
-    resonant frequencies and the time spent in computation $t$ are shown.}
+    various \acrshort{DOF}s the mean absolute deviation $\bar{\Delta}$ from the analytical
+    resonant frequencies located in the interval $\omega \in [3, 5]$ and the time spent in computation $t$ are shown.}
     \label{tab:rectangular_cavity_comparison}
     \input{tables/rectangular_cavity_comparison.tex}
 \end{table}
 
 Hereafter I would like to discuss two major benefits the \acrshort{gMRI} method
-for finding resonant modes holds over the \texttt{eigsh} approach.
+for finding resonant modes (explained in Section \ref{subsec:roots}) holds over
+the \texttt{eigsh} approach.
 
 Fistly, \texttt{eigsh} requires us to specify the exact number of eigenvalues that
 should be approximated. Unless it is a priori known how many resonant modes are
 expected to fall within an interval of interest, there is no guarantee of having
-found all. The \acrshort{gMRI} way will reliably find all resonant modes within
-and even in a close neighborhood of the interval of interest.
+found all of them. On the other hand, the \acrshort{gMRI} way will reliably find
+all resonant modes within and even in a close neighborhood of the interval of
+interest.
 
 % Problems with non-resonant solutions suppressed by the boundary integral
-Secondly, while solving the generalized eigenvalue problem, some resonant modes
-are identified that, depending on the boundary condition at the inlet, are 
-suppressed and do not emerge when solving the actual problem. Moreover, even
-the analytical resonant frequencies suffer from the exact same effect. The reason
-for this caveat is the following:
+Secondly, while solving the generalized eigenvalue problem some resonant modes
+are incorrectly identified as such: Depending on the boundary condition at the
+inlet, some analytically admissible resonant modes are suppressed and do not
+emerge when solving the actual problem. A sketch of the reason for this caveat
+is demonstrated in the following.
 
-Take $\{ \mathbf{u}_j, \omega_j^2 \}_j$ to be resonant modes, i.e. solutions to 
+Take $\{ \mathbf{w}_j, \omega_j^2 \}_j$ to be resonant modes, i.e. solutions to 
 the eigenvalue problem (\ref{equ:numerical-eigenmodes}), such that
 \begin{equation}
-    \mathbf{\underline{K}} \mathbf{u}_j = \omega_j^2 \mathbf{\underline{M}} \mathbf{u}_j
+    \mathbf{\underline{K}} \mathbf{w}_j = \omega_j^2 \mathbf{\underline{M}} \mathbf{w}_j
     \label{equ:eigen-solution}
 \end{equation}
-Adding a source term $\mathbf{f}$, the new system is described by
+Adding a source term $\mathbf{f}$, the new system is described by (see Equation \ref{equ:maxwell-weak})
 \begin{equation}
-    \mathbf{\underline{K}} \mathbf{u} - \omega^2 \mathbf{\underline{M}} \mathbf{u} = \mathbf{f}
+    \mathbf{\underline{K}} \mathbf{w} - \omega^2 \mathbf{\underline{M}} \mathbf{w} = \mathbf{f} \label{equ:eigenproblem-forced}
 \end{equation}
-If a solution $\mathbf{u}$ can be expressed in terms of the basis $\{ \mathbf{u}_j \}_j$,
-meaning $\mathbf{u} = \sum_j \alpha_j \mathbf{u}_j$ for some $\alpha_j$, then
+If a solution $\mathbf{w}$ can be expressed in terms of the basis $\{ \mathbf{w}_j \}_j$,
+meaning $\mathbf{w} = \sum_j \alpha_j \mathbf{w}_j$ for some $\alpha_j$, then
+(\ref{equ:eigenproblem-forced}) becomes
 \begin{equation} 
-    \sum_j \alpha_j (\mathbf{\underline{K}} \mathbf{u}_j - \omega^2 \mathbf{\underline{M}} \mathbf{u}_j) = \mathbf{f}
+    \sum_j \alpha_j (\mathbf{\underline{K}} \mathbf{w}_j - \omega^2 \mathbf{\underline{M}} \mathbf{w}_j) = \mathbf{f}
 \end{equation}
 Using (\ref{equ:eigen-solution}) yields
 \begin{equation}
-    \sum_j \alpha_j (\omega_j^2 - \omega^2) \mathbf{\underline{M}} \mathbf{u}_j = \mathbf{f}
+    \sum_j \alpha_j (\omega_j^2 - \omega^2) \mathbf{\underline{M}} \mathbf{w}_j = \mathbf{f}
 \end{equation}
-from which we can then multiply both sides with $\mathbf{u}_i^H$ to obtain
+from which we can then obtain the coefficients $\alpha_j$ by taking the scalar product
+with $\mathbf{w}_i$
 % WHY SHOULD THIS BE A BASIS (DOES IT SPAN?), AND WHY M-ORTHONORMAL
 \begin{equation}
-    \alpha_i = \frac{\mathbf{u}_i^H \mathbf{f}}{\omega_i^2 - \omega^2} \label{equ:suppression}
+    \alpha_i = \frac{\langle \mathbf{w}_i, \mathbf{f} \rangle}{\omega_i^2 - \omega^2} \label{equ:suppression}
 \end{equation}
-using $\mathbf{u}_i^H \mathbf{\underline{M}} \mathbf{u}_j = \delta_{ij}$
+and using $\langle \mathbf{w}_i, \mathbf{\underline{M}} \mathbf{w}_j \rangle = \delta_{ij}$
 since the eigenvectors stemming from a hermitian eigenvalue problem can be made 
 $\mathbf{\underline{M}}$-orthonormal.
 
-Inspecting (\ref{equ:suppression}), we see that if $\mathbf{u}_i^H \mathbf{f} = 0$,
+Inspecting (\ref{equ:suppression}), we see that if $\langle \mathbf{w}_i, \mathbf{f} \rangle = 0$,
 then the resonant mode at $\omega = \omega_i$ is suppressed. Because neither the
 generalized eigenvalue problem nor the analytical considerations
-are informed about the nature of the source term $\mathbf{f}$, this is not accounted for.
-Specifying as the initial iteration vector for the \texttt{eigsh} eigenvalue solver
-the source term $\mathbf{f}$ to avoid finding eigensolutions that are orthogonal
-to it did not prove to be effective.
+are informed about the nature of the source term $\mathbf{f}$, this \enquote{effect}
+is usually not accounted for. Even specifying as the initial iteration vector for
+the \texttt{eigsh} eigenvalue solver the source term $\mathbf{f}$ to avoid finding
+eigensolutions that are orthogonal to it did not prove to be effective.
 
 \begin{figure}[ht]
     \centering
@@ -986,21 +1011,29 @@ to it did not prove to be effective.
     three discussed approaches are shown (bottom). Only two resonant
     frequencies visibly emerge from the $||\cdot||_M$-norm spectrum determined by
     solving the problem with the \acrshort{FEM} (top). Suppressed resonant
-    frequencies appear (or much rather do not appear) whenever the corresponding
-    eigensolution $u(\omega_{n, m})$ is orthogonal to the source term $f$ (middle).}
+    frequencies $\omega_{n, m}$ appear (or much rather do not appear) whenever the corresponding
+    eigensolution $\mathbf{u}_z(\omega_{n, m})$ is orthogonal to the source term $f$ (middle).
+    \acrshort{gMRI} (still with a tolerance of $\tau = 10^{-2}$ and 1000 uniformly
+    spaced test points in $\omega = [6, 7]$) successfully avoids identifying suppressed resonant frequencies
+    while both the analytical and \texttt{eigsh} approach fail to do so.}
     \label{fig:rectangular-cavity-suppression}
 \end{figure}
 
+\clearpage
 \subsubsection{Approximating solutions along a trace}
 \label{subsubsec:traces}
 
-I now restrict my view to solutions $u|_{\Gamma}$ along a trace $\Gamma$. Setting
+I now restrict my view to approximating solutions $u_z|_{\Gamma}$ along a trace $\Gamma$. Setting
 \begin{equation}
-    ||u||_{M(\Gamma)}^2 = \mathbf{u}|_{\Gamma}^H \mathbf{\underline{M}}(\Gamma) \mathbf{u}|_{\Gamma}
-        \approx \int_{\Gamma} \mathbf{u}^H \cdot \mathbf{u}
+    ||\mathbf{\bar{u}}_z||_{M(\Gamma)}^2 = \mathbf{\bar{u}}_z|_{\Gamma}^H \mathbf{\underline{M}}(\Gamma) \mathbf{\bar{u}}_z|_{\Gamma}
+        \approx \int_{\Gamma} ||u_z||^2
 \end{equation}
-Running \acrshort{gMRI} (Algorithm \ref{alg:gMRI}) on the restriction $u|_{\Gamma}$
-instead of the full solution $u$ is a straight forward generalization of the
+with $\mathbf{\bar{u}}_z \in \mathbb{C}^N$ as the vertex basis representation of
+the two-dimensional solution $u_z$, while $\mathbf{\underline{M}}(\Gamma)$ is the
+matrix representation of the discretized integral form along the trace.
+Again, I will not bother putting bars everywhere and will instead just use $\mathbf{u}_z$.
+Running \acrshort{gMRI} (Algorithm \ref{alg:gMRI}) on the restriction $\mathbf{u}_z|_{\Gamma}$
+instead of the full solution $\mathbf{u}_z$ is a straight forward generalization of the
 algorithm. Nevertheless, when taking as $\Gamma = \Gamma_N$ the inlet of the
 rectangular resonant cavity, no convergence in the relative error norm restricted
 to this trace appears to happen with \acrshort{gMRI} (see Figure \ref{fig:rectangular-cavity-trace-errornorm}),
@@ -1015,7 +1048,7 @@ are heavily linearly dependent.
     \input{plots/rectangular_cavity_trace_errorprogression.pgf}
     \caption{The non-convergent behavior of the approximate relative error norm
     during every second iteration of \acrshort{gMRI} of the solution
-    restricted to the inlet $\Gamma_N$. Here, $\tilde{u}|_{\Gamma_N}^{(S)}$ stands 
+    restricted to the inlet $\Gamma_N$. Here, $\mathbf{\tilde{u}}_z^{(S)}|_{\Gamma_N}$ stands 
     for the rational surrogate for the solution on the trace built using $S$
     support points.}
     \label{fig:rectangular-cavity-trace-errornorm}
@@ -1030,11 +1063,11 @@ of the cavity (see Figure \ref{fig:rectangular-cavity-cubby}).
     \caption{A tiny cubby is introduced alongside one of the edges in order to
     break the linear dependence of solutions restricted to a trace. It extends
     along a quarter of the length of the cavity but extends outwards only by
-    1/100-th of the height of the cavity.}
+    1/100-th (sketch not drawn to scale!) of the height of the cavity.}
     \label{fig:rectangular-cavity-cubby}
 \end{figure}
 
-Desipte the only tiny perturbation in the geometry of the cavity, the improved
+Despite only adding a minor perturbation to the geometry of the cavity, the improved
 convergence behavior may immediately be seen in Figure \ref{fig:rectangular-cubby-trace-errornorm}.
 
 \begin{figure}[ht]
@@ -1044,7 +1077,7 @@ convergence behavior may immediately be seen in Figure \ref{fig:rectangular-cubb
     on a trace) with a tiny cubby (see Figure \ref{fig:rectangular-cavity-cubby})
     proves to be a quite effective remedy for the stability in building the
     rational surrogate with \acrshort{gMRI}. For every second iteration of the 
-    algorithm, an estimate for the relative error of the surrogate $u_{\Gamma_N}^{(S)}$
+    algorithm, an estimate for the relative error of the surrogate $\mathbf{u}_z^{(S)}|_{\Gamma_N}$
     built with $S$ support points (shown at the bottom) is plotted. Compared to
     Figure \ref{fig:rectangular-cavity-trace-errornorm}, the error goes down much
     more uniformly.}
@@ -1066,7 +1099,7 @@ are plotted in Figure \ref{fig:imperfect-conductor-norms}.
 \begin{figure}[ht]
     \centering
     \includegraphics{plots/imperfect_conductor_solution.pdf}
-    \caption{The solution $u_z(x, y)$ obtained with the \acrshort{FEM} at the
+    \caption{The solution $\mathbf{u}_z$ obtained with the \acrshort{FEM} at the
     frequency $\omega = 3.5$. Unlike in Figures \ref{fig:rectangular-cavity-mode1}
     and \ref{fig:rectangular-cavity-mode5}, the solution does no longer have to
     vanish at the imperfect boundary on the right-hand edge.}
@@ -1076,8 +1109,8 @@ are plotted in Figure \ref{fig:imperfect-conductor-norms}.
 \begin{figure}[ht]
     \centering
     \input{plots/imperfect_conductor_norms.pgf}
-    \caption{The $||\cdot||_M$-norm of the \acrshort{FEM} solution $\mathbf{u}(\omega)$ (top) and
-    its surrogate $\mathbf{\tilde{u}}(\omega)$ (middle) for the rectangular cavity with
+    \caption{The $||\cdot||_M$-norm of the \acrshort{FEM} solution $\mathbf{u}_z(\omega)$ (top) and
+    its surrogate $\mathbf{\tilde{u}}_z(\omega)$ (middle) for the rectangular cavity with
     an imperfectly conducting edge is shown. The locations of the greedy support
     points are indicated (bottom).}
     \label{fig:imperfect-conductor-norms}
@@ -1085,16 +1118,16 @@ are plotted in Figure \ref{fig:imperfect-conductor-norms}.
 
 To find resonant frequencies for this system numerically, the nonlinear eigenproblem
 \begin{equation}
-    (\mathbf{\underline{K}} - i \omega \mathbf{\underline{I}} - \omega^2 \mathbf{\underline{M}}) \mathbf{u} = \mathbf{0} \label{equ:nonlinear-eigenproblem}
+    (\mathbf{\underline{K}} - i \omega \mathbf{\underline{I}} - \omega^2 \mathbf{\underline{M}}) \mathbf{w} = \mathbf{0} \label{equ:nonlinear-eigenproblem}
 \end{equation}
-with $\mathbf{I}$ being the matrix representation of the form
+with $\mathbf{I}$ being the matrix representation corresponding to the form
 \begin{equation}
-    \int_{\partial \Omega} \lambda u_z v_z 
+    \int_{\Gamma_I} \lambda u_z v_z 
 \end{equation}
 Unfortunately, solving this eigenvalue problem is not as straight forward as the
 one that was encountered in the previous example. Likely the simplest approach
 to solving (\ref{equ:nonlinear-eigenproblem}) is to linearize the system by
-defining $\mathbf{v} = \omega \mathbf{u}$, such that we can convert it to a
+defining $\mathbf{v} = \omega \mathbf{w}$, such that we can convert it to a
 system twice the size that reads
 \begin{equation}
     \begin{bmatrix}
@@ -1102,7 +1135,7 @@ system twice the size that reads
         \mathbf{\underline{K}} & -i \mathbf{\underline{I}}
     \end{bmatrix}
     \begin{bmatrix}
-        \mathbf{u} \\
+        \mathbf{w} \\
         \mathbf{v}
     \end{bmatrix}
     =
@@ -1112,7 +1145,7 @@ system twice the size that reads
          & \boldsymbol{\underline{M}}
     \end{bmatrix}
     \begin{bmatrix}
-        \mathbf{u} \\
+        \mathbf{w} \\
         \mathbf{v}
     \end{bmatrix}
 \end{equation}
@@ -1127,7 +1160,8 @@ for the comparison of the time spent in computation between the two methods).
 \begin{table}[ht]
     \caption{Comparison of the computation times for identifying the resonant
     frequencies with a real part in the interval $\omega=[3, 5]$ between \texttt{eigs} and
-    \acrshort{gMRI} with a tolerance of $\tau = 10^{-2}$. To get a full
+    \acrshort{gMRI} with a tolerance of $\tau = 10^{-2}$ and 1000 linearly
+    spaced candidate support points in $\omega=[3, 5]$. To get a full
     comparison to the equivalent computations in Table \ref{tab:rectangular_cavity_comparison}
     an attempt was made to use \texttt{eigs} for solving the problem with 
     745513 \acrshort{DOF}s, but proved to be unsuccessful due to a memory overflow.}
@@ -1145,7 +1179,7 @@ $\lambda \to \infty$, a Dirichlet-type boundary is produced.
     \centering
     \input{plots/imperfect_conductor_eigfreqs.pgf}
     \caption{Resonant frequencies of a rectangular cavity with an imperfect boundary
-    with impedances $\lambda \in \{0.1, 1, 10\}$. Spurious resonant frequency far
+    with impedance $\lambda \in \{0.1, 1, 10\}$. Spurious resonant frequency far
     away from the relevant interval are not of interest for this problem and hence
     cropped off.}
     \label{fig:imperfect-conductor-eigfreqs}
@@ -1171,10 +1205,10 @@ in Section \ref{subsubsec:waveguide}.
     given in \cite{DMCWF-Dimensions}, but a full correspondence cannot be guaranteed
     due to yours truly being unable to resolve certain ambiguities that were encountered.
     The model adheres to the following dimensions:
-    $W_C=43.87$ mm, $D_C=28.0$ mm, $L_B=43.87$ mm, $W_B=19.05$ mm, $H_B=9.525$ mm,
-    $L_B=20.0$ mm, $W_S=10.05$ mm, $H_S=3.0$ mm, $W_A=2.0$ mm, $H_A=3.375$ mm,
+    $L_C=43.87$ mm, $D_C=28.0$ mm, $L_B=20.0$ mm, $W_B=19.05$ mm, $H_B=9.525$ mm,
+    $W_S=10.05$ mm, $H_S=3.0$ mm, $W_A=2.0$ mm, $H_A=3.375$ mm,
     $L_A=2.825$ mm; The thickness of all irises is $2.0$ mm; The screws
-    are placed exactly half way up the two resonant cylinders,
+    are placed exactly halfway up each of the two resonant cylinders,
     with the horizontal tuning screws reaching a depth of $3.82$ mm into the cavity
     and coupling screws at angles $\pm 45^{\circ}$ with a depth of $3.57$ mm.
     Observe that the \acrshort{DMCWF} is point symmetric with respect to the center 
@@ -1193,8 +1227,8 @@ the mesh was refined around critical components such as the screws and irises
 using transfinite curves (the sharp-eyed reader may observe these refinements
 in the surface mesh visualized in Figure \ref{fig:DMCWF}). A total of
 185726 \acrshort{DOF}s are accounted for. The conversion of the
-mesh to the FEniCS supported .xml format was performed with the mesh format converter
-meshio\footnote{\url{https://github.com/nschloe/meshio}}. 
+mesh to the FEniCS supported .xml format was performed with the open source mesh
+format converter meshio\footnote{\url{https://github.com/nschloe/meshio}}. 
 
 % Scattering coefficient
 In the following, I would like to demonstrate the capability of the 
@@ -1223,13 +1257,14 @@ entries of the scattering matrix
 
 For the simulation, $\epsilon = 4 \pi \times 10^{-7}$ and 
 $\mu = 8.854187 \times 10^{-12}$ were assumed. The one-sided forcing
-was performed with $\left.\mathbf{g}\right|_{\Gamma_i} = - \mathbf{e}_z$ from the
-left-hand inlet, and $\left.\mathbf{g}\right|_{\Gamma_i} = \mathbf{e}_z$ from the
-right-hand inlet. The scattering coefficients $S_{11}(\omega)$ and $S_{12}(\omega)$
+was performed with $\left.\mathbf{g}\right|_{\Gamma_L} = - \mathbf{e}_z$ from the
+left-hand inlet $\Gamma_L$, and $\left.\mathbf{g}\right|_{\Gamma_R} = \mathbf{e}_z$ from the
+right-hand inlet $\Gamma_R$. The scattering coefficients $S_{11}(\omega)$ and $S_{21}(\omega)$
 once computed by using the solutions at 150 uniformly spaced sample frequencies
 directly obtained with the \acrshort{FEM},
 and once from the rational surrogate computed with \acrshort{gMRI} at a tolerance
-of $\tau = 10^{-2}$. Both are shown (but only one is seen) in Figure
+of $\tau = 10^{-2}$ and 1000 uniformly spaced candidate test points in
+the frequency range $\omega \in [7.257 \times 10^{10}, 7.508 \times 10^{10}]$. Both are shown (but only one is seen) in Figure
 \ref{fig:circular-waveguide-scattering}. At somewhat more than four minutes,
 the \acrshort{gMRI} was able to deliver the approximated scattering coefficients
 roughly 25 times faster than the \acrshort{FEM}. Compared to \cite{DMCWF-FrequencySweep},
@@ -1238,7 +1273,7 @@ the passband is shifted to a slightly lower frequency.
 \begin{figure}[ht]
     \centering
     \input{plots/circular_waveguide_scattering.pgf}
-    \caption{The scattering coefficients $S_11(\omega)$ and $S_22(\omega)$
+    \caption{The scattering coefficients $S_{11}(\omega)$ and $S_{21}(\omega)$
     defined in (\ref{equ:scattering-coefficients}) computed as a reference
     from solving the system at discrete sample points and the
     \acrshort{FEM}, as well as the ones obtained by using \acrshort{gMRI}.}
@@ -1253,8 +1288,15 @@ can be seen in Figure \ref{fig:circular-waveguide-error}.
     \centering
     \input{plots/circular_waveguide_error.pgf}
     \caption{Progression of the absolute error between the reference scattering
-    coefficients ($S_{11, \textrm{FEM}}$ and $S_{12, \textrm{FEM}}$) obtained by solving the problem with \acrshort{FEM} and the 
-    ones obtained by using \acrshort{gMRI} ($S_{11, \textrm{gMRI}}$ and $S_{12, \textrm{gMRI}}$).}
+    coefficients ($S_{11, \textrm{FEM}}$ and $S_{21, \textrm{FEM}}$) obtained by solving the problem with \acrshort{FEM} and the 
+    ones obtained by using \acrshort{gMRI} ($S_{11, \textrm{gMRI}}^{(S)}$ and $S_{21, \textrm{gMRI}}^{(S)}$)
+    with $S$ support points (please excuse the unfortunate notation). 
+    In reality, computing the rational surrogate when forcing from the right-hand
+    side required one more support point to meet the stopping criterion in \acrshort{gMRI}
+    than the surrogate for forcing from the left-hand side. However, because both
+    right- and left-hand side are required to compute $S_{11, \textrm{gMRI}}^{(S)}$
+    and $S_{21, \textrm{gMRI}}^{(S)}$, this figure ignores the very last iteration
+    $S=9$, where only a right-hand surrogate has been computed.}
     \label{fig:circular-waveguide-error}
 \end{figure}
 
@@ -1333,62 +1375,64 @@ direction.
 The goal is to rewrite the curl-integral on the left-hand side of 
 (\ref{equ:maxwell-weak-initial}):
 \begin{equation}
-    \int_{\Omega} (\nabla \times (\mu^{-1} \nabla \times \mathbf{u})) \cdot \mathbf{v} \label{equ:maxwell-weak-initial-LHS}
+    \int_{\Omega} \langle \nabla \times (\mu^{-1} \nabla \times \mathbf{u}), \mathbf{v} \rangle \label{equ:maxwell-weak-initial-LHS}
 \end{equation}
 In order to simplify the curls and apply the Gauss theorem, I first show
 the following vector calculus identity:
 \begin{fancybox}{Curl product rule}
     \begin{equation}
-        (\nabla \times \mathbf{a}) \cdot \mathbf{b} = \nabla \cdot (\mathbf{a} \times \mathbf{b}) + \mathbf{a} \cdot (\nabla \times \mathbf{b}) \label{equ:vector-calculus}
+        \langle  \nabla \times \mathbf{a}, \mathbf{b} \rangle = \langle \nabla, \mathbf{a} \times \mathbf{b} \rangle + \langle \mathbf{a}, \nabla \times \mathbf{b} \rangle \label{equ:vector-calculus}
     \end{equation}
 \end{fancybox}
 where $\mathbf{a}$, $\mathbf{b}$ are vector-valued functions. Rewriting the 
 left-hand side of this equation by using the Levi-Civita tensor (\ref{equ:levi-civita})
 yields
 \begin{align}
-    (\nabla \times \mathbf{a}) \cdot \mathbf{b} &= \sum_k (\nabla \times \mathbf{a})_k b_k \notag \\ 
+    \langle  \nabla \times \mathbf{a}, \mathbf{b} \rangle
+    &= \sum_k (\nabla \times \mathbf{a})_k b_k \notag \\ 
     &= \sum_k (\sum_i \sum_j \varepsilon_{ijk} \partial_i a_j) b_k \notag \\ 
     &= \sum_k \sum_i \sum_j \partial_i (\varepsilon_{ijk} a_j b_k) - \sum_k \sum_i \sum_j a_j (\varepsilon_{ijk} \partial_i b_k) \notag \\ 
     &= \sum_k \sum_i \sum_j \partial_i (\varepsilon_{jki} a_j b_k) - \sum_k \sum_i \sum_j a_j ((-\varepsilon_{ikj}) \partial_i b_k) \notag \\ 
     &= \sum_i \partial_i (\mathbf{a} \times \mathbf{b})_i + \sum_j u_j (\nabla \times \mathbf{b})_j \notag \\ 
-    &= \nabla \cdot (\mathbf{a} \times \mathbf{b}) + \mathbf{a} \cdot (\nabla \times \mathbf{b}) \label{equ:curlidentity} 
+    &= \langle \nabla, \mathbf{a} \times \mathbf{b} \rangle + \langle \mathbf{a}, \nabla \times \mathbf{b} \rangle \label{equ:curlidentity} 
 \end{align}
 by expressing the scalar product as a component-sum, using the product rule and
 applying the symmetry and anti-symmetry properties of the Levi-Civita tensor.
 Now the identity (\ref{equ:vector-calculus}) to (\ref{equ:maxwell-weak-initial-LHS})
 together with Gauss' theorem gives
 \begin{align}
-    \int_{\Omega} (\nabla \times ({\mu^{-1} \nabla \times \mathbf{u}})) \cdot \mathbf{v} &=
-    \int_{\Omega} \nabla \cdot (({\mu^{-1} \nabla \times \mathbf{u}}) \times \mathbf{v})
-    + \int_{\Omega} ({\mu^{-1} \nabla \times \mathbf{u}}) \cdot (\nabla \times \mathbf{v}) \notag \\
-    &= \int_{\partial \Omega} (({\mu^{-1} \nabla \times \mathbf{u}}) \times \mathbf{v}) \cdot \mathbf{n}
-    + \int_{\Omega} ({\mu^{-1} \nabla \times \mathbf{u}}) \cdot (\nabla \times \mathbf{v}) \notag \\
+    \int_{\Omega} \langle \nabla \times ({\mu^{-1} \nabla \times \mathbf{u}}), \mathbf{v} \rangle &=
+    \int_{\Omega} \langle \nabla, ({\mu^{-1} \nabla \times \mathbf{u}}) \times \mathbf{v} \rangle
+    + \int_{\Omega} \langle {\mu^{-1} \nabla \times \mathbf{u}}, \nabla \times \mathbf{v} \rangle \notag \\
+    &= \int_{\partial \Omega} \langle ({\mu^{-1} \nabla \times \mathbf{u}}) \times \mathbf{v}, \mathbf{n} \rangle
+    + \int_{\Omega} \langle {\mu^{-1} \nabla \times \mathbf{u}}, \nabla \times \mathbf{v} \rangle \notag \\
 \end{align}
 
 For later convenience, the boundary integral can further be simplified using the
 \begin{fancybox}{Commutative behavior of the scalar triple product}
     \begin{equation}
-        (\mathbf{a} \times \mathbf{b}) \cdot \mathbf{c} = - (\mathbf{a} \times \mathbf{c}) \cdot \mathbf{b} \label{equ:vector-algebra}
+        \langle \mathbf{a} \times \mathbf{b}, \mathbf{c} \rangle = - \langle \mathbf{a} \times \mathbf{c}, \mathbf{b} \rangle \label{equ:vector-algebra}
     \end{equation}
 \end{fancybox}
 This identity follows immediately from a small manipulation with the Levi-Civita
 tensor:
 \begin{align}
-    (\mathbf{a} \times \mathbf{b}) \cdot \mathbf{c} &= \sum_k (\sum_i \sum_j \varepsilon_{ijk} a_i b_j) c_k \notag \\
-     &= \sum_j (\sum_i \sum_k (-\varepsilon_{ikj}) a_i c_k) b_j \notag \\ 
-     &= - (\mathbf{a} \times \mathbf{c}) \cdot \mathbf{b} 
+    \langle \mathbf{a} \times \mathbf{b}, \mathbf{c} \rangle
+    &= \sum_k (\sum_i \sum_j \varepsilon_{ijk} a_i b_j) c_k \notag \\
+    &= \sum_j (\sum_i \sum_k (-\varepsilon_{ikj}) a_i c_k) b_j \notag \\ 
+    &= - \langle \mathbf{a} \times \mathbf{c}, \mathbf{b} \rangle
 \end{align}
 The boundary integral becomes 
 \begin{equation}
-    \int_{\partial \Omega} (({\mu^{-1} \nabla \times \mathbf{u}}) \times \mathbf{v}) \cdot \mathbf{n}
-    = - \int_{\partial \Omega} (({\mu^{-1} \nabla \times \mathbf{u}}) \times \mathbf{n}) \cdot \mathbf{v}
+    \int_{\partial \Omega} \langle ({\mu^{-1} \nabla \times \mathbf{u}}) \times \mathbf{v}, \mathbf{n} \rangle
+    = - \int_{\partial \Omega} \langle ({\mu^{-1} \nabla \times \mathbf{u}}) \times \mathbf{n}, \mathbf{v} \rangle
 \end{equation}
 
 This concludes the short derivation, because now (\ref{equ:maxwell-weak-initial-LHS})
 may be rewritten as
 \begin{equation}
-    - \int_{\partial \Omega} (({\mu^{-1} \nabla \times \mathbf{u}}) \times \mathbf{v}) \cdot \mathbf{n}
-    + \int_{\Omega} ({\mu^{-1} \nabla \times \mathbf{u}}) \cdot (\nabla \times \mathbf{v})
+    - \int_{\partial \Omega} \langle ({\mu^{-1} \nabla \times \mathbf{u}}) \times \mathbf{v}, \mathbf{n} \rangle
+    + \int_{\Omega} \langle {\mu^{-1} \nabla \times \mathbf{u}},\nabla \times \mathbf{v} \rangle
 \end{equation}
 
 \subsection*{Invariance of repeated cross products}
@@ -1416,7 +1460,7 @@ of the indices (according to Equation (\ref{equ:levi-civita-properties})) to obt
     &= \sum_i \sum_j \sum_l \sum_m \varepsilon_{jki} \varepsilon_{lmi} n_l u_m n_j \notag \\ 
     &= \sum_j \sum_l \sum_m (\delta_{jl} \delta_{km} - \delta_{jm} \delta_{kl}) n_l u_m n_j \notag \\
     &= \sum_j n_j u_k n_j - \sum_j n_k u_j n_j \notag \\
-    &= ||\mathbf{n}||^2 u_k - (\mathbf{u} \cdot \mathbf{n}) n_k \notag \\ 
+    &= ||\mathbf{n}||^2 u_k - \langle \mathbf{u}, \mathbf{n} \rangle n_k \notag \\ 
     &= u_k
 \end{align}
 which concludes the component-wise proof.

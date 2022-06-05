@@ -30,7 +30,7 @@ u_D = fen.Expression(('0.0', '0.0', '0.0'), degree=2)
 bc = fen.DirichletBC(V, u_D, boundary_id, 2)
 
 # Neumann boundary integral term and boundary measure
-g_N = fen.Expression(('0.0', '0.0', '1.0'), degree=2)
+g = fen.Expression(('0.0', '0.0', '1.0'), degree=2)
 ds = fen.Measure('ds', subdomain_data=boundary_id)
 
 # Trial and test functions
@@ -38,7 +38,7 @@ u = fen.TrialFunction(V)
 v = fen.TestFunction(V)
 
 # Neumann boundary integral term
-N = fen.assemble(fen.dot(g_N, v) * ds(2))
+N = fen.assemble(fen.dot(g, v) * ds(2))
 
 # Stiffness matrix
 K = fen.assemble(fen.dot(fen.curl(u), fen.curl(v)) * fen.dx)

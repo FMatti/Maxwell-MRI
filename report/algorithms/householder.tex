@@ -10,7 +10,7 @@
     \State $\mathbf{u} = \mathbf{\underline{U}}[j, :]$
     \For{$k = 1:j-1$}
         \State $\mathbf{u} \leftarrow \mathbf{u} - 2 \langle \mathbf{\underline{V}}[k, :], \mathbf{u} \rangle_M \mathbf{\underline{V}}[k, :]$
-        \State $\mathbf{\underline{R}}[k, j] \leftarrow \langle \mathbf{\underline{E}}[k, :], u \rangle_M$
+        \State $\mathbf{\underline{R}}[k, j] \leftarrow \langle \mathbf{\underline{E}}[k, :], \mathbf{u} \rangle_M$
         \State $\mathbf{u} \leftarrow \mathbf{u} - \mathbf{\underline{R}}[k, j] \mathbf{\underline{E}}[k, :]$
     \EndFor
     \State $\mathbf{\underline{R}}[j, j] \leftarrow ||\mathbf{u}||_M$
@@ -19,7 +19,7 @@
         \State $\mathbf{\underline{E}}[j, :] \leftarrow \mathbf{\underline{E}}[j, :] (-\alpha / |\alpha|)$
     \EndIf 
     \State $\mathbf{\underline{V}}[j, :] \leftarrow \mathbf{\underline{R}}[j, j] \mathbf{\underline{E}}[j, :] - \mathbf{u}$
-    \State $\mathbf{\underline{V}}[j, :] \leftarrow \mathbf{\underline{V}}[j, :] - \langle \mathbf{\underline{E}}[S+1:j, :], \mathbf{\underline{V}}[j, :] \rangle_M \mathbf{\underline{E}}[S+1:j, :]$
+    \State $\mathbf{\underline{V}}[j, :] \leftarrow \mathbf{\underline{V}}[j, :] - \langle \mathbf{\underline{E}}[S+1:j, :], \mathbf{\underline{V}}[j, :] \rangle_M \mathbf{\underline{E}}[S+1:j, :]$ \Comment{\texttt{numpy} shorthand}
     \State $\sigma \leftarrow ||\mathbf{\underline{V}}[j, :]||_M$
     \If{$\sigma \neq 0$}
         \State $\mathbf{\underline{V}}[j, :] \leftarrow \mathbf{\underline{V}}[j, :] / \sigma$
