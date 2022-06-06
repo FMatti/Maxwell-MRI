@@ -25,7 +25,6 @@
     such as resonant modes that are of interest for problems of this type are discussed.
     Furthermore, the application of the \acrshort{gMRI} algorithm for finding the 
     scattering coefficients of a \acrfull{DMCWF} is studied.
-    % REMINDME! GIVE RESULTS
 \end{abstract}
 
 %\newpage
@@ -73,7 +72,7 @@ the scattering coefficients of a \acrfull{DMCWF}.
 My implementations can be found on \cite{git}. Vectors are printed in \textbf{bold}
 while matrices additionally have an \textbf{\underline{underline}}. 
 Euclidean scalar products are denoted with $\langle \cdot , \cdot \rangle$
-and norms with $||\cdot||$. For simplicity, results are delivered without units
+and norms with $||\cdot||$. The Hermitian transpose is written as $^{H}$. For simplicity, results are delivered without units
 and the angular frequency is referred to simply by frequency.
 
 \newpage
@@ -247,7 +246,7 @@ resonant cavity
     - \omega^2 \int_{\Omega} \epsilon u_z v_z^{\ast}
     = \int_{\partial \Omega} g_z v_z^{\ast} \label{equ:maxwell-weak-resonant-cavity}
 \end{equation}
-% REMINDME! vvv Correct definiton of H1-space?
+
 for an arbitrary $v_z \in H_1(\Omega) = \{v : \Omega \to \mathbb{C},~\text{such that}~\mathbf{v}\in L_2(\mathbb{C}), \nabla v \in L_2(\mathbb{C})^2\}$.
 % Boundary conditions Dirichlet and Neumann (from Monk)
 Now, let $\mathbf{E}$ and $\mathbf{B}$ refer to the electric and magnetic fields inside
@@ -732,12 +731,9 @@ spectral gap \cite{davidePHD}
 \end{equation}
 Usually, values of approximately above $10^{13}$ indicate that the rational surrogate could not
 be built in a stable way and in my implementations the user is informed by a warning.
-% REMINDME! Discuss better conditioning for going route via QR-decompostition
-% instead of Gramian matrix.
 
 \subsubsection{Alternative representations of the surrogate}
 \label{subsubsec:u-ring}
-% -> Model order reduction techniques (u_ring, error computation, ...)
 Denote with $\mathbf{\underline{U}} = [\mathbf{u}(\omega_1), \dots, \mathbf{u}(\omega_S)]$
 the snapshot matrix. Let 
 \begin{equation}
@@ -840,7 +836,7 @@ The system is forced from the inlet at $x=0$ with $g_z(y) = sin(\pi y / L_y)$.
 \label{subsubsec:exploration}
 
 To give the reader an impression of what the solution $\mathbf{u}_z$ to this problem
-looks like, I plot the \acrshort{FEM}-solution at the first and fifth resonant
+looks like, I plot the \acrshort{FEM}-solution at the first and sixth resonant
 frequencies in Figures \ref{fig:rectangular-cavity-mode1} and \ref{fig:rectangular-cavity-mode5}
 respectively. Notice that I type its variable in bold, since it is a large vector with the values
 for each of the \acrshort{DOF}s as its components.
@@ -859,7 +855,7 @@ for each of the \acrshort{DOF}s as its components.
     \centering
     \includegraphics{plots/rectangular_cavity_mode5.pdf}
     \caption{The solution $\mathbf{u}_z$ obtained with the \acrshort{FEM} at the
-    fifth resonant frequency $\omega = 4.675$ of the cavity.}
+    sixth resonant frequency $\omega = 4.675$ of the cavity.}
     \label{fig:rectangular-cavity-mode5}
 \end{figure}
 
@@ -1089,9 +1085,11 @@ convergence behavior may immediately be seen in Figure \ref{fig:rectangular-cubb
 \subsection{Imperfectly conducting boundaries}
 \label{subsec:examples-impedance}
 
-A slight modification of the problem (derived in Section \ref{subsubsec:impedance})
+A slight modification of the exact same problem as before in Section
+\ref{subsec:examples-rectangularcavity} (the derivation of this modification
+is derived in Section \ref{subsubsec:impedance})
 brings us to the example of an imperfectly conducting boundary. At the edge 
-opposite of the inlet (i.e. $x=L_x$), the impedance is set to $\lambda=1$.
+opposite of the inlet (i.e. $x=L_x$), the impedance is first set to $\lambda=1$.
 
 A solution to the system is plotted in Figure \ref{fig:imperfect-conductor-solution}
 and the $||\cdot||_M$-norm for both the \acrshort{FEM} and \acrshort{gMRI}
@@ -1174,8 +1172,7 @@ The effect of the impedance $\lambda$ on the position of the (complex) resonant
 frequencies is visualized in Figure \ref{fig:imperfect-conductor-eigfreqs}.
 For $\lambda \to 0$ we recover a Neumann boundary condition, while for 
 $\lambda \to \infty$, a Dirichlet-type boundary is mimicked.
-% REMINDME! ^^^ a bit vague
-% argmin |Q| only valid in undamped regime
+
 \begin{figure}[ht]
     \centering
     \input{plots/imperfect_conductor_eigfreqs.pgf}
@@ -1269,7 +1266,8 @@ the frequency range $\omega \in [7.257 \times 10^{10}, 7.508 \times 10^{10}]$. B
 \ref{fig:circular-waveguide-scattering}. At somewhat more than four minutes,
 the \acrshort{gMRI} was able to deliver the approximated scattering coefficients
 roughly 25 times faster than the \acrshort{FEM}. Compared to \cite{DMCWF-FrequencySweep},
-the passband is shifted to a slightly lower frequency.
+the passband is similar in shape but slightly shifted towards the left, i.e. lower
+frequencies.
 
 \begin{figure}[ht]
     \centering
