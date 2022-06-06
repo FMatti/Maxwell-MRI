@@ -4,15 +4,27 @@
 ![](https://img.shields.io/badge/requirement-FEniCS-blue?style=flat-square)
 
 # Minimal Rational Interpolation for Time-Harmonic Maxwell's Equations
-Semester project for the computational science and engineering master's program at EPFL.
+First semester project for the computational science and engineering master's program at EPFL.
 
 ## Introduction
-A wide class of problems in physics and engineering concerns itself with the study of the dependence of a model on one of its parameters. Of interest is usually a characteristic quantity that covaries with said parameter. Unless the system allows for an analytical solution, one may usually only find numerical solutions to the system for discrete values of the parameter by e.g. employing the finite element method (FEM). Minimal rational interpolation (MRI) offers a way to locally approximate the continuous dependence of a model on one of its parameters.
+A wide class of problems in physics and engineering concerns itself with studying the dependence of a model on one of its parameters. Of interest is usually a characteristic quantity depending on this parameter. Unless the system allows for an analytical solution, one may usually only find numerical solutions to the system for discrete values of the parameter. Minimal Rational Interpolation (MRI) offers a way to locally approximate vector fields which exhibit a meromorphic dependence on one of their parameters.
 
 ## Implementations
-Built on `numpy` and `scipy`, this repository offers a complete MRI suite for time-harmonic problems in electromagnetism. The engine for obtaining solutions to the partial differential equations governing these problems is `fenics`. 
+Built on `numpy` and `scipy`, this repository offers a complete MRI suite for time-harmonic problems in electromagnetism (so-called Maxwell problems). The finite element engine for obtaining solutions to the partial differential equations governing these problems is [`fenics`](https://fenicsproject.org/).
+
+## Example applications
+Central to this project are time-harmonic Maxwell problems (THMP), whose parameter is the (angular) frequency $\omega$. These problems are governed by the time-harmonic Maxwell's equations. Choosing the quantity of interest to be a vector potential $\mathbf{u}$, these equations reduce to a single curl-curl equation:
+
+$$ \nabla \times (\mu^{-1} \nabla \times \mathbf{u}) - \epsilon \omega^2 \mathbf{u} = \mathbf{j} $$
+
+Three examples for contained in this family of problems are studied:
+
+- The resonant modes of a two-dimensional resonant cavity
+- The two-dimensional cavity with an imperfectly conducting boundary
+- The scattering coefficients of a dual-mode waveguide filter (DMCWF)
 
 ## Quick start
+To demonstrate the usage of the MinimalRationalInterpolation class, I hereafter show the reader a simple and straight forward application: Finding resonant frequencies of the cubic unit cavity in a vacuum with trivial physical units.
 
     git clone https://github.com/FMatti/Maxwell-MRI.git
     cd Maxwell-MRI
@@ -63,18 +75,11 @@ Open the file `quickstart.py` in your preferred python editor, and run the follo
     MRI.compute_surrogate(THMP, greedy=True, omegas=np.linspace(3, 4, 1000))
     print(MRI.get_interpolatory_eigenfrequencies(only_real=True))
        
-which will indeed give the first resonant frequency (3.51230205) of the quadratic unit cavity with one edge acting as an inlet and trivial physical constants.
-
-## Example applications
-Central to this project are time-harmonic Maxwell problems (THMP), whose parameter is the (angular) frequency. These problems are governed by the time-harmonic Maxwell's equations. Choosing the quantity of interest to be a vector potential, these equations reduce to a single curl-curl equation.
-
-Three examples are studied:
-
-- The resonant modes of a two-dimensional resonant cavity
-- The two-dimensional cavity with an imperfectly conducting boundary
-- The scattering coefficients of a dual-mode waveguide filter (DMCWF)
+which will indeed give the first resonant frequency (3.51230205) of the cubic unit cavity with one edge acting as an inlet and trivial physical constants.
 
 ## File structure
+The core of my implementations are located in the `src/` directory. Illustrative jupyter notebooks for each of the example applications mentioned above can be found in the `examples/` directory. 
+
 ```
 Maxwell-MRI
 │   README.md
