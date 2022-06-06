@@ -55,7 +55,7 @@ Open the file `quickstart.py` in your preferred python editor, and run the follo
             return on_boundary and not B_N().inside(x, 'on_boundary')
 
     # Set physical constants
-    one = fen.Expression('1.0', degree=2)
+    mu = fen.Expression('1.0', degree=2)
     eps = fen.Expression('1.0', degree=2)
     j = fen.Expression('0.0', degree=2)
     
