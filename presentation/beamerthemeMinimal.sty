@@ -1,0 +1,143 @@
+\mode<presentation>
+
+%%% PREAMBLE
+
+% Typesetting packages
+\usepackage[T1]{fontenc}
+\usepackage[utf8]{inputenc}
+\usepackage[activate={true,nocompatibility},final,tracking=true,kerning=true,spacing=true,factor=1100,stretch=10,shrink=10]{microtype}
+
+% Font package
+\usepackage{palatino}
+\usepackage{eulervm}
+
+% Color package
+\usepackage{xcolor}
+
+% Tikzpicture package
+\usepackage{tikz}
+
+% Useful packages
+\usepackage{booktabs}
+
+
+%%% COLOR THEME
+
+% Color definitions
+\definecolor{darkblue}{HTML}{2F455C}
+\definecolor{lightblue}{HTML}{1DCDFE}
+
+\definecolor{darkgreen}{HTML}{21D0B2}
+\definecolor{lightgreen}{HTML}{34F5C5}
+
+\definecolor{dark}{HTML}{0D0D0D}
+\definecolor{light}{HTML}{EBEBEB}
+
+% Text color assignments
+\setbeamercolor{title}{fg = white}
+\setbeamercolor{frametitle}{fg = white}
+\setbeamercolor{normal text}{fg = dark}
+
+\setbeamercolor{section in toc}{fg = dark}
+\setbeamercolor{section in toc shaded}{fg = dark}
+
+\setbeamercolor{item}{fg = dark}
+\setbeamercolor{subitem}{fg = dark}
+\setbeamercolor{subsubitem}{fg = dark}
+
+\setbeamercolor{description item}{fg = dark}
+
+\setbeamercolor{caption}{fg = dark}
+\setbeamercolor{caption name}{fg = dark}
+
+% Background color assignments
+\setbeamercolor{background canvas}{bg = white}
+
+% Block color assignments
+\setbeamercolor{block title}{fg = white, bg = dark}
+\setbeamercolor{block body}{bg = dark!10!white}
+
+\setbeamercolor{block title example}{fg = dark, bg = light!40!white}
+\setbeamercolor{block body example}{bg = lightblue!10!white}
+
+\setbeamercolor{block title alerted}{fg = dark, bg = darkgreen!40!white}
+\setbeamercolor{block body alerted}{bg = darkgreen!10!white}
+
+\setbeamercolor{qed symbol}{fg = dark}
+
+% Bullet color assignments
+\setbeamercolor{itemize item}{fg = dark}
+\setbeamercolor{itemize subitem}{fg = dark}
+\setbeamercolor{enumerate item}{fg = dark}
+\setbeamercolor{enumerate subitems}{fg = dark}
+
+%%% FONT THEME
+
+\usefonttheme{professionalfonts}
+\renewcommand\familydefault{\rmdefault}
+
+
+%%% INNER THEME
+
+% Background
+\setbeamertemplate{background}{%
+
+  \begin{tikzpicture}
+
+    \fill[dark] (0, 0) rectangle (\the\paperwidth,\the\paperheight);
+
+    \ifnum \thepage > 1 \relax
+
+      \fill[white] (0, 0) rectangle (\the\paperwidth,\the\paperheight);
+
+    \fi
+
+  \end{tikzpicture}
+}
+
+
+%%% OUTER THEME
+
+% Frametitle formatting
+\setbeamertemplate{frametitle}{
+
+    \begin{beamercolorbox}[wd=\paperwidth, ht=1cm]{}
+
+        \begin{tikzpicture}
+
+            \fill[dark] (0, 0) rectangle (\paperwidth, 1);
+            \node[anchor=west, white, font=\Large] at (0.01\paperwidth, 0.5) {\insertframetitle};
+            \node[anchor=east, white, font=\Large] at (0.99\paperwidth, 0.5) {\insertframenumber};
+
+        \end{tikzpicture}
+
+    \end{beamercolorbox}
+
+}
+
+% Remove navigation symbols
+\setbeamertemplate{navigation symbols}{}
+
+% Title page
+\defbeamertemplate*{title page}{Minimal}[1][]
+{ 
+   \vskip3cm
+    \begin{beamercolorbox}[wd = \paperwidth, leftskip = 0.25\paperwidth, #1]{title}
+
+      \Large\inserttitle
+
+      \begin{tikzpicture}
+        \fill[white] (0, 0) rectangle (0.63\paperwidth, 0.05);
+      \end{tikzpicture}
+
+      \vskip0.3cm
+
+      \large\insertdate\par
+      \large\insertauthor
+
+    \end{beamercolorbox}
+    
+    \vfill
+}
+
+\mode<all>
