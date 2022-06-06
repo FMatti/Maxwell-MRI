@@ -73,8 +73,8 @@ class TestCase(unittest.TestCase):
 
 
     def test_inner_product_THMP_trace(self):
-        x = self.THMP_symmetric.get_solution(tonumpy=True, trace=self.VSL2_trace.get_trace())
-        y = self.THMP_asymmetric.get_solution(tonumpy=True, trace=self.VSL2_trace.get_trace())
+        x = self.THMP_symmetric.get_solution(trace=self.VSL2_trace.get_trace())
+        y = self.THMP_asymmetric.get_solution(trace=self.VSL2_trace.get_trace())
         testing.assert_almost_equal(self.VSL2_trace.inner_product(x, y),
                                     0,
                                     err_msg='incorrect trace inner product')
