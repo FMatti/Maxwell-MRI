@@ -1,0 +1,137 @@
+# -*- coding: utf-8 -*-
+
+import numpy as np
+import matplotlib.pyplot as plt
+
+import fenics as fen
+
+from context import src
+from src.time_harmonic_maxwell_problem import TimeHarmonicMaxwellProblem
+
+class RectangularCavity(TimeHarmonicMaxwellProblem):
+    """
+    Daughter class of TimeHarmonicMaxwellProblem specialized on the
+    two-dimensional resonant cavity.
+
+                                 L_x
+            <------------------------------------------->
+        I   ____________________________________________  ^
+        n   >                                          |  |
+        l   >                                          |  | L_y
+        e   >                                          |  |
+        t   ____________________________________________  v
+
+    Members
+    -------
+    Lx : float
+        Length of the cavity in x-direction.
+    Ly : float
+        Length of the cavity in y-direction.
+    Nx : int
+        Number of subdivisions of domain in x-direction.
+    Ny : int
+        Number of subdivisions of domain in y-direction.
+    (Additional members inherited from TimeHarmonicMaxwellProblem)
+
+    Methods
+    -------
+    plot_solution() : None -> None
+        Plot the solution in a 2d colormap.
+    plot_solution_trace(trace) : fen.Subdomain -> None
+        Plot the solution along a trace.
+    plot_external_solution(u_vec) : np.ndarray -> None
+        Plot an external solution in a 2d colormap.
+    plot_g_N() : None -> None
+        Plot the Neumann boundary condition.
+    get_analytical_eigenfrequencies(a, b) : float, float -> list
+        Return the analytical eigenfrequencies in the interval [a, b]
+    (Additional methods inherited from TimeHarmonicMaxwellProblem)
+
+    Usage
+    -----
+    Rectangular 5x1 cavity with 101x21 subdivisions and Neumann (inlet) datum 1. 
+    >>> Lx, Ly = 5.0, 1.0
+    >>> Nx, Ny = 101, 21
+    >>> g_N = fen.Expression('1.0', degree=2)
+    >>> RC = RectangularCavity(Lx=Lx, Ly=Ly, Nx=Nx, Ny=Ny, g_N=g_N)
+    >>> RC.setup()
+    """
+    def __init__(self, Lx, Ly, Nx, Ny, g_N):
+        self.Lx = Lx
+        self.Ly = Ly
+        self.Nx = Nx
+        self.Ny = Ny
+        mesh = fen.RectangleMesh(fen.Point(0.0, 0.0), fen.Point(self.Lx, self.Ly), Nx, Ny, 'crossed')
+        V = fen.FunctionSpace(mesh, 'P', 1)
+
+        # Trivial physical constants
+        mu = fen.Expression('1.0', degree=2)
+        eps = fen.Expression('1.0', degree=2)
+        j = fen.Expression('0.0', degree=2)
+
+        # Neumann boundary at x=0
+        class B_N(fen.SubDomain):
+            def inside(self_, x, on_boundary):
+                return on_boundary and fen.near(x[0], 0.0) and x[1]>0.0 and x[1]<self.Ly
+
+        # Dirichlet boundary everywhere else
+        class B_D(fen.SubDomain):
+            def inside(self, x, on_boundary):
+                return on_boundary and not B_N().inside(x, 'on_boundary')
+
+        # Dirichlet boundary condition
+        u_D = fen.Expression('0.0', degree=2)
+
+        TimeHarmonicMaxwellProblem.__init__(self, V, mu, eps, j, B_D(), u_D, B_N(), g_N)
+
+    def plot_solution(self, **kwargs):
+        """Plot the solution in a 2d colormap"""
+        solution = self.get_solution()
+        omega = self.get_frequency()
+        for i, u in enumerate(solution):
+            self.plot_external_solution(u, contains_boundary_values=True, omega=omega[i], **kwargs)
+
+    def plot_solution_trace(self, trace, **kwargs):
+        """Plot solution along a trace"""
+        solution = self.get_solution(trace=trace)
+        for i, u_trace in enumerate(solution):
+            plt.figure()
+            plt.title('Solution on trace at frequency \u03C9 = {:.3f} rad/s'.format(self.omega[i]))
+            all_coords = self.V.tabulate_dof_coordinates()
+            trace_coords = np.array([x for x in all_coords if trace.inside(x, 'on_boundary')])
+            plt.plot(trace_coords[:, 1], u_trace, **kwargs)
+            plt.show()
+
+    def plot_external_solution(self, u_vec, contains_boundary_values=False, omega=None, **kwargs):
+        """Plot the external solution u_vec in a 2d colormap"""
+        plt.figure()
+        if omega is not None:
+            plt.title('Solution to system at frequency \u03C9 = {:.3f} rad/s'.format(omega))
+        
+        # Insert Dirichlet boundary values if they were are not already contained
+        u_func = fen.Function(self.V)
+        if not contains_boundary_values:
+            u_vec = self.insert_boundary_values(u_vec)
+        u_func.vector()[:] = u_vec
+        fig = fen.plot(u_func, **kwargs)
+        plt.colorbar(fig, orientation='horizontal')
+        plt.show()
+
+    def plot_g_N(self, **kwargs):
+        """Plot the Neumann boundary condition"""
+        plt.figure()
+        all_coords = self.V.tabulate_dof_coordinates()
+        inlet_coords = np.array([x for x in all_coords if self.B_N.inside(x, 'on_boundary')])
+        g_N_coords = [self.g_N(x) for x in inlet_coords]
+        plt.plot(inlet_coords[:, 1], g_N_coords, **kwargs)
+        plt.ylabel('g_N')
+        plt.xlim(0.0, self.Ly)
+        plt.show()
+
+    def get_analytical_eigenfrequencies(self, a, b):
+        """Return the analytical eigenfrequencies in the interval [a, b]"""
+        freqs = lambda n, m: np.pi*pow(((n+0.5)/self.Lx)**2 + (m/self.Ly)**2, 0.5)
+        n_max = np.ceil(b * self.Lx / np.pi - 0.5).astype('int')
+        m_max = np.ceil(b * self.Ly / np.pi).astype('int')
+        eigs = np.unique(np.frompyfunc(freqs, 2, 1).outer(range(n_max+1), range(1, m_max+1)))
+        return [e for e in eigs if a <= e and e <= b]

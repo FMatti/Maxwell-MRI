@@ -86,7 +86,17 @@ Maxwell-MRI
 |   LICENSE
 |
 └───examples
-│   └───circular_waveguide_filter
+|   |
+│   └───1_resonant_cavity
+|   |   |   resonant_cavity.ipynb               (visualization and demonstration notebook)
+|   |   |   rectangular_cavity.py               (rectangular cavities)
+|   |   |   two_dimensional_cavity.py           (generic 2D cavities)
+|   |
+│   └───2_imperfect_conductor
+|   |   |   imperfect_conductor.ipynb           (visualization and demonstration notebook)
+|   |   |   imperfect_conductor.py              (rectangular cavity with an imperfect boundary)
+|   |
+│   └───3_circular_waveguide_filter
 |   |   └───model
 |   |   |   |   DMCWF.geo                       (Gmsh work file)
 |   |   |   |   DMCWF.step                      (3D CAD model)
@@ -94,15 +104,9 @@ Maxwell-MRI
 |   |   |
 |   |   |   circular_waveguide_filter.ipynb     (visualization and demonstration notebook)
 |   |   |   circular_waveguide_filter.py        (engine for simulating the DMCWF)
-|   |
-│   └───imperfect_conductor
-|   |   |   imperfect_conductor.ipynb           (visualization and demonstration notebook)
-|   |   |   imperfect_conductor.py              (rectangular cavity with an imperfect boundary)
-|   |
-│   └───resonant_cavity
-|   |   |   resonant_cavity.ipynb               (visualization and demonstration notebook)
-|   |   |   rectangular_cavity.py               (rectangular cavities)
-|   |   |   two_dimensional_cavity.py           (generic 2D cavities)
+|
+└───presentation
+|   |   ...
 |
 └───report
 |   |   ...

@@ -155,7 +155,7 @@ dmypy.json
 *.msh
 
 # Modeling Directories
-examples/circular_waveguide_filter/model
+examples/3_circular_waveguide_filter/model
 
 # Snapshots
 *.obj
