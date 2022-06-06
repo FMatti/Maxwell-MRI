@@ -1,4 +1,4 @@
-![](https://img.shields.io/badge/status-in_development-orange?style=flat-square)
+![](https://img.shields.io/badge/status-finished-green?style=flat-square)
 ![](https://img.shields.io/badge/licence-MIT-green?style=flat-square)
 ![](https://img.shields.io/badge/language-Python-blue?style=flat-square)
 ![](https://img.shields.io/badge/requirement-FEniCS-blue?style=flat-square)
