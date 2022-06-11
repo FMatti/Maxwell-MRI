@@ -15,11 +15,41 @@
 
 \end{frame}
 
+\begin{frame}{Primer}
+
+    \onslide<1->{
+    To locally approximate
+    \begin{equation*}
+        \mathbf{u} : \mathbb{C} \ni \omega \mapsto \mathbf{u}(\omega)
+    \end{equation*}
+    }
+    \onslide<2->{
+    compute
+    \begin{equation*}
+        \mathbf{u}(\omega_1), \mathbf{u}(\omega_2), \dots, \mathbf{u}(\omega_S) \hspace{30pt} \text{(Snapshots)}
+    \end{equation*}
+    }
+    \onslide<3->{
+    and build
+    \begin{equation*}
+        \mathbf{\tilde{u}}(\omega) = \frac{\mathbf{P}(\omega)}{q(\omega)} \hspace{30pt} \text{(Rational surrogate)}
+    \end{equation*}
+    }
+    \onslide<3->{
+    such that
+    \begin{equation*}
+        \mathbf{\tilde{u}}(\omega) \approx \mathbf{u}(\omega)
+    \end{equation*}
+    close to $\omega_1, \omega_2, \dots, \omega_S$.
+    }
+
+\end{frame}
+
 \begin{frame}{Outline}
 
     \begin{itemize}
         \item<1-> Problem formulation
-        \item<2-> Finite element approximation
+        \item<2-> Finite element method
         \item<3-> Minimal rational interpolation
         \item<4-> Example applications
         \item<5-> Conclusion and outlook
@@ -29,33 +59,233 @@
 
 \begin{frame}{Problem formulation}
 
+    \onslide<1->{
     Time-harmonic vector potential $\mathbf{u}(\mathbf{x}, t) = \mathbf{u}(\mathbf{x})\exp(i \omega t)$.
-
     \begin{align*}
         \mathbf{B} &= \nabla \times \mathbf{u} &\text{(Magnetic field)}\\
         \mathbf{E} &= - i \omega \mathbf{u} &\text{(Electric field)}
     \end{align*}
+    }
+    \onslide<2->{
+    Maxwell's equation
+    \begin{align*}
+        \nabla \times (\mu^{-1} \mathbf{B}) - \partial_t (\epsilon \mathbf{E}) = \mathbf{j}
+    \end{align*}
+    }
+    \begin{block}<3->{Time-harmonic potential equation}
 
-    \begin{block}<2->{Time-harmonic potential equation}
-        
         \begin{equation}
             \nabla \times (\mu^{-1} \nabla \times \mathbf{u}) - \epsilon \omega^2 \mathbf{u} = \mathbf{j}
-            \label{equ:gauss-bonnet}
+            \label{equ:maxwell-potential}
         \end{equation}
 
     \end{block}
 
 \end{frame}
 
-\begin{frame}{Example applications}
+%%% FINITE ELEMENT METHOD
+\begin{frame}{Finite element method | Weak formulation}
+
+    \onslide<1->{
+    \begin{equation*}
+        H_{\text{curl}}(\Omega) = \{ \mathbf{v}: \Omega \to \mathbb{C}^3,~\text{such that}~\mathbf{v} \in L_2(\mathbb{C})^3,~\nabla \times \mathbf{v} \in L_2(\mathbb{C})^3 \}
+    \end{equation*}
+        }
+
+    \begin{block}<2->{Weak formulation of the time-harmonic potential equation}
+        Find $\mathbf{u} \in H_{\text{curl}}(\Omega)$, such that
+        \begin{equation}
+        \int_{\Omega} \langle {\mu^{-1} \nabla \times \mathbf{u}}, \nabla \times \mathbf{v} \rangle
+        - \omega^2 \int_{\Omega} \epsilon \langle \mathbf{u}, \mathbf{v} \rangle
+        = \int_{\Omega} \langle \mathbf{j}, \mathbf{v} \rangle
+        + \int_{\partial \Omega} \langle \mathbf{g}, \mathbf{v} \rangle
+        \label{equ:maxwell-weak}
+        \end{equation}
+        for all $\mathbf{v} \in H_{\text{curl}}$, where $\mathbf{g} = ({\mu^{-1} \nabla \times \mathbf{u}}) \times \mathbf{n}$.
+    \end{block}
+
+\end{frame}
+
+\begin{frame}{Finite element method | Boundary conditions}
+
+    \onslide<1->{
+        Perfectly conducting boundary
+        \begin{equation*}
+            \mathbf{u} \times \mathbf{n} = 0,~\text{on}~\Gamma_D
+        \end{equation*}
+    }
+    \onslide<2->{
+        Inlet, i.e. $\mathbf{B}$ is given along $\Gamma_N$
+        \begin{equation*}
+            \mathbf{g} = (\mu^{-1} \mathbf{B}) \times \mathbf{n},~\text{on}~\Gamma_N
+        \end{equation*}
+    }
+    \onslide<3->{
+        Imperfectly conducting boundary
+        \begin{equation*}
+            \mathbf{g} = i \omega \lambda (\mathbf{n} \times \mathbf{u}) \times \mathbf{n},~\text{on}~\Gamma_I
+        \end{equation*}
+    }
+
+\end{frame}
+
+\begin{frame}{Finite element method | FEniCS}
+
+    TODO
+
+\end{frame}
+
+\begin{frame}{Minimal rational interpolation | Surrogate}
+
+    \onslide<1->{
+        Rational surrogate
+        \begin{equation*}
+            \mathbf{\tilde{u}}(\omega) = \sum_{i=1}^S \frac{\mathbf{p}_i}{\omega - \omega_i} / \sum_{i=1}^S \frac{q_i}{\omega - \omega_i}
+        \end{equation*}
+        in barycentric coordinates with support points $\omega_1$, $\omega_2$, \dots, $\omega_3$.
+    }
+    \onslide<2->{
+        Interpolation property
+        \begin{equation*}
+            \mathbf{\tilde{u}}(\omega_i) = \mathbf{u}(\omega_i),~\forall i \in \{ 1, 2, \dots, S \}
+        \end{equation*}
+    }
+
+\end{frame}
+
+\begin{frame}{Minimal rational interpolation | MRI algorithm}
+
+    Given snapshots $\mathbf{u}(\omega_1)$, $\mathbf{u}(\omega_2)$, \dots, $\mathbf{u}(\omega_S)$:
+    \begin{enumerate}
+        \item<2-> Compute the Gramian matrix $\mathbf{\underline{G}}$ with $g_{ij} = \langle \mathbf{u}(\omega_i), \mathbf{u}(\omega_j) \rangle$, $i,j \in \{1, 2, \dots, S\}$
+        \item<3-> Compute the singular value decomposition $\mathbf{\mathbf{G}} = \mathbf{\underline{V}}~\boldsymbol{\underline{\Sigma}}~\mathbf{\underline{V}}^H$
+        \item<4-> Define $\mathbf{q} = (q_1, q_2, \dots, q_S)^T = \mathbf{\underline{V}}[:, S]$
+        \item<5-> Define $\mathbf{\tilde{u}}(\omega) = \mathbf{P}(\omega) / Q(\omega)$ with $\mathbf{P}(\omega) = \sum_{j=1}^S \frac{q_j \mathbf{u}(\omega_j)}{\omega - \omega_j}$ and $Q(\omega) = \sum_{j=1}^S \frac{q_j}{\omega - \omega_j}$
+    \end{enumerate}
+
+\end{frame}
+
+\begin{frame}{Minimal rational interpolation | gMRI algorithm}
+    
+    \begin{enumerate}
+        \item<1-> Define $\Omega_{\text{test}} = \{\omega_1, \omega_2, \dots, \omega_M\}$ as candidate support points
+        \item<2-> Build surrogate $\mathbf{\tilde{u}}_{t}$ with initial support points $\omega_1, \omega_2, \cdot, \omega_t \in \Omega_{\text{test}}$
+        \item<3-> Iteratively add a new support point $\omega_{t+1} = argmin_{\omega \in \Omega_{\text{test}}} |Q_t(\omega)|$ to build $\mathbf{\tilde{u}}_{t+1}$ based on $\mathbf{u}(\omega_1), \mathbf{u}(\omega_2), \dots, \mathbf{u}(\omega_{t+1})$
+        \item<4-> Stop when relative error $||\mathbf{u}_{t+1} - \mathbf{\tilde{u}}_{t+1}|| / ||\mathbf{u}_{t+1}||$ is small enough
+    \end{enumerate}
+
+\end{frame}
+
+\begin{frame}{Minimal rational interpolation | Tweak 1}
+    
+    Householder, sequential
+
+\end{frame}
+
+\begin{frame}{Minimal rational interpolation | Tweak 2}
+    
+    Norms
+
+\end{frame}
+
+\begin{frame}{Minimal rational interpolation | Resonances}
+
+    We want to find $\omega$, such that
+    \begin{equation*}
+        0 = Q(\omega) = \sum_{i=1}^S \frac{q_i}{\omega - \omega_i}
+    \end{equation*}
+    Equivalently eigenvalue problem
+    \begin{equation*}
+        \mathbf{\underline{A}} \mathbf{w} = \omega \mathbf{\underline{B}} \mathbf{w}
+    \end{equation*}
+    with
+    \begin{equation*}
+        \mathbf{\underline{A}} = \begin{pmatrix}
+            0 & q_1 & q_2 & \dots & q_S \\
+            1 & \omega_1 & & & \\
+            1 & & \omega_2 & & \\
+            \vdots & & & \ddots & \\
+            1 & & & & \omega_S
+        \end{pmatrix} ~~\text{and}~~
+        \mathbf{\underline{B}} = \begin{pmatrix}
+            0 & & & & \\
+            & 1 & & & \\
+            & & 1 & & \\ 
+            \vdots & & & \ddots & \\ 
+            & & & & 1
+        \end{pmatrix}
+    \end{equation*}
+
+\end{frame}
+
+\begin{frame}{Example application 1 | Rectangular cavity}
 
     \begin{figure}
+        \centering
+        \scalebox{0.9}{\input{../report/figures/rectangular_cavity.tex}}
+    \end{figure}
+    \vspace{-45pt}
+    \begin{figure}
+        \centering
         \includegraphics[scale=0.9]{../report/plots/rectangular_cavity_mode1.pdf}
     \end{figure}
-    \vspace{-30pt}
+
+\end{frame}
+
+\begin{frame}{Example application 1 | Resonances}
+
     \begin{figure}
-        \includegraphics[scale=0.9]{../report/plots/rectangular_cavity_mode5.pdf}
+        \centering
+        \scalebox{0.8}{\input{../report/plots/rectangular_cavity_suppression.pgf}}
     \end{figure}
+
+\end{frame}
+
+\begin{frame}{Example application 2 | Imperfect conductor}
+
+    \begin{figure}
+        \centering
+        \scalebox{0.8}{\input{../report/plots/imperfect_conductor_norms.pgf}}
+    \end{figure}
+
+\end{frame}
+
+\begin{frame}{Example application 2 | Resonances}
+
+    \begin{figure}
+        \centering
+        \scalebox{0.8}{\input{../report/plots/imperfect_conductor_eigfreqs.pgf}}
+    \end{figure}
+
+\end{frame}
+
+\begin{frame}{Example application 3 | DMCWF}
+
+    Dual-mode circular waveguide filter
+
+    \begin{figure}
+        \centering
+        \includegraphics[scale=0.18, trim=12cm 0.2cm 15cm 0.2cm, clip]{../report/figures/DMCWF_surfacemesh.pdf}
+    \end{figure}
+
+\end{frame}
+
+\begin{frame}{Example application 3 | Scattering coefficients}
+
+    \begin{figure}
+        \centering
+        \scalebox{0.8}{\input{../report/plots/circular_waveguide_scattering.pgf}}
+    \end{figure}
+
+\end{frame}
+
+\begin{frame}{Conclusion and outlook}
+
+    \begin{itemize}
+        \item<1-> xy
+        \item<2-> xy
+        \item<3-> DMCWF exact dimensions and reference
+    \end{itemize}
 
 \end{frame}
 
