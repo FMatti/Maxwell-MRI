@@ -101,7 +101,6 @@ Maxwell-MRI
 |   |   |   |   DMCWF.geo                       (Gmsh work file)
 |   |   |   |   DMCWF.step                      (3D CAD model)
 |   |   |   |   DMCWF.xml                       (final mesh)
-|   |   |
 |   |   |   circular_waveguide_filter.ipynb     (visualization and demonstration notebook)
 |   |   |   circular_waveguide_filter.py        (engine for simulating the DMCWF)
 |
