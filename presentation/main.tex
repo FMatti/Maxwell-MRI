@@ -7,6 +7,8 @@
 
 \usetheme{Minimal}
 
+% REMINDME! References.
+
 \begin{document}
 
 \begin{frame}[noframenumbering]
@@ -22,25 +24,18 @@
     \begin{equation*}
         \mathbf{u} : \mathbb{C} \ni \omega \mapsto \mathbf{u}(\omega)
     \end{equation*}
-    }
-    \onslide<2->{
-    compute
+    }\onslide<2->{
+    compute the snapshots
     \begin{equation*}
-        \mathbf{u}(\omega_1), \mathbf{u}(\omega_2), \dots, \mathbf{u}(\omega_S) \hspace{30pt} \text{(Snapshots)}
+        \mathbf{u}(\omega_1), \mathbf{u}(\omega_2), \dots, \mathbf{u}(\omega_S)
     \end{equation*}
-    }
-    \onslide<3->{
-    and build
+    }\onslide<3->{
+    and build the rational surrogate
     \begin{equation*}
-        \mathbf{\tilde{u}}(\omega) = \frac{\mathbf{P}(\omega)}{q(\omega)} \hspace{30pt} \text{(Rational surrogate)}
+        \mathbf{\tilde{u}}(\omega) = \frac{\mathbf{P}(\omega)}{Q(\omega)}
     \end{equation*}
-    }
-    \onslide<3->{
-    such that
-    \begin{equation*}
-        \mathbf{\tilde{u}}(\omega) \approx \mathbf{u}(\omega)
-    \end{equation*}
-    close to $\omega_1, \omega_2, \dots, \omega_S$.
+    such that $\mathbf{\tilde{u}}(\omega) \approx \mathbf{u}(\omega)$ close to
+    $\omega_1, \omega_2, \dots, \omega_S$.
     }
 
 \end{frame}
@@ -48,11 +43,11 @@
 \begin{frame}{Outline}
 
     \begin{itemize}
-        \item<1-> Problem formulation
-        \item<2-> Finite element method
-        \item<3-> Minimal rational interpolation
-        \item<4-> Example applications
-        \item<5-> Conclusion and outlook
+        \item Problem formulation
+        \item Finite element method
+        \item Minimal rational interpolation
+        \item Example applications
+        \item Conclusion and outlook
     \end{itemize}
 
 \end{frame}
@@ -71,14 +66,12 @@
     \begin{align*}
         \nabla \times (\mu^{-1} \mathbf{B}) - \partial_t (\epsilon \mathbf{E}) = \mathbf{j}
     \end{align*}
-    }
+    }%
     \begin{block}<3->{Time-harmonic potential equation}
-
-        \begin{equation}
+        \begin{equation*}
             \nabla \times (\mu^{-1} \nabla \times \mathbf{u}) - \epsilon \omega^2 \mathbf{u} = \mathbf{j}
             \label{equ:maxwell-potential}
-        \end{equation}
-
+        \end{equation*}
     \end{block}
 
 \end{frame}
@@ -88,19 +81,18 @@
 
     \onslide<1->{
     \begin{equation*}
-        H_{\text{curl}}(\Omega) = \{ \mathbf{v}: \Omega \to \mathbb{C}^3,~\text{such that}~\mathbf{v} \in L_2(\mathbb{C})^3,~\nabla \times \mathbf{v} \in L_2(\mathbb{C})^3 \}
+        H_{\text{curl}}(\Omega) = \{ \mathbf{v}: \Omega \to \mathbb{C}^3,~\text{such that}~\mathbf{v} \in L_2(\Omega)^3,~\nabla \times \mathbf{v} \in L_2(\Omega)^3 \}
     \end{equation*}
-        }
-
+    }%
     \begin{block}<2->{Weak formulation of the time-harmonic potential equation}
         Find $\mathbf{u} \in H_{\text{curl}}(\Omega)$, such that
-        \begin{equation}
+        \begin{equation*}
         \int_{\Omega} \langle {\mu^{-1} \nabla \times \mathbf{u}}, \nabla \times \mathbf{v} \rangle
         - \omega^2 \int_{\Omega} \epsilon \langle \mathbf{u}, \mathbf{v} \rangle
         = \int_{\Omega} \langle \mathbf{j}, \mathbf{v} \rangle
         + \int_{\partial \Omega} \langle \mathbf{g}, \mathbf{v} \rangle
         \label{equ:maxwell-weak}
-        \end{equation}
+        \end{equation*}
         for all $\mathbf{v} \in H_{\text{curl}}$, where $\mathbf{g} = ({\mu^{-1} \nabla \times \mathbf{u}}) \times \mathbf{n}$.
     \end{block}
 
@@ -111,27 +103,45 @@
     \onslide<1->{
         Perfectly conducting boundary
         \begin{equation*}
-            \mathbf{u} \times \mathbf{n} = 0,~\text{on}~\Gamma_D
+            \mathbf{u} \times \mathbf{n} = \mathbf{0},~\text{on}~\Gamma_D
         \end{equation*}
-    }
-    \onslide<2->{
-        Inlet, i.e. $\mathbf{B}$ is given along $\Gamma_N$
+    }\onslide<2->{
+        Inlet, where e.g. $\mathbf{B}$ is known along $\Gamma_N$
         \begin{equation*}
             \mathbf{g} = (\mu^{-1} \mathbf{B}) \times \mathbf{n},~\text{on}~\Gamma_N
         \end{equation*}
-    }
-    \onslide<3->{
+    }\onslide<3->{
         Imperfectly conducting boundary
         \begin{equation*}
             \mathbf{g} = i \omega \lambda (\mathbf{n} \times \mathbf{u}) \times \mathbf{n},~\text{on}~\Gamma_I
         \end{equation*}
-    }
+    }\begin{tikzpicture}[scale=0.7, every node/.style={scale=0.7}]
+        \fill[white] (-7.5, -1) rectangle (7.5, 3);
+        \node at (3, 0) {$\int_{\Omega} \langle {\mu^{-1} \nabla \times \mathbf{u}}, \nabla \times \mathbf{v} \rangle
+        - \omega^2 \int_{\Omega} \epsilon \langle \mathbf{u}, \mathbf{v} \rangle
+        = \int_{\Omega} \langle \mathbf{j}, \mathbf{v} \rangle
+        + \int_{\partial \Omega} \langle \mathbf{g}, \mathbf{v} \rangle$};
+    \end{tikzpicture}
 
 \end{frame}
 
-\begin{frame}{Finite element method | FEniCS}
-
-    TODO
+\begin{frame}{Finite element method | Vertex basis}
+    \onslide<1->{
+        FEniCS is used to obtain FEM solutions of the form
+        \begin{equation*}
+            \mathbf{\bar{u}} = (\bar{u}_1, \bar{u}_2, \dots, \bar{u}_N)
+        \end{equation*}
+        where $N$ is the number of degrees of freedom.
+    }\onslide<2->{
+        Inner product in this representation is 
+        \begin{equation*}
+            \langle \mathbf{\bar{u}}, \mathbf{\bar{v}} \rangle_M = \mathbf{\bar{u}}^H \mathbf{\underline{M}} \mathbf{\bar{v}} \approx \int_{\Omega} \langle \mathbf{u}, \mathbf{v} \rangle
+        \end{equation*}
+        and the norm 
+        \begin{equation*}
+           || \mathbf{\bar{u}} ||_M = \sqrt{\langle \mathbf{\bar{u}}, \mathbf{\bar{u}} \rangle_M}  \approx || \mathbf{u} ||_{L_2(\Omega)}
+        \end{equation*}
+    }
 
 \end{frame}
 
@@ -140,10 +150,11 @@
     \onslide<1->{
         Rational surrogate
         \begin{equation*}
-            \mathbf{\tilde{u}}(\omega) = \sum_{i=1}^S \frac{\mathbf{p}_i}{\omega - \omega_i} / \sum_{i=1}^S \frac{q_i}{\omega - \omega_i}
+            \mathbf{\tilde{u}}(\omega) = \frac{\mathbf{P}(\omega)}{Q(\omega)} = \sum_{i=1}^S \frac{\mathbf{p}_i}{\omega - \omega_i} / \sum_{i=1}^S \frac{q_i}{\omega - \omega_i}
         \end{equation*}
         in barycentric coordinates with support points $\omega_1$, $\omega_2$, \dots, $\omega_3$.
     }
+    \vspace{20pt}
     \onslide<2->{
         Interpolation property
         \begin{equation*}
@@ -155,36 +166,97 @@
 
 \begin{frame}{Minimal rational interpolation | MRI algorithm}
 
-    Given snapshots $\mathbf{u}(\omega_1)$, $\mathbf{u}(\omega_2)$, \dots, $\mathbf{u}(\omega_S)$:
-    \begin{enumerate}
-        \item<2-> Compute the Gramian matrix $\mathbf{\underline{G}}$ with $g_{ij} = \langle \mathbf{u}(\omega_i), \mathbf{u}(\omega_j) \rangle$, $i,j \in \{1, 2, \dots, S\}$
-        \item<3-> Compute the singular value decomposition $\mathbf{\mathbf{G}} = \mathbf{\underline{V}}~\boldsymbol{\underline{\Sigma}}~\mathbf{\underline{V}}^H$
-        \item<4-> Define $\mathbf{q} = (q_1, q_2, \dots, q_S)^T = \mathbf{\underline{V}}[:, S]$
-        \item<5-> Define $\mathbf{\tilde{u}}(\omega) = \mathbf{P}(\omega) / Q(\omega)$ with $\mathbf{P}(\omega) = \sum_{j=1}^S \frac{q_j \mathbf{u}(\omega_j)}{\omega - \omega_j}$ and $Q(\omega) = \sum_{j=1}^S \frac{q_j}{\omega - \omega_j}$
-    \end{enumerate}
+    \begin{block}{Minimal rational interpolation (MRI)}
+        Given snapshots $\mathbf{u}(\omega_1)$, $\mathbf{u}(\omega_2)$, \dots, $\mathbf{u}(\omega_S)$:
+        \begin{enumerate}
+            \item<2-> Compute the Gramian matrix $\mathbf{\underline{G}}$ with entries $g_{ij} = \langle \mathbf{u}(\omega_i), \mathbf{u}(\omega_j) \rangle$, $i,j \in \{1, 2, \dots, S\}$
+            \item<3-> Compute the singular value decomposition $\mathbf{\underline{G}} = \mathbf{\underline{V}}~\boldsymbol{\underline{\Sigma}}~\mathbf{\underline{V}}^H$
+            \item<4-> Define $\mathbf{q} = (q_1, q_2, \dots, q_S)^T = \mathbf{\underline{V}}[:, S]$
+            \item<5-> Define $\mathbf{\tilde{u}}(\omega) = \mathbf{P}(\omega) / Q(\omega)$ with 
+            \begin{equation*}
+                \mathbf{P}(\omega) = \sum_{j=1}^S \frac{q_j \mathbf{u}(\omega_j)}{\omega - \omega_j}~~\text{and}~~Q(\omega) = \sum_{j=1}^S \frac{q_j}{\omega - \omega_j}
+            \end{equation*}
+        \end{enumerate}
+    \end{block}
 
 \end{frame}
 
 \begin{frame}{Minimal rational interpolation | gMRI algorithm}
     
-    \begin{enumerate}
-        \item<1-> Define $\Omega_{\text{test}} = \{\omega_1, \omega_2, \dots, \omega_M\}$ as candidate support points
-        \item<2-> Build surrogate $\mathbf{\tilde{u}}_{t}$ with initial support points $\omega_1, \omega_2, \cdot, \omega_t \in \Omega_{\text{test}}$
-        \item<3-> Iteratively add a new support point $\omega_{t+1} = argmin_{\omega \in \Omega_{\text{test}}} |Q_t(\omega)|$ to build $\mathbf{\tilde{u}}_{t+1}$ based on $\mathbf{u}(\omega_1), \mathbf{u}(\omega_2), \dots, \mathbf{u}(\omega_{t+1})$
-        \item<4-> Stop when relative error $||\mathbf{u}_{t+1} - \mathbf{\tilde{u}}_{t+1}|| / ||\mathbf{u}_{t+1}||$ is small enough
-    \end{enumerate}
+    \begin{block}{Greedy minimal rational interpolation (gMRI)}
+        Given $\Omega_{\text{test}} = \{\omega_1, \omega_2, \dots, \omega_T\}$ as candidate support points:
+        \begin{enumerate}
+            \item<1-> Build initial surrogate $\mathbf{\tilde{u}}_{t}$ with some initial support points $\omega_1, \omega_2, \dots, \omega_t \in \Omega_{\text{test}}$ (usually smallest and largest element)
+            \item<2-> Iteratively add a new support point
+            \begin{equation*}
+                \omega_{t+1} = argmin_{\omega \in \Omega_{\text{test}}} |Q_t(\omega)|
+            \end{equation*}
+            to build $\mathbf{\tilde{u}}_{t+1}$ based on $\mathbf{u}(\omega_1),
+            \mathbf{u}(\omega_2), \dots, \mathbf{u}(\omega_{t+1})$
+            \item<3-> Stop when relative error 
+            \begin{equation*}
+                ||\mathbf{u}(\omega_{t+1}) - \mathbf{\tilde{u}}_{t+1}(\omega_{t+1})||_M / ||\mathbf{u}(\omega_{t+1})||_M
+            \end{equation*}
+            is small enough
+        \end{enumerate}
+    \end{block}
 
 \end{frame}
 
 \begin{frame}{Minimal rational interpolation | Tweak 1}
     
-    Householder, sequential
-
+    \onslide<1->{
+        With the QR-decomposition of the snapshot matrix $\mathbf{\underline{U}} = [\mathbf{u}(\omega_1), \dots, \mathbf{u}(\omega_S)]$.
+        \begin{equation*}
+            \mathbf{\underline{U}} = \mathbf{\underline{Q}}~\mathbf{\underline{R}}
+        \end{equation*}
+        the Gramian matrix can be expressed as
+        \begin{equation*}
+            \mathbf{\underline{G}} = \mathbf{\underline{R}}^H \mathbf{\underline{R}}
+        \end{equation*}
+    }
+    \begin{itemize}
+        \item<2-> $\mathbf{\underline{G}}$ and $\mathbf{\underline{R}}$ have
+        the same right-singular vector (exactly what is needed for MRI)
+        \item<3-> $\mathbf{\underline{R}}$ can be built sequentially (modified
+        Householder triangularization for gMRI)
+    \end{itemize}
+    
 \end{frame}
 
 \begin{frame}{Minimal rational interpolation | Tweak 2}
     
-    Norms
+    \onslide<1->{
+        Efficient way of storing the surrogate ($\mathbf{e}_j$ canonical basis vector)
+        \begin{equation*}
+            \accentset{\circ}{\mathbf{u}}(\omega) = \sum_{j=1}^S \frac{q_j \mathbf{e}_j}{\omega - \omega_j}
+            / \sum_{j=1}^S \frac{q_j}{\omega - \omega_j}
+        \end{equation*}
+    }
+    \onslide<2->{
+        Can recover the original surrogate
+        \begin{equation*}
+            \mathbf{\tilde{u}}(\omega) = \mathbf{\underline{U}} \accentset{\circ}{\mathbf{u}}(\omega)
+        \end{equation*}
+    }
+\end{frame}
+
+\begin{frame}{Minimal rational interpolation | Tweak 3}
+    
+    \onslide<1->{
+        Neat helper quantity ($\mathbf{r}_j = \mathbf{\underline{R}}[:, S]$ from QR-decomposition)
+        \begin{equation*}
+            \mathbf{\hat{u}}(\omega) = \sum_{j=1}^S \frac{q_j \mathbf{r}_j}{\omega - \omega_j}
+            / \sum_{j=1}^S \frac{q_j}{\omega - \omega_j}
+        \end{equation*}
+    }
+    \onslide<2->{
+        Proposed way of approximating relative error in gMRI
+        \begin{equation*}
+            \frac{||\mathbf{u}_{t+1} - \mathbf{\tilde{u}}_t(\omega_{t+1})||_M}{||\mathbf{u}_{t+1}||_M}
+            \approx \frac{||\mathbf{r}_{t+1} - \mathbf{\hat{u}}_t(\omega_{t+1})||}{||\mathbf{\hat{u}_t}(\omega_{t+1})||}
+        \end{equation*}
+    }
 
 \end{frame}
 
@@ -194,7 +266,7 @@
     \begin{equation*}
         0 = Q(\omega) = \sum_{i=1}^S \frac{q_i}{\omega - \omega_i}
     \end{equation*}
-    Equivalently eigenvalue problem
+    Equivalent eigenvalue problem
     \begin{equation*}
         \mathbf{\underline{A}} \mathbf{w} = \omega \mathbf{\underline{B}} \mathbf{w}
     \end{equation*}
@@ -282,9 +354,10 @@
 \begin{frame}{Conclusion and outlook}
 
     \begin{itemize}
-        \item<1-> xy
-        \item<2-> xy
-        \item<3-> DMCWF exact dimensions and reference
+        \item<1-> Speed and efficiency
+        \item<2-> Finding resonances made much easier
+        \item<3-> Problems when dealing with highly symmetric meshes
+        \item<4-> DMCWF exact dimensions and reference needed
     \end{itemize}
 
 \end{frame}
