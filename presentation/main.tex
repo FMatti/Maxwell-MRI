@@ -95,6 +95,10 @@
         \end{equation*}
         for all $\mathbf{v} \in H_{\text{curl}}$, where $\mathbf{g} = ({\mu^{-1} \nabla \times \mathbf{u}}) \times \mathbf{n}$.
     \end{block}
+    \begin{tikzpicture}[scale=0.7, every node/.style={scale=0.7}]
+        \fill[white] (-7.5, -1) rectangle (7.5, 2);
+        \node at (5.5, 0) {$\nabla \times (\mu^{-1} \nabla \times \mathbf{u}) - \epsilon \omega^2 \mathbf{u} = \mathbf{j}$};
+    \end{tikzpicture}
 
 \end{frame}
 
@@ -103,7 +107,7 @@
     \onslide<1->{
         Perfectly conducting boundary
         \begin{equation*}
-            \mathbf{u} \times \mathbf{n} = \mathbf{0},~\text{on}~\Gamma_D
+            \mathbf{g} = \mathbf{0} ~~\text{and}~~ \mathbf{E} \times \mathbf{n} = \mathbf{0},~\text{on}~\Gamma_D
         \end{equation*}
     }\onslide<2->{
         Inlet, where e.g. $\mathbf{B}$ is known along $\Gamma_N$
@@ -116,7 +120,7 @@
             \mathbf{g} = i \omega \lambda (\mathbf{n} \times \mathbf{u}) \times \mathbf{n},~\text{on}~\Gamma_I
         \end{equation*}
     }\begin{tikzpicture}[scale=0.7, every node/.style={scale=0.7}]
-        \fill[white] (-7.5, -1) rectangle (7.5, 3);
+        \fill[white] (-7.5, -1) rectangle (7.5, 2.5);
         \node at (3, 0) {$\int_{\Omega} \langle {\mu^{-1} \nabla \times \mathbf{u}}, \nabla \times \mathbf{v} \rangle
         - \omega^2 \int_{\Omega} \epsilon \langle \mathbf{u}, \mathbf{v} \rangle
         = \int_{\Omega} \langle \mathbf{j}, \mathbf{v} \rangle
@@ -150,9 +154,9 @@
     \onslide<1->{
         Rational surrogate
         \begin{equation*}
-            \mathbf{\tilde{u}}(\omega) = \frac{\mathbf{P}(\omega)}{Q(\omega)} = \sum_{i=1}^S \frac{\mathbf{p}_i}{\omega - \omega_i} / \sum_{i=1}^S \frac{q_i}{\omega - \omega_i}
+            \mathbf{\tilde{u}}(\omega) = \frac{\mathbf{P}(\omega)}{Q(\omega)} = \sum_{j=1}^S \frac{\mathbf{p}_j}{\omega - \omega_j} / \sum_{j=1}^S \frac{q_j}{\omega - \omega_j}
         \end{equation*}
-        in barycentric coordinates with support points $\omega_1$, $\omega_2$, \dots, $\omega_3$.
+        in barycentric coordinates with support points $\omega_1$, $\omega_2$, \dots, $\omega_S$.
     }
     \vspace{20pt}
     \onslide<2->{
@@ -160,6 +164,7 @@
         \begin{equation*}
             \mathbf{\tilde{u}}(\omega_i) = \mathbf{u}(\omega_i),~\forall i \in \{ 1, 2, \dots, S \}
         \end{equation*}
+        if and only if $\mathbf{p}_i = q_i\mathbf{u}(\omega_i), \forall i$.
     }
 
 \end{frame}
@@ -172,7 +177,7 @@
             \item<2-> Compute the Gramian matrix $\mathbf{\underline{G}}$ with entries $g_{ij} = \langle \mathbf{u}(\omega_i), \mathbf{u}(\omega_j) \rangle$, $i,j \in \{1, 2, \dots, S\}$
             \item<3-> Compute the singular value decomposition $\mathbf{\underline{G}} = \mathbf{\underline{V}}~\boldsymbol{\underline{\Sigma}}~\mathbf{\underline{V}}^H$
             \item<4-> Define $\mathbf{q} = (q_1, q_2, \dots, q_S)^T = \mathbf{\underline{V}}[:, S]$
-            \item<5-> Define $\mathbf{\tilde{u}}(\omega) = \mathbf{P}(\omega) / Q(\omega)$ with 
+            \item<5-> Define the minimal rational surrogate $\mathbf{\tilde{u}}(\omega) = \mathbf{P}(\omega) / Q(\omega)$ with 
             \begin{equation*}
                 \mathbf{P}(\omega) = \sum_{j=1}^S \frac{q_j \mathbf{u}(\omega_j)}{\omega - \omega_j}~~\text{and}~~Q(\omega) = \sum_{j=1}^S \frac{q_j}{\omega - \omega_j}
             \end{equation*}
@@ -186,14 +191,17 @@
     \begin{block}{Greedy minimal rational interpolation (gMRI)}
         Given $\Omega_{\text{test}} = \{\omega_1, \omega_2, \dots, \omega_T\}$ as candidate support points:
         \begin{enumerate}
-            \item<1-> Build initial surrogate $\mathbf{\tilde{u}}_{t}$ with some initial support points $\omega_1, \omega_2, \dots, \omega_t \in \Omega_{\text{test}}$ (usually smallest and largest element)
-            \item<2-> Iteratively add a new support point
+            \item<2-> Build the minimal rational surrogate $\mathbf{\tilde{u}}_{2}$
+                      with $\mathbf{u}(\omega^{(0)})$ and $\mathbf{u}(\omega^{(1)})$
+                      and remove $\omega^{(0)}, \omega^{(1)}$ from $\Omega_{\text{test}}$
+            \item<3-> Starting with $t=2$, iteratively take a new support point
             \begin{equation*}
-                \omega_{t+1} = argmin_{\omega \in \Omega_{\text{test}}} |Q_t(\omega)|
+                \omega^{(t)} = \text{argmin}_{\omega \in \Omega_{\text{test}}} |Q^{(t)}(\omega)|
             \end{equation*}
-            to build $\mathbf{\tilde{u}}_{t+1}$ based on $\mathbf{u}(\omega_1),
-            \mathbf{u}(\omega_2), \dots, \mathbf{u}(\omega_{t+1})$
-            \item<3-> Stop when relative error 
+            from $\Omega_{\text{test}}$ to build the minimal rational surrogate $\mathbf{\tilde{u}}_{t+1}$
+            based on $\mathbf{u}(\omega^{(0)}), \mathbf{u}(\omega^{(1)}), \dots, \mathbf{u}(\omega^{(t+1)})$
+            and increment $t$
+            \item<4-> Stop when relative error 
             \begin{equation*}
                 ||\mathbf{u}(\omega_{t+1}) - \mathbf{\tilde{u}}_{t}(\omega_{t+1})||_M / ||\mathbf{u}(\omega_{t+1})||_M
             \end{equation*}
@@ -234,7 +242,7 @@
         \end{equation*}
     }
     \onslide<2->{
-        Can recover the original surrogate
+        The original surrogate can be recovered with
         \begin{equation*}
             \mathbf{\tilde{u}}(\omega) = \mathbf{\underline{U}} \accentset{\circ}{\mathbf{u}}(\omega)
         \end{equation*}
@@ -255,6 +263,12 @@
         \begin{equation*}
             \frac{||\mathbf{u}(\omega_{t+1}) - \mathbf{\tilde{u}}_t(\omega_{t+1})||_M}{||\mathbf{u}(\omega_{t+1})||_M}
             \approx \frac{||\mathbf{r}_{t+1} - \mathbf{\hat{u}}_t(\omega_{t+1})||}{||\mathbf{\hat{u}_t}(\omega_{t+1})||}
+        \end{equation*}
+    }
+    \onslide<3->{
+        The original surrogate can be recovered with
+        \begin{equation*}
+            \mathbf{\tilde{u}}(\omega) = \mathbf{\underline{Q}} \mathbf{\hat{u}}(\omega)
         \end{equation*}
     }
 
