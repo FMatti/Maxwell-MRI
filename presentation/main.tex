@@ -195,7 +195,7 @@
             \mathbf{u}(\omega_2), \dots, \mathbf{u}(\omega_{t+1})$
             \item<3-> Stop when relative error 
             \begin{equation*}
-                ||\mathbf{u}(\omega_{t+1}) - \mathbf{\tilde{u}}_{t+1}(\omega_{t+1})||_M / ||\mathbf{u}(\omega_{t+1})||_M
+                ||\mathbf{u}(\omega_{t+1}) - \mathbf{\tilde{u}}_{t}(\omega_{t+1})||_M / ||\mathbf{u}(\omega_{t+1})||_M
             \end{equation*}
             is small enough
         \end{enumerate}
@@ -253,7 +253,7 @@
     \onslide<2->{
         Proposed way of approximating relative error in gMRI
         \begin{equation*}
-            \frac{||\mathbf{u}_{t+1} - \mathbf{\tilde{u}}_t(\omega_{t+1})||_M}{||\mathbf{u}_{t+1}||_M}
+            \frac{||\mathbf{u}(\omega_{t+1}) - \mathbf{\tilde{u}}_t(\omega_{t+1})||_M}{||\mathbf{u}(\omega_{t+1})||_M}
             \approx \frac{||\mathbf{r}_{t+1} - \mathbf{\hat{u}}_t(\omega_{t+1})||}{||\mathbf{\hat{u}_t}(\omega_{t+1})||}
         \end{equation*}
     }
