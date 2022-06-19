@@ -7,8 +7,6 @@
 
 \usetheme{Minimal}
 
-% REMINDME! References.
-
 \begin{document}
 
 \begin{frame}[noframenumbering]
@@ -115,7 +113,7 @@
             \mathbf{g} = (\mu^{-1} \mathbf{B}) \times \mathbf{n},~\text{on}~\Gamma_N
         \end{equation*}
     }\onslide<3->{
-        Imperfectly conducting boundary
+        Imperfectly conducting boundary \cite{monk}
         \begin{equation*}
             \mathbf{g} = i \omega \lambda (\mathbf{n} \times \mathbf{u}) \times \mathbf{n},~\text{on}~\Gamma_I
         \end{equation*}
@@ -131,7 +129,7 @@
 
 \begin{frame}{Finite element method | Vertex basis}
     \onslide<1->{
-        FEniCS is used to obtain FEM solutions of the form
+        FEniCS \cite{fenics} is used to obtain FEM solutions of the form
         \begin{equation*}
             \mathbf{\bar{u}} = (\bar{u}_1, \bar{u}_2, \dots, \bar{u}_N)
         \end{equation*}
@@ -171,7 +169,7 @@
 
 \begin{frame}{Minimal rational interpolation | MRI algorithm}
 
-    \begin{block}{Minimal rational interpolation (MRI)}
+    \begin{block}{Minimal rational interpolation (MRI) \cite{greedyMRI}}
         Given snapshots $\mathbf{u}(\omega_1)$, $\mathbf{u}(\omega_2)$, \dots, $\mathbf{u}(\omega_S)$:
         \begin{enumerate}
             \item<2-> Compute the Gramian matrix $\mathbf{\underline{G}}$ with entries $g_{ij} = \langle \mathbf{u}(\omega_i), \mathbf{u}(\omega_j) \rangle$, $i,j \in \{1, 2, \dots, S\}$
@@ -188,7 +186,7 @@
 
 \begin{frame}{Minimal rational interpolation | gMRI algorithm}
     
-    \begin{block}{Greedy minimal rational interpolation (gMRI)}
+    \begin{block}{Greedy minimal rational interpolation (gMRI) \cite{shortMRI}}
         Given $\Omega_{\text{test}} = \{\omega_1, \omega_2, \dots, \omega_T\}$ as candidate support points:
         \begin{enumerate}
             \item<2-> Build the minimal rational surrogate $\mathbf{\tilde{u}}_{2}$
@@ -280,7 +278,7 @@
     \begin{equation*}
         0 = Q(\omega) = \sum_{i=1}^S \frac{q_i}{\omega - \omega_i}
     \end{equation*}
-    Equivalent eigenvalue problem
+    Equivalent eigenvalue problem \cite{klein}
     \begin{equation*}
         \mathbf{\underline{A}} \mathbf{w} = \omega \mathbf{\underline{B}} \mathbf{w}
     \end{equation*}
@@ -322,7 +320,7 @@
 
     \begin{figure}
         \centering
-        \scalebox{0.8}{\input{../report/plots/rectangular_cavity_suppression.pgf}}
+        \scalebox{0.8}{\input{../report/plots/rectangular_cavity_suppression_presentation.pgf}}
     \end{figure}
 
 \end{frame}
@@ -331,7 +329,7 @@
 
     \begin{figure}
         \centering
-        \scalebox{0.8}{\input{../report/plots/imperfect_conductor_norms.pgf}}
+        \scalebox{0.8}{\input{../report/plots/imperfect_conductor_norms_presentation.pgf}}
     \end{figure}
 
 \end{frame}
@@ -375,5 +373,45 @@
     \end{itemize}
 
 \end{frame}
+
+\begin{frame}{References}
+    \bibliography{../report/biblio.bib}
+\end{frame}
+
+\begin{frame}{Rectangular cavity | Error progression}
+    \begin{figure}
+        \centering
+        \scalebox{0.8}{\input{../report/plots/rectangular_cavity_errorprogression.pgf}}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Rectangular cavity | High symmetry problem}
+    \begin{figure}
+        \centering
+        \scalebox{0.8}{\input{../report/plots/rectangular_cavity_trace_errorprogression.pgf}}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Rectangular cavity | Breaking symmetry with cubby}
+    \begin{figure}
+        \centering
+        \scalebox{0.8}{\input{../report/plots/rectangular_cubby_trace_errorprogression.pgf}}
+    \end{figure}
+\end{frame}
+
+%\begin{frame}{Imperfect conductor | Solution}
+%    \begin{figure}
+%        \centering
+%        \scalebox{0.8}{\input{../report/plots/imperfect_conductor_solution.pdf}}
+%    \end{figure}
+%\end{frame}
+
+\begin{frame}{DMCWF | Error progression}
+    \begin{figure}
+        \centering
+        \scalebox{0.8}{\input{../report/plots/circular_waveguide_error.pgf}}
+    \end{figure}
+\end{frame}
+
 
 \end{document}
