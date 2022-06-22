@@ -20,7 +20,7 @@
     \onslide<1->{
     To locally approximate
     \begin{equation*}
-        \mathbf{u} : \mathbb{C} \ni \omega \mapsto \mathbf{u}(\omega)
+        \mathbf{u} : \mathbb{C} \ni \omega \mapsto \mathbf{u}(\omega) \in H_{\text{curl}}(\Omega)
     \end{equation*}
     }\onslide<2->{
     compute the snapshots
@@ -28,7 +28,7 @@
         \mathbf{u}(\omega_1), \mathbf{u}(\omega_2), \dots, \mathbf{u}(\omega_S)
     \end{equation*}
     }\onslide<3->{
-    and build the rational surrogate
+    and build a rational surrogate
     \begin{equation*}
         \mathbf{\tilde{u}}(\omega) = \frac{\mathbf{P}(\omega)}{Q(\omega)}
     \end{equation*}
@@ -79,7 +79,7 @@
 
     \onslide<1->{
     \begin{equation*}
-        H_{\text{curl}}(\Omega) = \{ \mathbf{v}: \Omega \to \mathbb{C}^3,~\text{such that}~\mathbf{v} \in L_2(\Omega)^3,~\nabla \times \mathbf{v} \in L_2(\Omega)^3 \}
+        H_{\text{curl}}(\Omega) = \{ \mathbf{v}: \Omega \to \mathbb{C}^3,~\text{such that}~\mathbf{v} \in L_2(\Omega),~\nabla \times \mathbf{v} \in L_2(\Omega) \}
     \end{equation*}
     }%
     \begin{block}<2->{Weak formulation of the time-harmonic potential equation}
@@ -98,6 +98,13 @@
         \node at (5.5, 0) {$\nabla \times (\mu^{-1} \nabla \times \mathbf{u}) - \epsilon \omega^2 \mathbf{u} = \mathbf{j}$};
     \end{tikzpicture}
 
+\end{frame}
+
+\begin{frame}{Finite element method | Computational domain}
+    \begin{figure}
+        \centering
+        {\input{../report/figures/2d_cavity.tex}}
+    \end{figure}
 \end{frame}
 
 \begin{frame}{Finite element method | Boundary conditions}
@@ -127,21 +134,27 @@
 
 \end{frame}
 
-\begin{frame}{Finite element method | Vertex basis}
+\begin{frame}{Finite element method | Finite element space}
     \onslide<1->{
         FEniCS \cite{fenics} is used to obtain FEM solutions of the form
-        \begin{equation*}
-            \mathbf{\bar{u}} = (\bar{u}_1, \bar{u}_2, \dots, \bar{u}_N)
-        \end{equation*}
-        where $N$ is the number of degrees of freedom.
+        \begin{equation}
+            \mathbf{u}_h(\omega) = \sum_{i=1}^{N_h} u_i(\omega) \boldsymbol{\phi}_i
+        \end{equation}
+        for a basis $\{ \boldsymbol{\phi}_i \}_{i=1}^{N_h}$ of a finite dimensional
+        subspace $H_{\text{curl}, h}(\Omega) \subset H_{\text{curl}}(\Omega)$ (Nédélec
+        finite elements of the first kind).
     }\onslide<2->{
-        Inner product in this representation is 
+        From now on
         \begin{equation*}
-            \langle \mathbf{\bar{u}}, \mathbf{\bar{v}} \rangle_M = \mathbf{\bar{u}}^H \mathbf{\underline{M}} \mathbf{\bar{v}} \approx \int_{\Omega} \langle \mathbf{u}, \mathbf{v} \rangle
+            \mathbf{u} = (u_1, u_2, \dots, u_N)
+        \end{equation*}
+        with the $L_2(\Omega)$ inner product in $H_{\text{curl}, h}(\Omega)$ represented by
+        \begin{equation*}
+            \langle \mathbf{u}, \mathbf{v} \rangle_M = \mathbf{u}^H \mathbf{\underline{M}} \mathbf{v}
         \end{equation*}
         and the norm 
         \begin{equation*}
-           || \mathbf{\bar{u}} ||_M = \sqrt{\langle \mathbf{\bar{u}}, \mathbf{\bar{u}} \rangle_M}  \approx || \mathbf{u} ||_{L_2(\Omega)}
+           || \mathbf{\bar{u}} ||_M = \sqrt{\langle \mathbf{\bar{u}}, \mathbf{\bar{u}} \rangle_M}
         \end{equation*}
     }
 
@@ -316,6 +329,15 @@
 
 \end{frame}
 
+\begin{frame}{Rectangular cavity | Error progression}
+
+    \begin{figure}
+        \centering
+        \scalebox{0.8}{\input{../report/plots/rectangular_cavity_errorprogression_presentation.pgf}}
+    \end{figure}
+
+\end{frame}
+
 \begin{frame}{Example application 1 | Resonances}
 
     \begin{figure}
@@ -367,22 +389,16 @@
 
     \begin{itemize}
         \item<1-> Speed and efficiency
-        \item<2-> Finding resonances made much easier
-        \item<3-> Problems when dealing with highly symmetric meshes
+        \item<2-> Finding resonances
+        \item<3-> Highly symmetric meshes
         \item<4-> DMCWF exact dimensions and reference needed
+        \item<5-> Copper AC-wire application
     \end{itemize}
 
 \end{frame}
 
 \begin{frame}{References}
     \bibliography{../report/biblio.bib}
-\end{frame}
-
-\begin{frame}{Rectangular cavity | Error progression}
-    \begin{figure}
-        \centering
-        \scalebox{0.8}{\input{../report/plots/rectangular_cavity_errorprogression.pgf}}
-    \end{figure}
 \end{frame}
 
 \begin{frame}{Rectangular cavity | High symmetry problem}
@@ -392,24 +408,52 @@
     \end{figure}
 \end{frame}
 
-\begin{frame}{Rectangular cavity | Breaking symmetry with cubby}
+\begin{frame}{Rectangular cavity | Symmetry breaking cubby}
+    \begin{figure}
+        \centering
+        \scalebox{0.8}{\input{../report/figures/rectangular_cavity_cubby.tex}}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Rectangular cavity | Symmetry breaking cubby}
     \begin{figure}
         \centering
         \scalebox{0.8}{\input{../report/plots/rectangular_cubby_trace_errorprogression.pgf}}
     \end{figure}
 \end{frame}
 
-%\begin{frame}{Imperfect conductor | Solution}
-%    \begin{figure}
-%        \centering
-%        \scalebox{0.8}{\input{../report/plots/imperfect_conductor_solution.pdf}}
-%    \end{figure}
-%\end{frame}
+\begin{frame}{Rectangular cavity | Timing}
+    \begin{table}
+        \centering
+        \scalebox{0.8}{\input{../report/tables/rectangular_cavity_comparison.tex}}
+    \end{table}
+\end{frame}
+
+\begin{frame}{Imperfect conductor | Solution}
+    \begin{figure}
+        \centering
+        \includegraphics[scale=0.8]{../report/plots/imperfect_conductor_solution.pdf}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Imperfect conductor | Timing}
+    \begin{table}
+        \centering
+        \scalebox{0.8}{\input{../report/tables/imperfect_conductor_comparison.tex}}
+    \end{table}
+\end{frame}
 
 \begin{frame}{DMCWF | Error progression}
     \begin{figure}
         \centering
-        \scalebox{0.8}{\input{../report/plots/circular_waveguide_error.pgf}}
+        \scalebox{0.6}{\input{../report/plots/circular_waveguide_error.pgf}}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Example applications | Similarities}
+    \begin{figure}
+        \centering
+        \scalebox{0.8}{\input{../report/figures/simple_examples.tex}}
     \end{figure}
 \end{frame}
 
