@@ -15,28 +15,28 @@
 
 \end{frame}
 
-\begin{frame}{Primer}
-
-    \onslide<1->{
-    To locally approximate
-    \begin{equation*}
-        \mathbf{u} : \mathbb{C} \ni \omega \mapsto \mathbf{u}(\omega) \in H_{\text{curl}}(\Omega)
-    \end{equation*}
-    }\onslide<2->{
-    compute the snapshots
-    \begin{equation*}
-        \mathbf{u}(\omega_1), \mathbf{u}(\omega_2), \dots, \mathbf{u}(\omega_S)
-    \end{equation*}
-    }\onslide<3->{
-    and build a rational surrogate
-    \begin{equation*}
-        \mathbf{\tilde{u}}(\omega) = \frac{\mathbf{P}(\omega)}{Q(\omega)}
-    \end{equation*}
-    such that $\mathbf{\tilde{u}}(\omega) \approx \mathbf{u}(\omega)$ close to
-    $\omega_1, \omega_2, \dots, \omega_S$.
-    }
-
-\end{frame}
+%\begin{frame}{Primer}
+%
+%    \onslide<1->{
+%    To locally approximate
+%    \begin{equation*}
+%        \mathbf{u} : \mathbb{C} \ni \omega \mapsto \mathbf{u}(\omega) \in H_{\text{curl}}(\Omega)
+%    \end{equation*}
+%    }\onslide<2->{
+%    compute the snapshots
+%    \begin{equation*}
+%        \mathbf{u}(\omega_1), \mathbf{u}(\omega_2), \dots, \mathbf{u}(\omega_S)
+%    \end{equation*}
+%    }\onslide<3->{
+%    and build a rational surrogate
+%    \begin{equation*}
+%        \mathbf{\tilde{u}}(\omega) = \frac{\mathbf{P}(\omega)}{Q(\omega)}
+%    \end{equation*}
+%    such that $\mathbf{\tilde{u}}(\omega) \approx \mathbf{u}(\omega)$ close to
+%    $\omega_1, \omega_2, \dots, \omega_S$.
+%    }
+%
+%\end{frame}
 
 \begin{frame}{Outline}
 
@@ -79,7 +79,7 @@
 
     \onslide<1->{
     \begin{equation*}
-        H_{\text{curl}}(\Omega) = \{ \mathbf{v}: \Omega \to \mathbb{C}^3,~\text{such that}~\mathbf{v} \in L_2(\Omega),~\nabla \times \mathbf{v} \in L_2(\Omega) \}
+        H_{\text{curl}}(\Omega) = \{ \mathbf{v}: \Omega \to \mathbb{C}^3,~\text{such that}~\mathbf{v} \in L_2(\Omega)^3,~\nabla \times \mathbf{v} \in L_2(\Omega)^3 \}
     \end{equation*}
     }%
     \begin{block}<2->{Weak formulation of the time-harmonic potential equation}
@@ -149,7 +149,7 @@
     }\onslide<2->{
         From now on
         \begin{equation*}
-            \mathbf{u} = (u_1, u_2, \dots, u_N)^T
+            \mathbf{u} = (u_1, u_2, \dots, u_{N_h})^T
         \end{equation*}
         with the $L_2(\Omega)$ inner product in $H_{\text{curl}, h}(\Omega)$ represented by
         \begin{equation*}
@@ -176,9 +176,9 @@
     \onslide<2->{
         Interpolation property
         \begin{equation*}
-            \mathbf{\tilde{u}}(\omega_i) = \mathbf{u}(\omega_i),~\forall i \in \{ 1, 2, \dots, S \}
+            \mathbf{\tilde{u}}(\omega_j) = \mathbf{u}(\omega_j),~\forall j \in \{ 1, 2, \dots, S \}
         \end{equation*}
-        if and only if $\mathbf{p}_i = q_i\mathbf{u}(\omega_i), \forall i$.
+        if and only if $\mathbf{p}_j = q_j\mathbf{u}(\omega_j), \forall j$.
     }
 
 \end{frame}
@@ -188,7 +188,7 @@
     \begin{block}{Minimal rational interpolation (MRI) \cite{greedyMRI}}
         Given snapshots $\mathbf{u}(\omega_1)$, $\mathbf{u}(\omega_2)$, \dots, $\mathbf{u}(\omega_S)$:
         \begin{enumerate}
-            \item<2-> Compute the Gramian matrix $\mathbf{\underline{G}}$ with entries $g_{ij} = \langle \mathbf{u}(\omega_i), \mathbf{u}(\omega_j) \rangle_M$, $i,j \in \{1, 2, \dots, S\}$
+            \item<2-> Compute the Gramian matrix $\mathbf{\underline{G}}$ with entries $G_{ij} = \langle \mathbf{u}(\omega_i), \mathbf{u}(\omega_j) \rangle_M$, $i,j \in \{1, 2, \dots, S\}$
             \item<3-> Compute the singular value decomposition $\mathbf{\underline{G}} = \mathbf{\underline{V}}~\boldsymbol{\underline{\Sigma}}~\mathbf{\underline{V}}^H$
             \item<4-> Define $\mathbf{q} = (q_1, q_2, \dots, q_S)^T = \mathbf{\underline{V}}[:, S]$
             \item<5-> Define the minimal rational surrogate $\mathbf{\tilde{u}}(\omega) = \mathbf{P}(\omega) / Q(\omega)$ with 
@@ -210,7 +210,7 @@
                       and remove $\omega^{(0)}, \omega^{(1)}$ from $\Omega_{\text{test}}$
             \item<3-> Starting with $t=2$, iteratively take a new support point
             \begin{equation*}
-                \omega^{(t)} = \text{argmin}_{\omega \in \Omega_{\text{test}}} |Q^{(t)}(\omega)|
+                \omega^{(t+1)} = \text{argmin}_{\omega \in \Omega_{\text{test}}} |Q^{(t)}(\omega)|
             \end{equation*}
             from $\Omega_{\text{test}}$ to build the minimal rational surrogate $\mathbf{\tilde{u}}_{t+1}$
             based on $\mathbf{u}(\omega^{(0)}), \mathbf{u}(\omega^{(1)}), \dots, \mathbf{u}(\omega^{(t+1)})$
@@ -240,8 +240,9 @@
     \begin{itemize}
         \item<2-> $\mathbf{\underline{G}}$ and $\mathbf{\underline{R}}$ have
         the same right-singular vector (exactly what is needed for MRI)
-        \item<3-> $\mathbf{\underline{R}}$ can be built sequentially (modified
-        Householder triangularization for gMRI)
+        \item<3-> Improved conditioning of SVD with $\mathbf{\underline{R}}$
+        \item<4-> $\mathbf{\underline{R}}$ can be built sequentially (modified
+        Householder triangularization for gMRI \cite{householder})
     \end{itemize}
     
 \end{frame}
@@ -261,60 +262,35 @@
             \mathbf{\tilde{u}}(\omega) = \mathbf{\underline{U}} \accentset{\circ}{\mathbf{u}}(\omega)
         \end{equation*}
     }
+    \begin{tikzpicture}[scale=0.7, every node/.style={scale=0.7}]
+        \fill[white] (-7.5, -1) rectangle (7.5, 2);
+        \node at (4.5, 0) {$\mathbf{\tilde{u}}(\omega) = \frac{\mathbf{P}(\omega)}{Q(\omega)} = \sum_{j=1}^S \frac{q_j\mathbf{u}(\omega_j)}{\omega - \omega_j} / \sum_{j=1}^S \frac{q_j}{\omega - \omega_j}$};
+    \end{tikzpicture}
 \end{frame}
 
 \begin{frame}{Minimal rational interpolation | Tweak 3}
     
     \onslide<1->{
-        Neat helper quantity ($\mathbf{r}_j = \mathbf{\underline{R}}[:, S]$ from QR-decomposition)
+        Neat helper quantity ($\mathbf{r}_j = \mathbf{\underline{R}}[:, j]$ from QR-decomposition)
         \begin{equation*}
             \mathbf{\hat{u}}(\omega) = \sum_{j=1}^S \frac{q_j \mathbf{r}_j}{\omega - \omega_j}
             / \sum_{j=1}^S \frac{q_j}{\omega - \omega_j}
         \end{equation*}
     }
     \onslide<2->{
+        The original surrogate can be recovered with
+        \begin{equation*}
+            \mathbf{\tilde{u}}(\omega) = \mathbf{\underline{Q}} \mathbf{\hat{u}}(\omega)
+        \end{equation*}
+    }
+    \onslide<3->{
         Proposed way of approximating relative error in gMRI
         \begin{equation*}
             \frac{||\mathbf{u}(\omega_{t+1}) - \mathbf{\tilde{u}}_t(\omega_{t+1})||_M}{||\mathbf{u}(\omega_{t+1})||_M}
             \approx \frac{||\mathbf{r}_{t+1} - \mathbf{\hat{u}}_t(\omega_{t+1})||}{||\mathbf{\hat{u}_t}(\omega_{t+1})||}
         \end{equation*}
     }
-    \onslide<3->{
-        The original surrogate can be recovered with
-        \begin{equation*}
-            \mathbf{\tilde{u}}(\omega) = \mathbf{\underline{Q}} \mathbf{\hat{u}}(\omega)
-        \end{equation*}
-    }
 
-\end{frame}
-
-\begin{frame}{Minimal rational interpolation | Resonances}
-
-    We want to find $\omega$, such that
-    \begin{equation*}
-        0 = Q(\omega) = \sum_{i=1}^S \frac{q_i}{\omega - \omega_i}
-    \end{equation*}
-    Equivalent eigenvalue problem \cite{klein}
-    \begin{equation*}
-        \mathbf{\underline{A}} \mathbf{w} = \omega \mathbf{\underline{B}} \mathbf{w}
-    \end{equation*}
-    with
-    \begin{equation*}
-        \mathbf{\underline{A}} = \begin{pmatrix}
-            0 & q_1 & q_2 & \dots & q_S \\
-            1 & \omega_1 & & & \\
-            1 & & \omega_2 & & \\
-            \vdots & & & \ddots & \\
-            1 & & & & \omega_S
-        \end{pmatrix} ~~\text{and}~~
-        \mathbf{\underline{B}} = \begin{pmatrix}
-            0 & & & & \\
-            & 1 & & & \\
-            & & 1 & & \\ 
-            \vdots & & & \ddots & \\ 
-            & & & & 1
-        \end{pmatrix}
-    \end{equation*}
 
 \end{frame}
 
@@ -332,7 +308,7 @@
 
 \end{frame}
 
-\begin{frame}{Rectangular cavity | Error progression}
+\begin{frame}{Example application 1 | Error progression}
 
     \begin{figure}
         \centering
@@ -374,7 +350,12 @@
 
     \begin{figure}
         \centering
-        \includegraphics[scale=0.18, trim=12cm 0.2cm 15cm 0.2cm, clip]{../report/figures/DMCWF_surfacemesh.pdf}
+        \scalebox{0.8}{
+            \begin{tikzpicture}
+                \node at (3, 2) {\includegraphics[scale=0.18, trim=12cm 0.2cm 15cm 0.2cm, clip]{../report/figures/DMCWF_surfacemesh.pdf}};
+                \input{../report/figures/DMCWF_schematics.tex}
+            \end{tikzpicture}
+        }
     \end{figure}
 
 \end{frame}
@@ -383,7 +364,7 @@
 
     \begin{figure}
         \centering
-        \scalebox{0.8}{\input{../report/plots/circular_waveguide_scattering.pgf}}
+        \scalebox{0.7}{\input{../report/plots/circular_waveguide_scattering.pgf}}
     \end{figure}
 
 \end{frame}
@@ -391,11 +372,10 @@
 \begin{frame}{Conclusion and outlook}
 
     \begin{itemize}
-        \item<1-> Speed and efficiency
-        \item<2-> Finding resonances
+        \item<1-> Easy to implement
+        \item<2-> Robust and fast for finding resonant frequencies
         \item<3-> Problem with highly symmetric meshes
-        \item<4-> DMCWF exact dimensions and reference needed
-        \item<5-> Copper AC-wire application
+        \item<4-> Exact dimensions and reference needed for DMCWF
     \end{itemize}
 
 \end{frame}
@@ -404,10 +384,48 @@
     \bibliography{../report/biblio.bib}
 \end{frame}
 
+
+\begin{frame}{Minimal rational interpolation | Resonances}
+
+    Find $\omega$, such that
+    \begin{equation*}
+        0 = Q(\omega) = \sum_{j=1}^S \frac{q_j}{\omega - \omega_j}
+    \end{equation*}
+    Equivalent eigenvalue problem%\cite{klein}
+    \begin{equation*}
+        \mathbf{\underline{A}} \mathbf{w} = \omega \mathbf{\underline{B}} \mathbf{w}
+    \end{equation*}
+    with
+    \begin{equation*}
+        \mathbf{\underline{A}} = \begin{pmatrix}
+            0 & q_1 & q_2 & \dots & q_S \\
+            1 & \omega_1 & & & \\
+            1 & & \omega_2 & & \\
+            \vdots & & & \ddots & \\
+            1 & & & & \omega_S
+        \end{pmatrix} ~~\text{and}~~
+        \mathbf{\underline{B}} = \begin{pmatrix}
+            0 & & & & \\
+            & 1 & & & \\
+            & & 1 & & \\ 
+            & & & \ddots & \\ 
+            & & & & 1
+        \end{pmatrix}
+    \end{equation*}
+
+\end{frame}
+
 \begin{frame}{Rectangular cavity | High symmetry problem}
     \begin{figure}
         \centering
         \scalebox{0.8}{\input{../report/plots/rectangular_cavity_trace_errorprogression.pgf}}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Example applications | Overview}
+    \begin{figure}
+        \centering
+        \scalebox{0.8}{\input{../report/figures/simple_examples.tex}}
     \end{figure}
 \end{frame}
 
@@ -452,13 +470,5 @@
         \scalebox{0.6}{\input{../report/plots/circular_waveguide_error.pgf}}
     \end{figure}
 \end{frame}
-
-\begin{frame}{Example applications | Similarities}
-    \begin{figure}
-        \centering
-        \scalebox{0.8}{\input{../report/figures/simple_examples.tex}}
-    \end{figure}
-\end{frame}
-
 
 \end{document}
