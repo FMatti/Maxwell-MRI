@@ -13,7 +13,9 @@ A wide class of problems in physics and engineering concerns itself with studyin
 Built on `numpy` and `scipy`, this repository offers a complete MRI suite for time-harmonic problems in electromagnetism (so-called Maxwell problems). The finite element engine for obtaining solutions to the partial differential equations governing these problems is [`fenics`](https://fenicsproject.org/).
 
 ## Example applications
-Central to this project are time-harmonic Maxwell problems (THMP), whose parameter is the (angular) frequency $\omega$. These problems are governed by the time-harmonic Maxwell's equations. Choosing the quantity of interest to be a vector potential $\mathbf{u}$, these equations reduce to a single curl-curl equation:
+Central to this project are time-harmonic Maxwell problems (THMP), whose parameter is the (angular) frequency $\omega$.
+These problems are governed by the time-harmonic Maxwell's equations. Choosing the quantity of interest to be a vector potential $\mathbf{u}$,
+these equations reduce to a single curl-curl equation:
 
 $$ \nabla \times (\mu^{-1} \nabla \times \mathbf{u}) - \epsilon \omega^2 \mathbf{u} = \mathbf{j} $$
 
