@@ -100,37 +100,40 @@
 
 \end{frame}
 
-\begin{frame}{Finite element method | Computational domain}
-    \begin{figure}
-        \centering
-        {\input{../report/figures/2d_cavity.tex}}
-    \end{figure}
-\end{frame}
-
 \begin{frame}{Finite element method | Boundary conditions}
-
-    \onslide<1->{
-        Perfectly conducting boundary
-        \begin{equation*}
-            \mathbf{g} = \mathbf{0} ~~\text{and}~~ \mathbf{E} \times \mathbf{n} = \mathbf{0},~\text{on}~\Gamma_D
-        \end{equation*}
-    }\onslide<2->{
-        Inlet, where e.g. $\mathbf{B}$ is known along $\Gamma_N$
-        \begin{equation*}
-            \mathbf{g} = (\mu^{-1} \mathbf{B}) \times \mathbf{n},~\text{on}~\Gamma_N
-        \end{equation*}
-    }\onslide<3->{
-        Imperfectly conducting boundary \cite{monk}
-        \begin{equation*}
-            \mathbf{g} = i \omega \lambda (\mathbf{n} \times \mathbf{u}) \times \mathbf{n},~\text{on}~\Gamma_I
-        \end{equation*}
-    }\begin{tikzpicture}[scale=0.7, every node/.style={scale=0.7}]
-        \fill[white] (-7.5, -1) rectangle (7.5, 2.5);
-        \node at (3, 0) {$\int_{\Omega} \langle {\mu^{-1} \nabla \times \mathbf{u}}, \nabla \times \mathbf{v} \rangle
-        - \omega^2 \int_{\Omega} \epsilon \langle \mathbf{u}, \mathbf{v} \rangle
-        = \int_{\Omega} \langle \mathbf{j}, \mathbf{v} \rangle
-        + \int_{\partial \Omega} \langle \mathbf{g}, \mathbf{v} \rangle$};
-    \end{tikzpicture}
+    \begin{columns}
+        \begin{column}[]{0.6\textwidth}
+            \onslide<1->{
+                Perfectly conducting boundary
+                \begin{equation*}
+                    \mathbf{g} = \mathbf{0} ~~\text{and}~~ \mathbf{E} \times \mathbf{n} = \mathbf{0},~\text{on}~\Gamma_D
+                \end{equation*}
+            }\onslide<2->{
+                Inlet, where e.g. $\mathbf{B}$ is known along $\Gamma_N$
+                \begin{equation*}
+                    \mathbf{g} = (\mu^{-1} \mathbf{B}) \times \mathbf{n},~\text{on}~\Gamma_N
+                \end{equation*}
+            }\onslide<3->{
+                Imperfectly conducting boundary \cite{monk}
+                \begin{equation*}
+                    \mathbf{g} = i \omega \lambda (\mathbf{n} \times \mathbf{u}) \times \mathbf{n},~\text{on}~\Gamma_I
+                \end{equation*}
+            }\begin{tikzpicture}[scale=0.7, every node/.style={scale=0.7}]
+                \fill[white] (-7.5, -1) rectangle (7.5, 2.5);
+                \node at (3, 0) {$\int_{\Omega} \langle {\mu^{-1} \nabla \times \mathbf{u}}, \nabla \times \mathbf{v} \rangle
+                - \omega^2 \int_{\Omega} \epsilon \langle \mathbf{u}, \mathbf{v} \rangle
+                = \int_{\Omega} \langle \mathbf{j}, \mathbf{v} \rangle
+                + \int_{\partial \Omega} \langle \mathbf{g}, \mathbf{v} \rangle$};
+            \end{tikzpicture}
+        \end{column}
+        \begin{column}[]{0.4\textwidth}
+            \begin{figure}
+                \centering
+                \scalebox{0.7}{\input{../report/figures/2d_cavity.tex}}
+            \end{figure}
+        \end{column}
+        
+    \end{columns}
 
 \end{frame}
 
@@ -138,15 +141,15 @@
     \onslide<1->{
         FEniCS \cite{fenics} is used to obtain FEM solutions of the form
         \begin{equation}
-            \mathbf{u}_h(\omega) = \sum_{i=1}^{N_h} u_i(\omega) \boldsymbol{\phi}_i
+            \mathbf{u}_h(\omega) = \sum_{i=1}^{N_h} u_i(\omega) \boldsymbol{\phi}_h^{(i)}
         \end{equation}
-        for a basis $\{ \boldsymbol{\phi}_i \}_{i=1}^{N_h}$ of a finite dimensional
+        for a basis $\{ \boldsymbol{\phi}_h^{(i)} \}_{i=1}^{N_h}$ of the finite dimensional
         subspace $H_{\text{curl}, h}(\Omega) \subset H_{\text{curl}}(\Omega)$ (Nédélec
         finite elements of the first kind).
     }\onslide<2->{
         From now on
         \begin{equation*}
-            \mathbf{u} = (u_1, u_2, \dots, u_N)
+            \mathbf{u} = (u_1, u_2, \dots, u_N)^T
         \end{equation*}
         with the $L_2(\Omega)$ inner product in $H_{\text{curl}, h}(\Omega)$ represented by
         \begin{equation*}
@@ -154,7 +157,7 @@
         \end{equation*}
         and the norm 
         \begin{equation*}
-           || \mathbf{\bar{u}} ||_M = \sqrt{\langle \mathbf{\bar{u}}, \mathbf{\bar{u}} \rangle_M}
+           || \mathbf{u} ||_M = \sqrt{\langle \mathbf{u}, \mathbf{u} \rangle_M}
         \end{equation*}
     }
 
@@ -185,7 +188,7 @@
     \begin{block}{Minimal rational interpolation (MRI) \cite{greedyMRI}}
         Given snapshots $\mathbf{u}(\omega_1)$, $\mathbf{u}(\omega_2)$, \dots, $\mathbf{u}(\omega_S)$:
         \begin{enumerate}
-            \item<2-> Compute the Gramian matrix $\mathbf{\underline{G}}$ with entries $g_{ij} = \langle \mathbf{u}(\omega_i), \mathbf{u}(\omega_j) \rangle$, $i,j \in \{1, 2, \dots, S\}$
+            \item<2-> Compute the Gramian matrix $\mathbf{\underline{G}}$ with entries $g_{ij} = \langle \mathbf{u}(\omega_i), \mathbf{u}(\omega_j) \rangle_M$, $i,j \in \{1, 2, \dots, S\}$
             \item<3-> Compute the singular value decomposition $\mathbf{\underline{G}} = \mathbf{\underline{V}}~\boldsymbol{\underline{\Sigma}}~\mathbf{\underline{V}}^H$
             \item<4-> Define $\mathbf{q} = (q_1, q_2, \dots, q_S)^T = \mathbf{\underline{V}}[:, S]$
             \item<5-> Define the minimal rational surrogate $\mathbf{\tilde{u}}(\omega) = \mathbf{P}(\omega) / Q(\omega)$ with 
@@ -225,7 +228,7 @@
 \begin{frame}{Minimal rational interpolation | Tweak 1}
     
     \onslide<1->{
-        With the QR-decomposition of the snapshot matrix $\mathbf{\underline{U}} = [\mathbf{u}(\omega_1), \dots, \mathbf{u}(\omega_S)]$.
+        With the QR-decomposition of the snapshot matrix $\mathbf{\underline{U}} = [\mathbf{u}(\omega_1), \dots, \mathbf{u}(\omega_S)]^T$.
         \begin{equation*}
             \mathbf{\underline{U}} = \mathbf{\underline{Q}}~\mathbf{\underline{R}}
         \end{equation*}
@@ -390,7 +393,7 @@
     \begin{itemize}
         \item<1-> Speed and efficiency
         \item<2-> Finding resonances
-        \item<3-> Highly symmetric meshes
+        \item<3-> Problem with highly symmetric meshes
         \item<4-> DMCWF exact dimensions and reference needed
         \item<5-> Copper AC-wire application
     \end{itemize}
