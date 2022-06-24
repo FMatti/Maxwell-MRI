@@ -160,19 +160,19 @@
     \begin{block}{Greedy minimal rational interpolation (gMRI) \cite{shortMRI}}
         Given $\Omega_{\text{test}} = \{\omega_1, \omega_2, \dots, \omega_T\}$ as candidate support points:
         \begin{enumerate}
-            \item<2-> Build the minimal rational surrogate $\mathbf{\tilde{u}}_{2}$
-                      with $\mathbf{u}(\omega^{(0)})$ and $\mathbf{u}(\omega^{(1)})$
-                      and remove $\omega^{(0)}, \omega^{(1)}$ from $\Omega_{\text{test}}$
+            \item<2-> Build the minimal rational surrogate $\mathbf{\tilde{u}}^{(2)}$
+                      with $\mathbf{u}(\omega^{(1)})$ and $\mathbf{u}(\omega^{(2)})$
+                      and remove $\omega^{(1)}, \omega^{(2)}$ from $\Omega_{\text{test}}$
             \item<3-> Starting with $t=2$, iteratively take a new support point
             \begin{equation*}
                 \omega^{(t+1)} = \text{argmin}_{\omega \in \Omega_{\text{test}}} |Q^{(t)}(\omega)|
             \end{equation*}
-            from $\Omega_{\text{test}}$ to build the minimal rational surrogate $\mathbf{\tilde{u}}_{t+1}$
-            based on $\mathbf{u}(\omega^{(0)}), \mathbf{u}(\omega^{(1)}), \dots, \mathbf{u}(\omega^{(t+1)})$
+            from $\Omega_{\text{test}}$ to build the minimal rational surrogate $\mathbf{\tilde{u}}^{(t+1)}$
+            based on $\mathbf{u}(\omega^{(1)}), \mathbf{u}(\omega^{(2)}), \dots, \mathbf{u}(\omega^{(t+1)})$
             and increment $t$
             \item<4-> Stop when relative error 
             \begin{equation*}
-                ||\mathbf{u}(\omega_{t+1}) - \mathbf{\tilde{u}}_{t}(\omega_{t+1})||_M / ||\mathbf{u}(\omega_{t+1})||_M
+                ||\mathbf{u}(\omega^{(t+1)}) - \mathbf{\tilde{u}}^{(t)}(\omega^{(t+1)})||_M / ||\mathbf{u}(\omega^{(t+1)})||_M
             \end{equation*}
             is small enough
         \end{enumerate}
@@ -221,8 +221,8 @@
     }\onslide<3->{
         Proposed way of approximating relative error in gMRI
         \begin{equation*}
-            \frac{||\mathbf{u}(\omega_{t+1}) - \mathbf{\tilde{u}}_t(\omega_{t+1})||_M}{||\mathbf{u}(\omega_{t+1})||_M}
-            \approx \frac{||\mathbf{r}_{t+1} - \mathbf{\hat{u}}_t(\omega_{t+1})||}{||\mathbf{\hat{u}_t}(\omega_{t+1})||}
+            \frac{||\mathbf{u}(\omega^{(t+1)}) - \mathbf{\tilde{u}}^{(t)}(\omega^{(t+1)})||_M}{||\mathbf{u}(\omega^{(t+1)})||_M}
+            \approx \frac{||\mathbf{r}_{t+1} - \mathbf{\hat{u}}^{(t)}(\omega^{(t+1)})||}{||\mathbf{\hat{u}^{(t)}}(\omega^{(t+1)})||}
         \end{equation*}
     }
     \begin{tikzpicture}[scale=0.7, every node/.style={scale=0.7}]
@@ -381,17 +381,17 @@
 
 \end{frame}
 
-\begin{frame}{Rectangular cavity | High symmetry problem}
-    \begin{figure}
-        \centering
-        \scalebox{0.8}{\input{../report/plots/rectangular_cavity_trace_errorprogression.pgf}}
-    \end{figure}
-\end{frame}
-
 \begin{frame}{Example applications | Overview}
     \begin{figure}
         \centering
         \scalebox{0.8}{\input{../report/figures/simple_examples.tex}}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Rectangular cavity | High symmetry problem}
+    \begin{figure}
+        \centering
+        \scalebox{0.8}{\input{../report/plots/rectangular_cavity_trace_errorprogression.pgf}}
     \end{figure}
 \end{frame}
 
