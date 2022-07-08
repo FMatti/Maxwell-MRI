@@ -4,6 +4,7 @@
 
 \institution{EPFL}
 \project{Semester Project}
+\degree{Master of Science MSc in \\ Computational Science and Engineering}
 \title{Minimal Rational Interpolation for Time-Harmonic Maxwell's Equations}
 \author{Fabio Matti}
 \supervisor{Prof. Fabio Nobile \\ Dr. Davide Pradovera}
@@ -11,13 +12,15 @@
 
 \begin{document}
 
+%!REMINDME (identity matrix change of converniton)
+
 \maketitle
 
 \begin{abstract}
     \acrfull{MRI} provides an efficient and reliable way to approximate
-    a meromorphic dependence of a characteristic quantity of a model on one
+    a meromorphic dependence of a characteristic output quantity of a model on one
     of its parameters.
-    The focus of this report is put on the \acrfull{gMRI} algorithm and particularly
+    The focus of this report is on the \acrfull{gMRI} algorithm and particularly
     on ways to enhance its performance. This algorithm is then applied to three 
     example problems concerning the time-harmonic Maxwell's equations in the 
     frequency domain. The advantages and disadvantages of
@@ -27,9 +30,6 @@
     scattering coefficients of a \acrfull{DMCWF} is studied.
 \end{abstract}
 
-%\newpage
-%\printglossary[type=\acronymtype, nonumberlist]
-
 \newpage
 \tableofcontents
 
@@ -37,8 +37,10 @@
 \section{Introduction}
 \label{sec:introduction}
 
-A wide class of problems in physics and engineering concerns itself with studying
-the dependence of a model on one of its parameters $\omega$. 
+%!REMINDME (rewrite introduction)
+
+A wide class of problems in physics and engineering concern studying
+the dependence of a model on one (or more) of its parameters $\omega$. 
 Of interest is usually a characteristic quantity
 $\mathbf{u}(\omega)$ depending on this parameter.
 Unless the system allows for an analytical solution, one may usually only
@@ -101,10 +103,7 @@ current density. Maxwell's equations are stated in \citep{monk} as
     \nabla \times \mathbf{E} &= -\partial_t \mathbf{B} \label{equ:maxwell3} \\
     \nabla \times (\mu^{-1} \mathbf{B}) &= \partial_t (\epsilon \mathbf{E}) + \mathbf{j} \label{equ:maxwell4}
 \end{align}
-with $\varepsilon$ being the permittivity and $\mu$ the permeability (whose names 
-let alone their values I always tend to forget).
-
-% Non-conducting material, else => j = sigma*E + J_a (Monk 21)
+with $\varepsilon$ being the permittivity and $\mu$ the permeability.
 
 Equation (\ref{equ:maxwell2}) motivates the expression of the magnetic field 
 $\mathbf{B} = \nabla \times \mathbf{u}$ in terms of a vector-valued function
@@ -164,9 +163,7 @@ and then integrate over the whole computational domain $\Omega$ to obtain
     - \omega^2 \int_{\Omega} \epsilon \langle \mathbf{u}, \mathbf{v} \rangle =
     \int_{\Omega} \langle \mathbf{j}, \mathbf{v} \rangle \label{equ:maxwell-weak-initial}
 \end{equation}
-This may further be simplified (\ref{equ:maxwell-weak-initial}) to (I allow myself
-to spare you the details of this computation, but nevertheless put a proper derivation
-in the appendix at the end of this report):
+Equation (\ref{equ:maxwell-weak-initial}) may be further simplified to:
 \begin{fancybox}{Weak formulation of the time-harmonic potential equation}
     \begin{equation}
         \int_{\Omega} \langle {\mu^{-1} \nabla \times \mathbf{u}}, \nabla \times \mathbf{v} \rangle
@@ -176,19 +173,22 @@ in the appendix at the end of this report):
         \label{equ:maxwell-weak}
     \end{equation}
 \end{fancybox}
-where $\mathbf{n}$ denotes the surface normal to the boundary $\partial \Omega$
+where $\mathbf{n}$ denotes the outward surface normal to the boundary $\partial \Omega$
 of the computational domain $\Omega$ and $\mathbf{v}$ is an arbitrary element
-of $H_{\textrm{curl}}(\Omega)$.
+of $H_{\textrm{curl}}(\Omega)$. I allow myself
+to spare you the details of this computation, but nevertheless put a proper derivation
+in the appendix at the end of this report.
 
-Boundary conditions on the electric field $\mathbf{E}$ along a part of the 
-boundary $\Gamma \subset \partial \Omega$ may be most easily enforced
+Supposing that we know the electric field $\mathbf{E}$ along a part of the
+boundary $\Gamma \subset \partial \Omega$, we may most easily enforce it
 in a Dirichlet-type fashion through the relation (\ref{equ:electricfield}) and
 the assumption (\ref{equ:time-harmonic})
 \begin{equation}
     \left.\mathbf{u}\right|_{\Gamma} = -\frac{1}{i\omega} \left.\mathbf{E}\right|_{\Gamma} \label{equ:dirichlet-boundary}
 \end{equation}
-Those on the magnetic field $\mathbf{B}$ through a Neumann-type condition following
-from (\ref{equ:magneticfield}) and again (\ref{equ:time-harmonic})
+A known magnetic field $\mathbf{B}$ may similarly be enforced
+with a Neumann-type condition following
+from (\ref{equ:magneticfield}) and (\ref{equ:time-harmonic})
 \begin{equation}
     \left.\mathbf{g}\right|_{\Gamma} = (\mu^{-1} \left.\mathbf{B}\right|_{\Gamma}) \times \mathbf{n} \label{equ:neumann-boundary}
 \end{equation}
@@ -246,7 +246,6 @@ resonant cavity
     - \omega^2 \int_{\Omega} \epsilon u_z v_z^{\ast}
     = \int_{\partial \Omega} g_z v_z^{\ast} \label{equ:maxwell-weak-resonant-cavity}
 \end{equation}
-
 for an arbitrary $v_z \in H_1(\Omega) = \{v : \Omega \to \mathbb{C},~\text{such that}~\mathbf{v}\in L_2(\mathbb{C}), \nabla v \in L_2(\mathbb{C})^2\}$.
 % Boundary conditions Dirichlet and Neumann (from Monk)
 Now, let $\mathbf{E}$ and $\mathbf{B}$ refer to the electric and magnetic fields inside
@@ -278,19 +277,18 @@ To simulate an imperfect boundary $\Gamma_I$, also called impedance boundary in 
 (\ref{equ:maxwell-weak}) with
 \begin{equation}
     \mathbf{g} = (\mu^{-1} \nabla \times \mathbf{u}) \times \mathbf{n}
-    = i \omega \lambda (\mathbf{n} \times \mathbf{u}) \times \mathbf{n}~~\text{on}~\Gamma_D
+    = i \omega \lambda (\mathbf{n} \times \mathbf{u}) \times \mathbf{n}~~\text{on}~\Gamma_I
+    \label{equ:impedance-boundary-g}
 \end{equation}
-with a parameter $\lambda>0$ I will henceforth refer to as the impedance.
+with a parameter $\lambda>0$ which I will henceforth refer to as the impedance.
 Supposing that $\mathbf{u} = u_z \mathbf{e}_z$ and only treating a
-two-dimensional domain, this condition simplifies to (using the fact that $\mathbf{n} \perp \mathbf{u}$
-and $||\mathbf{n}|| = 1$, so $(\mathbf{n} \times \mathbf{u}) \times \mathbf{n} = \mathbf{u}$,
-as is demonstrated in the appendix at the end of this report)
+two-dimensional domain, this condition simplifies to
 \begin{equation}
-    g_z = i \omega \lambda u_z~~\text{on}~\Gamma_D
+    g_z = i \omega \lambda u_z~~\text{on}~\Gamma_I
 \end{equation}
-Therefore, an impedance boundary can be treated in almost the same way as a
-Neumann boundary in the two-dimensional weak formulation (\ref{equ:maxwell-weak-resonant-cavity})
-of a resonant cavity.
+by using the fact that $\mathbf{n} \perp \mathbf{u}$
+and $||\mathbf{n}|| = 1$, so $(\mathbf{n} \times \mathbf{u}) \times \mathbf{n} = \mathbf{u}$,
+as is demonstrated in the appendix at the end of this report.
 
 \subsubsection{Waveguide}
 \label{subsubsec:waveguide}
@@ -318,11 +316,11 @@ to Equation (\ref{equ:maxwell-timeharmonic}).
 \label{subsec:fem-theory}
 
 % Theory
-It is readily seen that the weak formulation (\ref{equ:maxwell-weak}) assumes the shape
+It is readily seen that the weak formulation (\ref{equ:maxwell-weak}) assumes the form
 \begin{equation}
     \text{Find}~\mathbf{u} \in H_{\textrm{curl}}(\Omega),~\text{such that}~a_{\omega}(\mathbf{u}, \mathbf{v}) = L(\mathbf{v}), ~\forall \mathbf{v} \in H_{\textrm{curl}}(\Omega)
 \end{equation}
-with the bilinear form 
+with the bilinear form
 \begin{equation}
     a_{\omega}(\mathbf{u}, \mathbf{v}) = \underbrace{\int_{\Omega} \langle \mu^{-1} \nabla \times \mathbf{u}, \nabla \times \mathbf{v}\rangle }_{K(\mathbf{u}, \mathbf{v})}
     - \omega^2 \underbrace{\int_{\Omega} \epsilon \langle \mathbf{u}, \mathbf{v} \rangle}_{M(\mathbf{u}, \mathbf{v})} \label{equ:bilinear-form}
@@ -333,6 +331,9 @@ the linear form
     L(\mathbf{u}) = \int_{\Omega} \langle \mathbf{j}, \mathbf{v} \rangle + \int_{\partial \Omega} \langle \mathbf{g}, \mathbf{v} \rangle \label{equ:linear-form}
 \end{equation}
 and the appropriate Hilbert space $H_{\textrm{curl}}(\Omega)$ defined in (\ref{equ:h-curl}).
+Notice that in the case of the imperfectly conducting boundary, the integral along
+the boundary will have to be moved from the linear to the bilinear form, since then 
+$\mathbf{g}$ will depend on $\mathbf{u}$ via (\ref{equ:impedance-boundary-g}).
 
 A sequence of appropriate finite dimensional spaces $H_{\textrm{curl}, h}(\Omega)$
 parametrized by $h$ is introduced. As $h \to 0$, this sequence should become dense
@@ -412,8 +413,9 @@ is assembled, and the Dirichlet boundary conditions are applied.
 \lstinputlisting[firstnumber=43, firstline=44, lastline=45]{code/fenics_example.py}
 
 The mass matrix (i.e. the second term in the bilinear form (\ref{equ:bilinear-form}))
-is assembled, and the Dirichlet boundary conditions are accounted for by setting
-all rows and columns corresponding to degrees of freedom on the perfectly conducting
+is assembled. The fact that the Dirichlet boundary conditions have already
+been separately applied to the stiffness matrix above is accounted for by setting
+all rows and columns corresponding to degrees of freedom on the Dirichlet
 boundary to zero.
 \lstinputlisting[firstnumber=47, firstline=48, lastline=49]{code/fenics_example.py}
 
@@ -463,15 +465,17 @@ In the most simple case (dropping all constants), equations of the type
     \nabla \times (\nabla \times \mathbf{u}) - \omega^2 \mathbf{u} = \mathbf{j}
     \label{equ:maxwell-timeharmonic-simple}
 \end{equation}
-Writing the double-curl operator in terms of a matrix $\mathbf{\underline{A}}$
-allows for an expression of the solution $\mathbf{u}$ to (\ref{equ:maxwell-timeharmonic-simple})
-as
+Transitioning to a finite element space and expressing (\ref{equ:maxwell-timeharmonic-simple})
+in terms of the stiffness matrix $\mathbf{\underline{K}}$
+and mass matrix $\mathbf{\underline{M}}$ (see Section \ref{subsec:fem-theory})
+allows for us to write
 \begin{equation}
-    \mathbf{u} = (\mathbf{\underline{A}} - \omega^2)^{-1} \mathbf{j}
+    (\mathbf{\underline{K}} - \omega^2 \mathbf{\underline{M}}) \mathbf{u} = \mathbf{j} ~~\implies~~ \mathbf{u} = (\mathbf{\underline{K}} - \omega^2 \mathbf{\underline{M}})^{(-1)} \mathbf{j}
 \end{equation}
-The eigenvalue decomposition $\mathbf{\underline{A}} = \mathbf{\underline{V}}
-~ \boldsymbol{\underline{\Lambda}} ~ \mathbf{\underline{V}}^H$
-leads to a similar form as the one proposed in \cite{helmholtz-motivation}
+An eigenvalue decomposition $\mathbf{\underline{K}} = \mathbf{\underline{V}}
+~ \boldsymbol{\underline{\Lambda}} ~ \mathbf{\underline{V}}^H$ of the hermitian
+stiffness matrix $\mathbf{\underline{K}}$
+leads to a similar form of the solution as the one seen in \cite{helmholtz-motivation}
 \begin{equation}
     \mathbf{u} = \mathbf{\underline{V}} (\boldsymbol{\underline{\Lambda}} - \omega^2 \boldsymbol{\underline{1}})^{-1} \mathbf{\underline{V}}^H \mathbf{j} 
     = \sum_i \frac{\mathbf{v}_i \langle \mathbf{v}_i, \mathbf{j} \rangle}{\lambda_i - \omega^2} \label{equ:motivation}
@@ -512,7 +516,7 @@ In the following, I denote with
 \end{equation}
 the finite element approximation of the inner product in $L_2(\Omega)$.
 With $\mathbf{\bar{u}}, \mathbf{\bar{v}} \in \mathbb{C}^N$ I denote the vertex basis
-representations of $\mathbf{u}, \mathbf{v} \in \mathbb{C}^3$,
+representations of the vector fields $\mathbf{u}, \mathbf{v}$,
 i.e. the collection of all $N$ \acrfull{DOF} in a vector, while $\mathbf{\underline{M}}$
 is the matrix representing the inner product in this vertex basis. Similarly, let
 \begin{equation}
@@ -526,7 +530,7 @@ but will instead also refer to it with $\mathbf{u}$.
 For completeness, I state the strategy for numerically computing the \acrshort{MRI} 
 for a collection of snapshots sampled from the target $\mathbf{u}$
 in Algorithm \ref{alg:MRI} \citep{greedyMRI}. The heart of the algorithm consists in computing the
-\acrfull{SVD} of the so-called Gramian matrix $\mathbf{\underline{G}}$, and using the last
+\acrfull{SVD} of a Gramian matrix $\mathbf{\underline{G}}$, and using the last
 left-singular vector to build the surrogate.
 
 \begin{algorithm}
@@ -534,25 +538,33 @@ left-singular vector to build the surrogate.
     \input{algorithms/MRI.tex}
 \end{algorithm}
 
+Because the Gramian matrix $\mathbf{\underline{G}}$ is hermitian, the singular value
+decomposition is the eigenvalue decomposition.
+In the algorithm, I implicitly assume that the singular values of $\mathbf{\underline{G}}$
+are ordered in decreasing order, meaning that $\mathbf{\underline{V}}[:, S]$
+is the left singular vector corresponding to the smallest singular value. In most
+numerical packages, such as the python package \texttt{numpy}, this is automatically the case.
+
 \subsection{Greedy minimal rational interpolation}
 \label{subsec:gMRI}
 
 A question that arises from the previous section is what the ideal choice of
 support points $\omega_1, \dots, \omega_S$ is: How many support points are
-required to achieve a good enough approximation and how should the supports
-be distributed when given a target domain? The \acrfull{gMRI} algorithm 
-\citep{shortMRI} tackles both questions simultaneously by sequentially adding new
-support points to the build.
+required to achieve a good enough approximation, and how should the support points
+be distributed in an interval on which we want to compute the approximation?
+The \acrfull{gMRI} algorithm \citep{shortMRI} tackles both questions
+simultaneously by sequentially adding a new support points to be included in the
+build of the minimal rational surrogate.
 
 In brief, the algorithm starts with a set of candidate support points
 $\Omega_{\mathrm{test}} = \{\omega_i\}_{i=1}^M$, for which we can guarantee
 to find an approximate solution to (\ref{equ:galerkin-problem}). 
 From the $\Omega_{\mathrm{test}}$ a subset is chosen (usually the smallest and
 largest element), and (\ref{equ:galerkin-problem}) is solved for these two initial
-supports. Using these solutions, a rational surrogate is built with
+supports. Using these solutions, the rational surrogate $P(\omega)/Q(\omega)$ is built with
 \acrshort{MRI} (Algorithm \ref{alg:MRI}). Motivated by the expression for the
 upper bound on the residual norm demonstrated in \cite{theoryMRI}, new support
-points are chosen as the minimizers of the denominator polynomial $Q(\omega)$
+points are chosen as the minimizers of the previously computed denominator polynomial $Q(\omega)$
 and added to the existing set of support points. This procedure is iteratively
 continued until the relative error norm drops below a certain tolerance set in advance.
 
@@ -568,7 +580,8 @@ The \acrshort{gMRI} algorithm can be found in Algorithm \ref{alg:gMRI}.
 
 % Interpolation property (in barycentric expansion, l'Hôpital whatever)
 Multiplying the numerator and denominator of the rational surrogate $\mathbf{\tilde{u}}$
-(\ref{equ:surrogate}) with the nodal polynomial yields
+(\ref{equ:surrogate}) with the nodal polynomial associated with the support points
+yields
 \begin{equation}
     \mathbf{\tilde{u}}(\omega)
     = \sum_{j=1}^S \prod_{\substack{i=1 \\ i \neq j}}^S (\omega - \omega_i) q_j \mathbf{u}(\omega_j)
@@ -597,16 +610,17 @@ we simply need to perform the following steps:
 \end{enumerate}
 
 The first step was already elaborated upon in Sections \ref{subsec:MRI} and \ref{subsec:gMRI}.
-Finding the zeros of a rational function of the form (\ref{equ:surrogate-denominator})
+Finding the zeros of the denominator of the minimal rational surrogate,
+a rational function of the form (\ref{equ:surrogate-denominator})
 can be elegantly converted to an eigenvalue problem \citep{klein}:
 
 Define
 \begin{equation}
-    v_i(\omega) = (\omega - \omega_i)^{-1}
+    v_i(\omega) = (\omega - \omega_i)^{-1} \label{equ:eigenproblem-definition}
 \end{equation}
 We want to find $\omega$, such that
 \begin{equation}
-    0 = Q(\omega) = \sum_{i=1}^S q_i v_i(\omega)
+    0 = Q(\omega) = \sum_{i=1}^S q_i v_i(\omega) \label{equ:eigenproblem-zero}
 \end{equation}
 This can be equivalently expressed as the generalized eigenvalue problem
 \begin{equation}
@@ -622,10 +636,10 @@ with
         1 & & & & \omega_S
     \end{pmatrix} ~~\text{and}~~
     \mathbf{\underline{B}} = \begin{pmatrix}
-        0 & & & & \\
+         0 & & & & \\
          & 1 & & & \\
          & & 1 & & \\ 
-        \vdots & & & \ddots & \\ 
+         & & & \ddots & \\ 
          & & & & 1
     \end{pmatrix}\label{equ:root-finding}
 \end{equation}
@@ -633,6 +647,9 @@ Solving the eigenproblem (\ref{equ:eigenvalue-problem}) numerically will confide
 yield two spurious, infinite eigenvalues which, however, can be filtered out
 manually with ease. The eigenvector corresponding to the eigenvalue $\omega$ is
 $\mathbf{w}(\omega) = (1, v_1(\omega), \dots, v_S(\omega))^T$ \cite{klein}.
+Consequently, each eigenvalue $\omega$ on one hand satisfies the constraints
+(\ref{equ:eigenproblem-definition}) and with (\ref{equ:eigenproblem-zero})
+is also the zero that we set out to find.
 
 \subsection{Optimization tricks for greedy minimal rational interpolation}
 \label{subsec:optimization}
@@ -714,14 +731,12 @@ for
 \end{equation}
 motivated by the performance boost an array multiplication with the Python package
 \texttt{numpy} introduces, compared to a simple for loop for summing.
-% -> Twice is enough?
 
 \subsubsection{Stability of singular value decomposition}
 \label{subsubsec:svd}
-% -> Check stability of build with SVDs (maybe also mention G / R difference)
-The stability of the build of the rational surrogate using \acrshort{MRI}
+The stability of Algorithm \ref{alg:MRI} used to build the rational surrogate using \acrshort{MRI}
 can be checked by analyzing the singular values $\sigma_1, \dots, \sigma_S$ 
-obtained from performing the \acrshort{SVD}. Assume these values to be
+obtained from performing the \acrshort{SVD} of $\mathbf{\underline{G}}$. Assume these values to be
 ordered in descending order, which the Python package
 \texttt{numpy} automatically does when computing the \acrshort{SVD} of a matrix. 
 The conditioning of the problem may be measured with the relative
@@ -770,6 +785,11 @@ computation of the relative error which is used as a stopping criterion in
 
 First, one may use the $\mathbf{\underline{M}}$-orthonormality of $\mathbf{\underline{Q}}$
 to get
+\begin{equation}
+    ||\mathbf{u}_{t+1}||_M = ||\mathbf{\underline{Q}}^{(t+1)} \mathbf{r}_{t+1}||_M
+                = ||\mathbf{r}_{t+1}|| 
+\end{equation}
+Where $||\cdot||$ is the Euclidean norm. Similarly, it follows that
 \begin{align}
     ||\mathbf{u}_{t+1} - \mathbf{\tilde{u}}_{t}(\omega_{t+1})||_M
     &= ||\mathbf{\underline{Q}}^{(t+1)} \mathbf{r}_{t+1} - \mathbf{\underline{Q}}^{(t+1)}\mathbf{\hat{u}}_{t}'(\omega_{t+1})||_M \notag \\
@@ -778,26 +798,17 @@ to get
 \end{align}
 with the short hand $\mathbf{\hat{u}}_{t}' = [\mathbf{\hat{u}}_{t}^T, 0]^T$
 and where $\mathbf{r}_{t+1}$ is the last column in $\mathbf{\underline{R}}^{(t+1)}$,
-he triangular matrix from the $(t+1)$-th step in the additive Housholder decomposition
-(Algorithm \ref{alg:householder}). $||\cdot||$ is the Euclidean norm.
+the triangular matrix from the $(t+1)$-th step in the additive Householder decomposition
+(Algorithm \ref{alg:householder}). 
 
-Additionally, my recommended way of approximating the $||\cdot||_M$-norm
-of a solution which circumvents having to deal with high-dimensional
-matrix multiplications stems from
-\begin{equation}
-    ||\mathbf{u}(\omega)||_M^2 \approx ||\mathbf{\tilde{u}}(\omega)||_M^2
-    = ||\mathbf{\underline{U}} \accentset{\circ}{\mathbf{u}}(\omega)||_M^2
-    = \accentset{\circ}{\mathbf{u}}(\omega)^H \underbrace{\mathbf{\underline{U}}^H \mathbf{\underline{M}}~\mathbf{\underline{U}}}_{= \mathbf{\underline{G}} = \mathbf{\underline{R}}^H \mathbf{\underline{R}}} \accentset{\circ}{\mathbf{u}}(\omega)
-    = \mathbf{\hat{u}}(\omega)^H \mathbf{\hat{u}}(\omega)
-    = ||\mathbf{\hat{u}}(\omega)||^2
-\end{equation}
-In this way, an approximation of the particular relative error norm  required in
-Algorithm \ref{alg:gMRI} can be approximated with only Euclidean norms:
+In this way, the particular relative error norm required in
+Algorithm \ref{alg:gMRI} can be computed with only Euclidean norms of relatively
+low-dimensional vectors:
 \begin{equation}
     \frac{||\mathbf{u}_{t+1} - \mathbf{\tilde{u}}_t(\omega_{t+1})||_M}{||\mathbf{u}_{t+1}||_M}
-    \approx \frac{||\mathbf{r}_{t+1} - \mathbf{\hat{u}}_t(\omega_{t+1})||}{||\mathbf{\hat{u}_t}(\omega_{t+1})||}
+    = \frac{||\mathbf{r}_{t+1} - \mathbf{\hat{u}}_t(\omega_{t+1})||}{||\mathbf{r}_{t+1}||}
 \end{equation}
-Notice how on the left-hand side, the vectors of dimension $N$ (usually $N \approx 10000$)
+Notice how on the left-hand side, the vectors of dimension $N$ (usually with $N$ of the order $10^4$)
 are multiplied with an $N \times N$ matrix to compute the norm, whereas
 the vectors on the right-hand side are only of size $S$ (usually $\leq 20$)
 and do not require a matrix for the norm computation.
@@ -836,7 +847,7 @@ The system is forced from the inlet at $x=0$ with $g_z(y) = sin(\pi y / L_y)$.
 \label{subsubsec:exploration}
 
 To give the reader an impression of what the solution $\mathbf{u}_z$ to this problem
-looks like, I plot the \acrshort{FEM}-solution at the first and sixth resonant
+looks like, I plot the \acrshort{FEM}-solution at the first and sixth numerical resonant
 frequencies in Figures \ref{fig:rectangular-cavity-mode1} and \ref{fig:rectangular-cavity-mode5}
 respectively. Notice that I type its variable in bold, since it is a large vector with the values
 for each of the \acrshort{DOF}s as its components.
@@ -845,7 +856,7 @@ for each of the \acrshort{DOF}s as its components.
     \centering
     \includegraphics{plots/rectangular_cavity_mode1.pdf}
     \caption{The solution $\mathbf{u}_z$ obtained with the \acrshort{FEM} at the
-    first resonant frequency $\omega = 3.159$ of the cavity. Observe how at
+    first numerical resonant frequency of the cavity. Observe how at
     every perfectly conducting boundary $\Gamma_D$ (cf. Figure
     \ref{fig:rectangular_cavity}) the solution gradually goes to zero, as I imposed.}
     \label{fig:rectangular-cavity-mode1}
@@ -855,7 +866,7 @@ for each of the \acrshort{DOF}s as its components.
     \centering
     \includegraphics{plots/rectangular_cavity_mode5.pdf}
     \caption{The solution $\mathbf{u}_z$ obtained with the \acrshort{FEM} at the
-    sixth resonant frequency $\omega = 4.675$ of the cavity.}
+    sixth numerical resonant frequency of the cavity.}
     \label{fig:rectangular-cavity-mode5}
 \end{figure}
 
@@ -903,7 +914,7 @@ the surrogate, which would obscure the point I want to make with this plot.
 As already discussed in Section \ref{subsec:roots}, \acrshort{gMRI} may be used
 to approximate resonant frequencies of a system. Conveniently enough, the analytical
 resonant frequencies for a rectangular resonant cavity as the one currently being 
-studied easy to determine due to the homogeneous boundary conditions:
+studied are easy to determine due to the homogeneous boundary conditions:
 \begin{equation}
     \omega_{n, m} = \pi \sqrt{\left(\frac{2n + 1}{2L_x}\right)^2 + \left(\frac{m}{L_y}\right)^2},
     ~n \in \{0, 1, \dots\}, ~m \in \{1, 2, \dots \} \label{equ:analytical-eigenmodes}
@@ -930,8 +941,8 @@ from their corresponding analytical resonances. Furthermore, the time each metho
 requires to produce a result given the assembled matrices $\mathbf{\underline{K}}$
 and $\mathbf{\underline{M}}$ is measured over multiple runs on a 7th generation
 Intel 8750H CPU at 2.20 GHz using the \texttt{timeit} library. This is done
-for four logarithmically spaced refinements of the mesh with a resulting number
-of \acrshort{DOF}s.
+for four refinements of the mesh, each resulting in 10 times more \acrshort{DOF}s
+than the previous one.
 
 \begin{table}[ht]
     \caption{In the same context as on the previous pages, two approaches to
@@ -993,26 +1004,28 @@ since the eigenvectors stemming from a hermitian eigenvalue problem can be made
 $\mathbf{\underline{M}}$-orthonormal.
 
 Inspecting (\ref{equ:suppression}), we see that if $\langle \mathbf{w}_i, \mathbf{f} \rangle = 0$,
-then the resonant mode at $\omega = \omega_i$ is suppressed. Because neither the
+for one of the eigenpairs $\{\mathbf{w}_i, \omega_i^2\}$ then the resonant mode
+at $\omega = \omega_i$ is suppressed, since $\alpha_i=0$. Because neither the
 generalized eigenvalue problem nor the analytical considerations
-are informed about the nature of the source term $\mathbf{f}$, this \enquote{effect}
+are \enquote{informed} about the nature of the source term $\mathbf{f}$, this \enquote{effect}
 is usually not accounted for. Even specifying as the initial iteration vector for
-the \texttt{eigsh} eigenvalue solver the source term $\mathbf{f}$ to avoid finding
+the \texttt{eigsh} eigenvalue solver the finite element representation of the
+source term $\mathbf{f}$ itself to avoid finding
 eigensolutions that are orthogonal to it did not prove to be effective.
-
+%!REMINDME (maybe some minor work still to be done)
 \begin{figure}[ht]
     \centering
     \input{plots/rectangular_cavity_suppression.pgf}
     \caption{For still the same problem but this time in a slightly higher
     frequency range $\omega = [6, 7]$, resonant frequencies determined using the
     three discussed approaches are shown (bottom). Only two resonant
-    frequencies visibly emerge from the $||\cdot||_M$-norm spectrum determined by
-    solving the problem with the \acrshort{FEM} (top). Suppressed resonant
-    frequencies $\omega_{n, m}$ appear (or much rather do not appear) whenever the corresponding
-    eigensolution $\mathbf{u}_z(\omega_{n, m})$ is orthogonal to the source term $f$ (middle).
-    \acrshort{gMRI} (still with a tolerance of $\tau = 10^{-2}$ and 1000 uniformly
-    spaced test points in $\omega = [6, 7]$) successfully avoids identifying suppressed resonant frequencies
-    while both the analytical and \texttt{eigsh} approach fail to do so.}
+    frequencies actually visibly emerge from the $||\cdot||_M$-norm spectrum computed
+    with the \acrshort{FEM} (top). Multiple resonant
+    frequencies $\omega_{n, m}$ are supressed, which is the case whenever the corresponding
+    solution $\mathbf{u}_z(\omega_{n, m})$ happens to be orthogonal to the source vector $f$ (middle).
+    \acrshort{gMRI} successfully avoids yielding suppressed resonant frequencies
+    while both the analytical and \texttt{eigsh} approach worngly yield
+    resonant frequencies that in actuality are suppressed.}
     \label{fig:rectangular-cavity-suppression}
 \end{figure}
 
@@ -1020,14 +1033,15 @@ eigensolutions that are orthogonal to it did not prove to be effective.
 \subsubsection{Approximating solutions along a trace}
 \label{subsubsec:traces}
 
-I now restrict my view to approximating solutions $u_z|_{\Gamma}$ along a trace $\Gamma$. Setting
+I now restrict my view to approximating solutions $u_z|_{\Gamma}$ along a portion $\Gamma$
+of the boundary. Setting
 \begin{equation}
     ||\mathbf{\bar{u}}_z||_{M(\Gamma)}^2 = \mathbf{\bar{u}}_z|_{\Gamma}^H \mathbf{\underline{M}}(\Gamma) \mathbf{\bar{u}}_z|_{\Gamma}
         \approx \int_{\Gamma} ||u_z||^2
 \end{equation}
 with $\mathbf{\bar{u}}_z \in \mathbb{C}^N$ as the vertex basis representation of
 the two-dimensional solution $u_z$, while $\mathbf{\underline{M}}(\Gamma)$ is the
-matrix representation of the discretized integral form along the trace.
+matrix representation of the discretized integral form along $\Gamma$.
 Again, I will not bother putting bars everywhere and will instead just use $\mathbf{u}_z$.
 Running \acrshort{gMRI} (Algorithm \ref{alg:gMRI}) on the restriction $\mathbf{u}_z|_{\Gamma}$
 instead of the full solution $\mathbf{u}_z$ is a straight forward generalization of the
@@ -1070,9 +1084,9 @@ convergence behavior may immediately be seen in Figure \ref{fig:rectangular-cubb
 \begin{figure}[ht]
     \centering
     \input{plots/rectangular_cubby_trace_errorprogression.pgf}
-    \caption{Breaking the symmetry (i.e. the linear dependence of the solutions
-    on a trace) with a tiny cubby (see Figure \ref{fig:rectangular-cavity-cubby})
-    proves to be a quite effective remedy for the stability in building the
+    \caption{Breaking the symmetry (i.e. the linear dependence of the trace
+    $\Gamma_N$ of the solution) with a tiny cubby (see Figure \ref{fig:rectangular-cavity-cubby})
+    proves to be quite an effective remedy for the stability of building the
     rational surrogate with \acrshort{gMRI}. For every second iteration of the 
     algorithm, an estimate for the relative error of the surrogate $\mathbf{u}_z^{(S)}|_{\Gamma_N}$
     built with $S$ support points (shown at the bottom) is plotted. Compared to
@@ -1123,6 +1137,8 @@ with $\mathbf{I}$ being the matrix representation corresponding to the form
 \begin{equation}
     \int_{\Gamma_I} \lambda u_z v_z 
 \end{equation}
+can be solved.
+
 Unfortunately, solving this eigenvalue problem is not as straight forward as the
 one that was encountered in the previous example. Likely the simplest approach
 to solving (\ref{equ:nonlinear-eigenproblem}) is to linearize the system by
@@ -1201,7 +1217,7 @@ in Section \ref{subsubsec:waveguide}.
     \caption{The surface-mesh of the modelled dual-mode circular waveguide filter
     (left). An effort was made to keep the dimensions as similar to the ones
     given in \cite{DMCWF-Dimensions}, but a full correspondence cannot be guaranteed
-    due to yours truly being unable to resolve certain ambiguities that were encountered.
+    due to the author being unable to resolve certain ambiguities that were encountered.
     The model adheres to the following dimensions:
     $L_C=43.87$ mm, $D_C=28.0$ mm, $L_B=20.0$ mm, $W_B=19.05$ mm, $H_B=9.525$ mm,
     $W_S=10.05$ mm, $H_S=3.0$ mm, $W_A=2.0$ mm, $H_A=3.375$ mm,
@@ -1327,8 +1343,9 @@ the nonlinear eigenproblem solved in Section \ref{subsec:examples-impedance}
 or the treatment of the \acrfull{DMCWF} in Section \ref{subsec:examples-dmcwf},
 excelled in its performance mainly due to its scalability and time efficiency.
 
-A problem with the presence of linearly combinable resonant modes, mainly present
-when restricting the view to only a trace of the full solution, was identified
+Stability issues of \acrshort{MRI} mainly emerging with highly symmetric meshes
+and when using as the snapshots only the solution along a trace
+were identified
 in Section \ref{subsubsec:traces} and remedies were suggested and tested to be
 effective in resolving this issue.
 

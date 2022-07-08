@@ -115,6 +115,7 @@
 
 %%% TITLEPAGE LAYOUT
 \newcommand*{\project}[1]{\gdef\@project{#1}}
+\newcommand*{\degree}[1]{\gdef\@degree{#1}}
 \newcommand*{\institution}[1]{\gdef\@institution{#1}}
 \newcommand*{\supervisor}[1]{\gdef\@supervisor{#1}}
 
@@ -125,6 +126,8 @@
     {\scshape\LARGE\@institution\unskip\strut\par}
     \vspace{1cm}
     {\scshape\Large\@project\unskip\strut\par}
+    \vspace{1cm}
+    {\scshape\Large\@degree\unskip\strut\par}
     \vspace{2cm}
     {\huge\bfseries\@title\unskip\strut\par}
     \vspace{2cm}
