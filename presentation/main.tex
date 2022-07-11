@@ -219,10 +219,10 @@
             ~~~\text{or}~~~\mathbf{\tilde{u}}(\omega) = \mathbf{\underline{Q}} \mathbf{\hat{u}}(\omega)
         \end{equation*}
     }\onslide<3->{
-        Proposed way of approximating relative error in gMRI
+        Proposed way of computing the stopping criterion in gMRI
         \begin{equation*}
             \frac{||\mathbf{u}(\omega^{(t+1)}) - \mathbf{\tilde{u}}^{(t)}(\omega^{(t+1)})||_M}{||\mathbf{u}(\omega^{(t+1)})||_M}
-            \approx \frac{||\mathbf{r}_{t+1} - \mathbf{\hat{u}}^{(t)}(\omega^{(t+1)})||}{||\mathbf{\hat{u}^{(t)}}(\omega^{(t+1)})||}
+            = \frac{||\mathbf{r}_{t+1} - \mathbf{\hat{u}}^{(t)}(\omega^{(t+1)})||}{||\mathbf{r}_{t+1}||}
         \end{equation*}
     }
     \begin{tikzpicture}[scale=0.7, every node/.style={scale=0.7}]

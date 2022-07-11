@@ -12,8 +12,6 @@
 
 \begin{document}
 
-%!REMINDME (identity matrix change of converniton)
-
 \maketitle
 
 \begin{abstract}
@@ -39,18 +37,22 @@
 
 %!REMINDME (rewrite introduction)
 
-A wide class of problems in physics and engineering concern studying
-the dependence of a model on one (or more) of its parameters $\omega$. 
-Of interest is usually a characteristic quantity
-$\mathbf{u}(\omega)$ depending on this parameter.
-Unless the system allows for an analytical solution, one may usually only
-find numerical solutions to the system for discrete values of the parameter.
+%A wide class of problems in physics and engineering concern studying
+%the dependence of a model on one (or more) of its parameters $\omega$. 
+%Of interest is usually a characteristic quantity
+%$\mathbf{u}(\omega)$ depending on this parameter.
+%Unless the system allows for an analytical solution, one may usually only
+%find numerical solutions to the system for discrete values of the parameter.
 \acrfull{MRI} offers a way to locally approximate vector fields
 $\mathbf{u}:\mathbb{C}\ni\omega\mapsto \mathbf{u}(\omega)$
 which exhibit a meromorphic dependence on one of their 
-parameters. The approach has proven
+parameters $\omega$. This approximation allows us to study the response of the
+system with respect to $\omega$ such as identifying values for the parameter
+$\omega$ for which resonance occurs. The approach has proven
 effective and efficient (both memory- and time-wise) in applications
-on Helmholtz-type problems \cite{greedyMRI, shortMRI}.
+on Helmholtz-type problems \cite{greedyMRI, shortMRI}. Due to the presence of 
+resonances at which the $\mathbf{u}$ theoretically becomes singular, classical
+approaches such as Lagrangian approximation usually fail.
 
 Central to this report are time-harmonic electromagnetic problems, whose 
 parameter is the (angular) frequency. These problems are governed by
@@ -71,10 +73,11 @@ discussed: the resonant modes of a two-dimensional resonant cavity,
 the two-dimensional cavity with an imperfectly conducting boundary, and lastly
 the scattering coefficients of a \acrfull{DMCWF}.
 
-My implementations can be found on \cite{git}. Vectors are printed in \textbf{bold}
+My implementations can be found in \cite{git}. Vectors are printed in \textbf{bold}
 while matrices additionally have an \textbf{\underline{underline}}. 
 Euclidean scalar products are denoted with $\langle \cdot , \cdot \rangle$
-and norms with $||\cdot||$. The Hermitian transpose is written as $^{H}$. For simplicity, results are delivered without units
+and norms with $||\cdot||$. The identity matrix shall be printed as $\mathbf{\underline{Id}}$.
+The Hermitian transpose is written as $^{H}$. For simplicity, results are delivered without units
 and the angular frequency is referred to simply by frequency.
 
 \newpage
@@ -477,12 +480,12 @@ An eigenvalue decomposition $\mathbf{\underline{K}} = \mathbf{\underline{V}}
 stiffness matrix $\mathbf{\underline{K}}$
 leads to a similar form of the solution as the one seen in \cite{helmholtz-motivation}
 \begin{equation}
-    \mathbf{u} = \mathbf{\underline{V}} (\boldsymbol{\underline{\Lambda}} - \omega^2 \boldsymbol{\underline{1}})^{-1} \mathbf{\underline{V}}^H \mathbf{j} 
+    \mathbf{u} = \mathbf{\underline{V}} (\boldsymbol{\underline{\Lambda}} - \omega^2 \mathbf{\underline{Id}})^{-1} \mathbf{\underline{V}}^H \mathbf{j} 
     = \sum_i \frac{\mathbf{v}_i \langle \mathbf{v}_i, \mathbf{j} \rangle}{\lambda_i - \omega^2} \label{equ:motivation}
     %= \sum_i \frac{\mathbf{r}_i}{\lambda_i - \omega^2} \label{equ:motivation}
 \end{equation}
 This follows from the fact that $\boldsymbol{\underline{\Lambda}}$ is diagonal,
-hence also $(\boldsymbol{\underline{\Lambda}} - \omega^2 \boldsymbol{\underline{1}})^{-1}$.
+hence also $(\boldsymbol{\underline{\Lambda}} - \omega^2 \mathbf{\underline{Id}})^{-1}$.
 Here, the diagonal elements of $\boldsymbol{\underline{\Lambda}}$ are denoted with 
 $\lambda_i$ (the eigenvalues of $\mathbf{\underline{A}}$) and the columns of
 $\mathbf{\underline{V}}$ with $\mathbf{v}_i$ (the eigenvectors of $\mathbf{\underline{A}}$).
@@ -676,7 +679,7 @@ inner product in $L_2(\Omega)$ in the basis of the mesh vertices.
 A QR decomposition with respect to the inner product
 $\langle \mathbf{u}, \mathbf{v} \rangle_M = \mathbf{u}^H \mathbf{\underline{M}} \mathbf{v}$
 yields $\mathbf{\underline{U}} = \mathbf{\underline{Q}}~\mathbf{\underline{R}}$
-with $\mathbf{\underline{Q}}^H \mathbf{\underline{M}}~\mathbf{\underline{Q}} = \boldsymbol{\underline{1}}$.
+with $\mathbf{\underline{Q}}^H \mathbf{\underline{M}}~\mathbf{\underline{Q}} = \mathbf{\underline{Id}}$.
 When plugging this into (\ref{equ:gramian-matrix}) one sees
 \begin{equation}
     \mathbf{\underline{G}} = (\mathbf{\underline{Q}}~\mathbf{\underline{R}})^H \mathbf{\underline{M}} 
@@ -1024,7 +1027,7 @@ eigensolutions that are orthogonal to it did not prove to be effective.
     frequencies $\omega_{n, m}$ are supressed, which is the case whenever the corresponding
     solution $\mathbf{u}_z(\omega_{n, m})$ happens to be orthogonal to the source vector $f$ (middle).
     \acrshort{gMRI} successfully avoids yielding suppressed resonant frequencies
-    while both the analytical and \texttt{eigsh} approach worngly yield
+    while both the analytical and \texttt{eigsh} approach wrongly yield
     resonant frequencies that in actuality are suppressed.}
     \label{fig:rectangular-cavity-suppression}
 \end{figure}
@@ -1133,7 +1136,7 @@ To find resonant frequencies for this system numerically, the nonlinear eigenpro
 \begin{equation}
     (\mathbf{\underline{K}} - i \omega \mathbf{\underline{I}} - \omega^2 \mathbf{\underline{M}}) \mathbf{w} = \mathbf{0} \label{equ:nonlinear-eigenproblem}
 \end{equation}
-with $\mathbf{I}$ being the matrix representation corresponding to the form
+with $\mathbf{\underline{I}}$ being the matrix representation corresponding to the form
 \begin{equation}
     \int_{\Gamma_I} \lambda u_z v_z 
 \end{equation}
@@ -1146,7 +1149,7 @@ defining $\mathbf{v} = \omega \mathbf{w}$, such that we can convert it to a
 system twice the size that reads
 \begin{equation}
     \begin{bmatrix}
-         & \boldsymbol{\underline{1}} \\
+         & \mathbf{\underline{Id}} \\
         \mathbf{\underline{K}} & -i \mathbf{\underline{I}}
     \end{bmatrix}
     \begin{bmatrix}
@@ -1156,7 +1159,7 @@ system twice the size that reads
     =
     \omega
     \begin{bmatrix}
-        \boldsymbol{\underline{1}} & \\
+        \mathbf{\underline{Id}} & \\
          & \boldsymbol{\underline{M}}
     \end{bmatrix}
     \begin{bmatrix}
@@ -1249,8 +1252,8 @@ In the following, I would like to demonstrate the capability of the
 \acrshort{gMRI} algorithm to approximate scattering coefficients for the \acrshort{DMCWF}.
 The definition of the scattering matrix is a adaptation from \cite{shortMRI} to
 \begin{equation}
-    \mathbf{\underline{S}}(\omega) = \mathbf{\underline{1}}
-    - 2\left( \mathbf{\underline{1}} + i \frac{\omega}{2\pi} \sqrt{\frac{\mu}{\epsilon}}
+    \mathbf{\underline{S}}(\omega) = \mathbf{\underline{Id}}
+    - 2\left( \mathbf{\underline{Id}} + i \frac{\omega}{2\pi} \sqrt{\frac{\mu}{\epsilon}}
     \sqrt{\frac{1 - (\omega_c / \omega_0)^2}{1 - (\omega_c / \omega)^2}} 
     \mathbf{\underline{F}}^H \mathbf{\underline{U}}(\omega) \right)^{-1}
 \end{equation}
