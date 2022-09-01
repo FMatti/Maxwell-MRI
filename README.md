@@ -28,54 +28,58 @@ Three examples for contained in this family of problems are studied:
 ## Quick start
 To demonstrate the usage of the MinimalRationalInterpolation class, I hereafter show the reader a simple and straight forward application: Finding resonant frequencies of the cubic unit cavity in a vacuum with trivial physical units.
 
-    git clone https://github.com/FMatti/Maxwell-MRI.git
-    cd Maxwell-MRI
-    touch quickstart.py
+```bash
+git clone https://github.com/FMatti/Maxwell-MRI.git
+cd Maxwell-MRI
+touch quickstart.py
+```
 
 Open the file `quickstart.py` in your preferred python editor, and run the following lines:
 
-    import fenics as fen
-    import numpy as np
-    
-    # Import utilities
-    from src.time_harmonic_maxwell_problem import TimeHarmonicMaxwellProblem
-    from src.minimal_rational_interpolation import MinimalRationalInterpolation
-    from src.vector_space import VectorSpaceL2
+```python
+import fenics as fen
+import numpy as np
 
-    # Define mesh
-    mesh = fen.UnitSquareMesh(100, 100)
-    V = fen.FunctionSpace(mesh, 'P', 1)
+# Import utilities
+from src.time_harmonic_maxwell_problem import TimeHarmonicMaxwellProblem
+from src.minimal_rational_interpolation import MinimalRationalInterpolation
+from src.vector_space import VectorSpaceL2
 
-    # Define position of inlet to be at x=0
-    class B_N(fen.SubDomain):
-        def inside(self_, x, on_boundary):
-            return on_boundary and fen.near(x[0], 0.0)
+# Define mesh
+mesh = fen.UnitSquareMesh(100, 100)
+V = fen.FunctionSpace(mesh, 'P', 1)
 
-    # Define all other boundaries to be perfectly conducting
-    class B_D(fen.SubDomain):
-        def inside(self, x, on_boundary):
-            return on_boundary and not B_N().inside(x, 'on_boundary')
+# Define position of inlet to be at x=0
+class B_N(fen.SubDomain):
+    def inside(self_, x, on_boundary):
+        return on_boundary and fen.near(x[0], 0.0)
 
-    # Set physical constants
-    mu = fen.Expression('1.0', degree=2)
-    eps = fen.Expression('1.0', degree=2)
-    j = fen.Expression('0.0', degree=2)
-    
-    # Set the boundary conditions for perfect conductor and the inlet
-    u_D = fen.Expression('0.0', degree=2)
-    g_N = fen.Expression('1.0', degree=2)
+# Define all other boundaries to be perfectly conducting
+class B_D(fen.SubDomain):
+    def inside(self, x, on_boundary):
+        return on_boundary and not B_N().inside(x, 'on_boundary')
 
-    # Set up the time-harmonic Maxwell problem
-    THMP = TimeHarmonicMaxwellProblem(V, mu, eps, j, B_D(), u_D, B_N(), g_N)
-    THMP.setup()
+# Set physical constants
+mu = fen.Expression('1.0', degree=2)
+eps = fen.Expression('1.0', degree=2)
+j = fen.Expression('0.0', degree=2)
 
-    # Create the corresponding vector space
-    VS = VectorSpaceL2(THMP)
+# Set the boundary conditions for perfect conductor and the inlet
+u_D = fen.Expression('0.0', degree=2)
+g_N = fen.Expression('1.0', degree=2)
 
-    # Perform the greedy MRI algorithm to find resonant frequencies in [3, 4]
-    MRI = MinimalRationalInterpolation(VS)
-    MRI.compute_surrogate(THMP, greedy=True, omegas=np.linspace(3, 4, 1000))
-    print(MRI.get_interpolatory_eigenfrequencies(only_real=True))
+# Set up the time-harmonic Maxwell problem
+THMP = TimeHarmonicMaxwellProblem(V, mu, eps, j, B_D(), u_D, B_N(), g_N)
+THMP.setup()
+
+# Create the corresponding vector space
+VS = VectorSpaceL2(THMP)
+
+# Perform the greedy MRI algorithm to find resonant frequencies in [3, 4]
+MRI = MinimalRationalInterpolation(VS)
+MRI.compute_surrogate(THMP, greedy=True, omegas=np.linspace(3, 4, 1000))
+print(MRI.get_interpolatory_eigenfrequencies(only_real=True))
+```
        
 which will indeed give the first resonant frequency (3.51230205) of the cubic unit cavity with one edge acting as an inlet and trivial physical constants.
 
